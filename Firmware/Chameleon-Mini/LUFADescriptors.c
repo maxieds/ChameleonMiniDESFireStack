@@ -214,9 +214,9 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
  */
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
-    .Header                 = {.Size = USB_STRING_LEN(14), .Type = DTYPE_String},
+    .Header                 = {.Size = USB_STRING_LEN(21), .Type = DTYPE_String},
 
-    .UnicodeString          = L"Chameleon-Mini"
+    .UnicodeString          = L"Chameleon-Mini-RevG++"
 };
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
@@ -260,8 +260,11 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                     Address = &ProductString;
                     Size    = pgm_read_byte(&ProductString.Header.Size);
                     break;
+		case 0xdc: // device unique serial number:
+		    Address = INTERNAL_SERIAL_START_ADDRESS;
+		    Size    = INTERNAL_SERIAL_LENGTH_BITS;
+		    break;
             }
-
             break;
     }
 

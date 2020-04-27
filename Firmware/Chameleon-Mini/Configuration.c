@@ -15,9 +15,9 @@
 static const MapEntryType PROGMEM ConfigurationMap[] = {
     { .Id = CONFIG_NONE, 			.Text = "NONE" },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
-    { .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
-    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
-    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
+    { .Id = CONFIG_MF_ULTRALIGHT, 	        .Text = "MF_ULTRALIGHT" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,       .Text = "MF_ULTRALIGHT_EV1_80B" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,      .Text = "MF_ULTRALIGHT_EV1_164B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_1K, 	.Text = "MF_CLASSIC_1K" },
@@ -30,6 +30,12 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_4K_7B, 	.Text = "MF_CLASSIC_4K_7B" },
+#endif
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+	{ .Id = CONFIG_MF_DESFIRE,		.Text = "MF_DESFIRE" },
+	{ .Id = CONFIG_MF_DESFIRE_EV1_2K,	.Text = "MF_DESFIRE_EV1_2K" },
+	{ .Id = CONFIG_MF_DESFIRE_EV1_4K,	.Text = "MF_DESFIRE_EV1_4K" },
+	{ .Id = CONFIG_MF_DESFIRE_EV1_8K,	.Text = "MF_DESFIRE_EV1_8K" },
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
@@ -185,6 +191,68 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
         .ReadOnly = false
     },
+#endif
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+	[CONFIG_MF_DESFIRE] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfireEV0AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
+	[CONFIG_MF_DESFIRE_EV1_2K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfire2kEV1AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
+	[CONFIG_MF_DESFIRE_EV1_4K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfire4kEV1AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
+	[CONFIG_MF_DESFIRE_EV1_4K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfire8kEV1AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     [CONFIG_ISO14443A_SNIFF] = {

@@ -3,7 +3,7 @@
 /** @file */
 #include "Common.h"
 
-#define LOG_SIZE	2048
+#define LOG_SIZE	        2048
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
 #define FRAM_LOG_SIZE		0x3FFE // the whole second half (minus the 2 Bytes of Address)
@@ -46,6 +46,11 @@ typedef enum {
     LOG_ERR_APP_AUTH_FAIL		= 0xC0, ///< Application authentication failed.
     LOG_ERR_APP_CHECKSUM_FAIL	= 0xC1, ///< Application had a checksum fail.
     LOG_ERR_APP_NOT_AUTHED		= 0xC2, ///< Application is not authenticated.
+
+    /* More intended for debugging the local oddities of the DESFire-chip-based 
+       implementation to authenticate school ID cards here at GA Tech ... */
+    LOG_INFO_DESFIRE_IN         = 0xE1, ///< DESFire specific logging of all incoming input
+    LOG_INFO_DESFIRE_OUT        = 0xE2, ///< Similarly for output  
 
     LOG_INFO_SYSTEM_BOOT		= 0xFF, ///< Chameleon boots
 
