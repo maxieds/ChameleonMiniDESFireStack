@@ -1,4 +1,4 @@
-# Source for Mifare DESFire tag support in the stock Chameleon Mini firmware
+# Source for Mifare DESFire tag support in the Chameleon Mini firmware
 
 This source code has been written, adapted, and modified by [Maxie D. Schmidt](https://github.com/maxieds) to 
 finally add the holy grail -- complete DESFire NFC tag support for the Chameleon Mini RevG based devices! 
@@ -12,6 +12,18 @@ NFC and Chameleon related [other projects](https://github.com/maxieds/ChameleonM
 by visiting [this site](https://patreon.com/maxieds). 
 Much credit should also be attributed to the difficult implementations adapted from Java / Android 
 cited below. 
+
+# Resources and references 
+
+The following detailed PDF resources are available to help with parsing the more subtle details 
+to the mutifaceted Mifare DESFire tag specifications:
+* [DESFire Specs and Datasheet (MF3 IC D40 -- Dated April, 2004)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
+* [NXP Application Note (Contains some helpful hints and common snags)](https://www.nxp.com/docs/en/application-note/AN4453.pdf)
+* [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
+
+Additionally, the following weblinks and posts clarify some common reference points:
+* [StackOverflow post on emulating DESFire on Android](https://stackoverflow.com/a/20068329)
+* [StackOverflow post on Android NFC support for DESFire](https://stackoverflow.com/a/26775311)
 
 # External credits
 
