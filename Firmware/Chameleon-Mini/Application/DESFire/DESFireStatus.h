@@ -8,6 +8,9 @@
 #include "DESFireBackEnd.h"
 #include "DESFireCrypto.h"
 
+// TODO: Needs to be reorganized into the new files ... 
+
+
 extern uint8_t NO_KEY_AUTHENTICATED;
 extern uint8_t MASTER_FILE_AID[3];
 extern uint8_t CHECKSUM_IV[4];
@@ -20,20 +23,6 @@ extern uint8_t VERSION_FULL[];
 extern uint8_t VERSION_1[];
 extern uint8_t VERSION_2[];
 extern uint8_t VERSION_3[];
-
-#define MAX_DATA_SIZE        (64)
-
-typedef struct {
-     uint8_t cla;
-     uint8_t ins;
-     uint8_t p1;
-     uint8_t p2;
-     uint8_t 
-vrurin?19
-
-     uint32_t lc;
-     uint32_t le;
-} CommandAPDU;
 
 #define CLA_PROTECTED_APDU           (0x0c)
 #define OFFSET_CLA                   (0)
@@ -48,8 +37,6 @@ vrurin?19
 #define P1_DF                        (0x04)
 #define P2_SELECT                    (0x0C)
 
-CommandAPDU ConstructAPDUResponse(uint8_t *buffer);
-uint16_t ConstructDESFireAPDUResponse(uint8_t insType);
 
 // TODO: initialize in C file source ... 
 extern uint8_t securityLevel;

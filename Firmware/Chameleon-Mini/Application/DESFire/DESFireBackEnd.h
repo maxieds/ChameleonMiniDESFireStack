@@ -38,6 +38,19 @@
 #define DESFIRE_FILE_LINEAR_RECORDS     3
 #define DESFIRE_FILE_CIRCULAR_RECORDS   4
 
+/** Data about an application's file is currently kept in this structure.
+ * The location of these structures is defined by the file index.
+ */
+
+enum mifare_desfire_file_types {
+    MDFT_STANDARD_DATA_FILE             = 0x00,
+    MDFT_BACKUP_DATA_FILE               = 0x01,
+    MDFT_VALUE_FILE_WITH_BACKUP         = 0x02,
+    MDFT_LINEAR_RECORD_FILE_WITH_BACKUP = 0x03,
+    MDFT_CYCLIC_RECORD_FILE_WITH_BACKUP = 0x04
+};
+
+
 /* Special values for access key IDs */
 
 #define DESFIRE_ACCESS_FREE     0xE
@@ -48,11 +61,20 @@
 #define DESFIRE_WRITE_ACCESS_RIGHTS_SHIFT       (2*4)
 #define DESFIRE_READ_ACCESS_RIGHTS_SHIFT        (3*4)
 
+/* Communication mode */
+
 #define DESFIRE_COMMS_PLAINTEXT         0
 #define DESFIRE_COMMS_PLAINTEXT_MAC     1
 #define DESFIRE_COMMS_CIPHERTEXT_DES    3
 
 /* PICC / Application master key settings */
+/* Mifare DESFire master key settings
+bit 7 - 4: Always 0.
+bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible); PICC master key settings changeable when authenticated with PICC master key = 1
+bit 2: PICC master key authentication required for creating or deleting applications = 0; Authentication not required = 1
+bit 1: PICC master key authentication required for listing of applications or reading key settings = 0; Free listing of applications and reading key settings = 1
+bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; PICC master key changeable = 1
+*/
 #define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (1 << 0)
 #define DESFIRE_FREE_DIRECTORY_LIST      (1 << 1)
 #define DESFIRE_FREE_CREATE_DELETE       (1 << 2)
@@ -118,7 +140,7 @@ typedef enum {
     // CommandToContinue: 
     NO_COMMAND_TO_CONTINUE = 0x00,
     // COMMAND CODES: 
-    AUTHENTICATE = 0x0A,
+    AUTHENTICATE_LEGACY = 0x0A,
     AUTHENTICATE_ISO = 0x1A,
     AUTHENTICATE_AES = 0xAA,
     CHANGE_KEY_SETTINGS = 0x54,
@@ -165,9 +187,8 @@ typedef enum {
 
 typedef uint8_t DesfireAidType[DESFIRE_AID_SIZE];
 
-/** Data about an application's file is currently kept in this structure.
- * The location of these structures is defined by the file index.
- */
+#pragma pack (push)
+#pragma pack (1)
 typedef struct {
     uint8_t Type;
     uint8_t CommSettings;
@@ -191,12 +212,15 @@ typedef struct {
         struct {
             uint8_t BlockCount;
             uint8_t ClearPending;
-            uint16_t RecordSize;
-            uint16_t CurrentRecord;
-            uint16_t MaxRecordCount;
-        } RecordFile;
-    };
-} DesfireFileType;
+            uint8_t RecordSize[3];
+            uint8_t CurrentNumRecords[3];
+            uint8_t MaxRecordCount[3];
+        } LinearRecordFile;
+    } FileSettings;
+} DESFireFileTypeSettings;
+#pragma pack (pop)
+
+// TODO: extern DESFireFileTypeSettings 
 
 /** Defines the block ID of each application's file on the card. */
 typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
@@ -217,10 +241,33 @@ typedef struct {
     uint16_t Checksum; /* Not actually used atm */
 } DesfireApplicationDataType;
 
+/* Mifare DESFire EV1 Application crypto operations */
+
+#define APPLICATION_CRYPTO_DES    0x00
+#define APPLICATION_CRYPTO_3K3DES 0x40
+#define APPLICATION_CRYPTO_AES    0x80
+
+/* Mifare DESFire Application settings
+ * bit 7 - 4: Number of key needed to change application keys (key 0 - 13; 0 = master key; 14 = key itself required for key change; 15 = all keys are frozen)
+ * bit 3: Application configuration frozen = 0; Application configuration changeable when authenticated with application master key = 1
+ * bit 2: Application master key authentication required for create/delete files = 0; Authentication not required = 1
+ * bit 1: GetFileIDs, GetFileSettings and GetKeySettings behavior: Master key authentication required = 0; No authentication required = 1
+ * bit 0 = Application master key frozen = 0; Application master key changeable = 1
+ */
+
+struct mifare_desfire_df {
+    uint32_t aid;
+    uint16_t fid;
+    uint8_t df_name[16];
+    size_t df_name_len;
+};
+
 
 /** Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
+#pragma pack (push)
+#pragma pack (1)
 typedef struct {
     /* Static data: does not change during the PICC's lifetime */
     uint8_t Uid[DESFIRE_UID_SIZE];
@@ -237,6 +284,7 @@ typedef struct {
     uint8_t TransactionStarted;
     uint8_t Spare[9];
 } DesfirePiccInfoType;
+#pragma pack (pop)
 
 /** Defines the application directory contents.
  * The application directory maps AIDs to application slots:

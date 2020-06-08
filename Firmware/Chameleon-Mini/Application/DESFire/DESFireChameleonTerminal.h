@@ -1,0 +1,39 @@
+/* 
+ * DESFireChameleonTerminal.h 
+ * Maxie D. Schmidt (github.com/maxieds)
+ */ 
+
+#ifndef __DESFIRE_CHAMELEON_TERMINAL_H__
+#define __DESFIRE_CHAMELEON_TERMINAL_H__
+
+#include "../../Terminal/Commands.h"
+
+#define DFCOMMAND_SET_VERSION                 "DESFIRE_SET_VERSION"
+
+#define DFCOMMAND_SET_MANUFACTURER            "DESFIRE_SET_MAUFACTURER"
+
+#define DFCOMMAND_SET_SERIALNO                "DESFIRE_SET_SERIALNO"
+
+#define DFCOMMAND_LAYOUT_PPRINT               "DESFIRE_PPRINT_PICC_LAYOUT"
+
+#define DFCOMMAND_FIRMWARE_INFO               "DESFIRE_GET_FIRMWARE_INFO"
+
+#define DFCOMMAND_LOGGING_MODE                "DESFIRE_SET_LOGGING_MODE"
+
+#define DFCOMMAND_SET_DATAXFER_MODE           "DESFIRE_SET_DATAXFER_MODE"
+
+#define DFCOMMAND_READ_AIDDF                  "DESFIRE_READ_APPDIR"
+
+#define DFCOMMAND_LIST_AIDDFS                 "DESFIRE_LIST_APPDIRS"
+
+#define DFCOMMAND_READ_FILE                   "DESFIRE_READ_FILE"
+
+#define DFCOMMAND_LIST_FILES                  "DESFIRE_LIST_FILES"
+
+#define DFCOMMAND_SET_CUSTOM_AID              "DESFIRE_SET_CUSTOM_AID"
+
+#define DFCOMMAND_SET_DEFAULT_AID             "DESFIRE_SET_DEFAULT_AID"
+
+#define DFCOMMAND_SET_DEFAULT_ISO7816_AID     "DESFIRE_SET_ISO7816_AID"
+
+#endif

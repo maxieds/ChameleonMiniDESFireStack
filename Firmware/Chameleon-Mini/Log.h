@@ -47,10 +47,10 @@ typedef enum {
     LOG_ERR_APP_CHECKSUM_FAIL	= 0xC1, ///< Application had a checksum fail.
     LOG_ERR_APP_NOT_AUTHED		= 0xC2, ///< Application is not authenticated.
 
-    /* More intended for debugging the local oddities of the DESFire-chip-based 
-       implementation to authenticate school ID cards here at GA Tech ... */
-    LOG_INFO_DESFIRE_IN         = 0xE1, ///< DESFire specific logging of all incoming input
-    LOG_INFO_DESFIRE_OUT        = 0xE2, ///< Similarly for output  
+    /* DESFire emulation and development related logging messages (0xEx): */ 
+    #ifdef CONFIG_MF_DESFIRE_SUPPORT
+         #include "Application/DESFire/DESFireLoggingCodesInclude.c" 
+    #endif
 
     LOG_INFO_SYSTEM_BOOT		= 0xFF, ///< Chameleon boots
 
