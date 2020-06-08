@@ -5,12 +5,19 @@
 #ifndef __DESFIRE_CRYPTO_H__
 #define __DESFIRE_CRYPTO_H__
 
-/* Cryptography related definitions */
+/** Cryptography related definitions **/
 
-#define CRYPTO_DES         (0x00)
-#define CRYPTO_TDES        (0x1A)
-#define CRYPTO_TKTDES      (0x1A)
-#define CRYPTO_AES         ((uint8_t) 0xAA)
+/* Communication modes */
+#define DESFIRE_COMMS_PLAINTEXT         0
+#define DESFIRE_COMMS_PLAINTEXT_MAC     1
+#define DESFIRE_COMMS_CIPHERTEXT_DES    3
+
+extern BYTE ActiveCommMode;
+
+#define CRYPTO_TYPE_DES         (0x00)
+#define CRYPTO_TYPE_TDES        (0x1A)
+#define CRYPTO_TYPE_TKTDEA      (0x1A)
+#define CRYPTO_TYPE_AES         ((uint8_t) 0xAA)
 
 /* Key sizes, in bytes */
 

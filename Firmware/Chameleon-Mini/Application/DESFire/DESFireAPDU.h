@@ -9,7 +9,7 @@
 #include "DESFireFirmwareSettings.h" 
 #include "DESFireCommands.h"
 
-#define MAX_APDU_DATA_LENGTH                (64)
+#define DESFIRE_MAX_PAYLOAD_SIZE            59 /* Bytes */
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
      BYTE  cla;
@@ -17,13 +17,13 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
      BYTE  p1;
      BYTE  p2;
      BYTE  lc;
-     BYTE  data[MAX_APDU_DATA_LENGTH] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+     BYTE  data[DESFIRE_MAX_PAYLOAD_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
      SIZET dataSize;
      BYTE  le;
 } APDUCommand;
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
-     BYTE  data[MAX_APDU_DATA_LENGTH] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+     BYTE  data[DESFIRE_MAX_PAYLOAD_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
      SIZET dataSize;
      BYTE  sw1;
      BYTE  sw2;

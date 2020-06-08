@@ -25,12 +25,6 @@ extern uint8_t VERSION_2[];
 extern uint8_t VERSION_3[];
 
 #define CLA_PROTECTED_APDU           (0x0c)
-#define OFFSET_CLA                   (0)
-#define OFFSET_INS                   (1)
-#define OFFSET_P1                    (2)
-#define OFFSET_P2                    (3)
-#define OFFSET_LC                    (4)
-#define OFFSET_CDATA                 (5)
 #define CLA_ISO7816                  (0)
 #define INS_SELECT                   ((uint8_t) -92)
 #define INS_EXTERNAL_AUTHENTICATE    ((uint8_t) -126)
@@ -60,6 +54,30 @@ extern uint8_t legacyMode;
 #define DO87_BYTENO    ((uint8_t) 0x7F)
 #define DO87_END       ((uint8_t) 0x01);
 #define LE_MAX         ((uint16_t) 256);
+
+typedef enum {
+    STATUS_OPERATION_OK = 0x00,
+    STATUS_NO_CHANGES = 0x0C,
+    STATUS_OUT_OF_EEPROM_ERROR = 0x0E,
+    STATUS_ILLEGAL_COMMAND_CODE = 0x1C,
+    STATUS_INTEGRITY_ERROR = 0x1E,
+    STATUS_NO_SUCH_KEY = 0x40,
+    STATUS_LENGTH_ERROR = 0x7E,
+    STATUS_PERMISSION_DENIED = 0x9D,
+    STATUS_PARAMETER_ERROR = 0x9E,
+    STATUS_APP_NOT_FOUND = 0xA0,
+    STATUS_APP_INTEGRITY_ERROR = 0xA1,
+    STATUS_AUTHENTICATION_ERROR = 0xAE,
+    STATUS_ADDITIONAL_FRAME = 0xAF,
+    STATUS_BOUNDARY_ERROR = 0xBE,
+    STATUS_COMMAND_ABORTED = 0xCA,
+    STATUS_APP_COUNT_ERROR = 0xCE,
+    STATUS_DUPLICATE_ERROR = 0xDE,
+    STATUS_EEPROM_ERROR = 0xEE,
+    STATUS_FILE_NOT_FOUND = 0xF0,
+    STATUS_PICC_INTEGRITY_ERROR = 0xC1,
+    STATUS_WRONG_VALUE_ERROR = 0x6E,
+} DesfireStatusCodeType;
     
 /**
   * Response status : No Error = (short)0x9000
@@ -79,7 +97,7 @@ extern uint8_t legacyMode;
 /**
   * Response status : Security condition not satisfied = 0x6982
   */
-public static final short SW_SECURITY_STATUS_NOT_SATISFIED = 27010;
+#define SW_SECURITY_STATUS_NOT_SATISFIED = 27010;
     
 /**
   * Response status : File invalid = 0x6983
