@@ -2,8 +2,8 @@
  * MifareDesfire.h
  * MIFARE DESFire frontend
  *
- *  Created on: 14.10.2016
- *      Author: dev_zzo
+ * Created on: 14.10.2016
+ * Author: dev_zzo
  */
 
 #ifndef MIFAREDESFIRE_H_

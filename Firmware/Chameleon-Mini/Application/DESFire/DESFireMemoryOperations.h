@@ -17,7 +17,17 @@
 extern BYTE DESFireInternalDataBuffer[MAX_DATA_BUFFER_SIZE];
 extern BYTE DESFireInternalStringBuffer[MAX_STRING_BUFFER_SIZE];
 
-BOOL WriteDataToPICCImage(int slotNumber, UINT destAddr, const BYTE *dataBuf, SIZET dataSize);
-BOOL ReadDataFromPICCImage(int slotNumber, UINT srcAddr, BYTE *destBuf, SIZET maxLength);
+/*
+ * EEPROM memory management routines:
+ */
+static void ReadBlockBytes(void *Buffer, BYTE StartBlock, SIZET Count);
+static void WriteBlockBytes(void *Buffer, BYTE StartBlock, SIZET Count);
+static void CopyBlockBytes(BYTE DestBlock, BYTE SrcBlock, SIZET Count);
+static BYTE AllocateBlocks(BYTE BlockCount);
+static BYTE GetCardCapacityBlocks(void);
+
+/* File data transfer related routines: */
+static void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count);
+static void WriteDateEEPROMSink(uint8_t *Buffer, uint8_t Count);
 
 #endif

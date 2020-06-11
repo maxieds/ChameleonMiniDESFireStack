@@ -8,8 +8,9 @@
 
 #include "DESFireFirmwareSettings.h"
 
-static inline const BYTE PICC_FORMATTED_MARKER[] = { 0xf0, 0x12, 0x34 };
-static inline const BYTE DefaultDESFireATS[] = { 0x06, 0x75, 0x77, 0x81, 0x02, 0x80 };
+extern const BYTE PICC_FORMATTED_MARKER[]; 
+extern const BYTE DefaultDESFireATS[]; 
+extern const BYTE DefaultJCOPDESFireATS[]; 
 
 #define DESFIRE_PICC_APP_SLOT 0
 
@@ -23,6 +24,32 @@ static inline const BYTE DefaultDESFireATS[] = { 0x06, 0x75, 0x77, 0x81, 0x02, 0
 /*
  * Definitions pertaining to on-card data
  */
+
+/* Anticollision parameters */
+#define ATQA_VALUE              0x0344
+#define SAK_CL1_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT | ISO14443A_SAK_INCOMPLETE)
+#define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
+
+#define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
+
+#define DESFIRE_EV0_ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
+#define DESFIRE_EV0_ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
+#define DESFIRE_EV0_ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported */
+#define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
+#define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
+
+#define GET_LE16(p)     (*(uint16_t*)&(p)[0])
+#define GET_LE24(p)     (*(__uint24*)&(p)[0])
+
+/* Defines for GetVersion */
+#define ID_PHILIPS_NXP           0x04
+#define DESFIRE_MANUFACTURER_ID         ID_PHILIPS_NXP
+
+/* These do not change */
+#define DESFIRE_TYPE                    0x01
+#define DESFIRE_SUBTYPE                 0x01
+#define DESFIRE_HW_PROTOCOL_TYPE        0x05
+#define DESFIRE_SW_PROTOCOL_TYPE        0x05
 
 /** Source: http://www.proxmark.org/forum/viewtopic.php?id=2982 **/
 /* DESFire EV0 versions */
@@ -47,7 +74,7 @@ static inline const BYTE DefaultDESFireATS[] = { 0x06, 0x75, 0x77, 0x81, 0x02, 0
 #define DESFIRE_STORAGE_SIZE_4K  0x18
 #define DESFIRE_STORAGE_SIZE_8K  0x1A
 
-typedef enum {
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      PICCHDR_SERIALNO     = 1,
      // TODO
 } PICCHeaderField;
@@ -60,7 +87,7 @@ typedef enum {
  */
 #pragma pack (push)
 #pragma pack (1)
-typedef struct {
+typedef struct DESFIRE_FIRMWARE_PACKING {
     /* Static data: does not change during the PICC's lifetime */
     uint8_t Uid[DESFIRE_UID_SIZE];
     uint8_t StorageSize;

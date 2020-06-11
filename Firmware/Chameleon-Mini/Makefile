@@ -29,7 +29,8 @@ SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
-SETTINGS        += -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE_EV1_2K
+#SETTINGS       += -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE_EV1_2K
+SETTINGS       += -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_SNIFF
 
 #Default button actions
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RANDOM
@@ -71,6 +72,13 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
+#Whether or not to customize the USB identifier settings in the firmware:
+SETTINGS	+= -DENABLE_LUFAUSB_CUSTOM_VERSIONS
+
+#Whether or not to allow users Chameleon terminal access to change the DESFire configuration's 
+#sensitive settings like manufacturer, serial number, etc.
+SETTINGS	+= -DENABLE_PERMISSIVE_DESFIRE_SETTINGS
+
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
@@ -84,7 +92,7 @@ BUILD_DATE   = "\"$(shell date /t)\""
 else
 BUILD_DATE   = $(shell date +'\"%y%m%d\"')
 endif
-COMMIT_ID	 = $(shell git rev-parse --short HEAD)
+COMMIT_ID    = $(shell git rev-parse --short HEAD)
 MCU          = atxmega128a4u
 ARCH         = XMEGA
 BOARD        = NONE
@@ -139,6 +147,7 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 %.bin: %.elf
 	@echo $(MSG_OBJCPY_CMD) Extracting BIN file data from \"$<\"
 	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
+	
 
 # Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
 spmhelper: $(TARGET).elf
@@ -166,3 +175,8 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	dfu-programmer $(MCU) flash-eeprom $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
+
+desfire-dev: $(TARGET).hex $(TARGET).eep
+	@cp $(TARGET).hex $(TARGET)-DESFire.hex
+	@cp $(TARGET).eep $(TARGET)-DESFire.eep
+	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/

@@ -6,6 +6,8 @@
 #ifndef __DESFIRE_EFFILE_H__
 #define __DESFIRE_EFFILE_H__
 
+#include "DESFireFirmwareSettings.h"
+
 #define EFFILE_DATA_CHUNK_SIZE            (4)
 #define EFFILE_DATA_CHUNK_ALIGNAT         __attribute__((align(EFFILE_DATA_CHUNK_SIZE)))
 
@@ -22,7 +24,7 @@
 /* File types */
 
 // See pages 48-49 of the datasheet for more details ... 
-typedef enum {
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      FTYPE_STD_DATA       = 0, 
      FTYPE_BACKUP_DATA    = 1, 
      FTYPE_VALUE          = 2,
@@ -41,7 +43,7 @@ typedef enum {
  */
 #pragma pack (push)
 #pragma pack (1)
-typedef struct {
+typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t Type;
     uint8_t CommSettings;
     uint16_t AccessRights;
@@ -72,22 +74,59 @@ typedef struct {
 } DESFireFileTypeSettings;
 #pragma pack (pop)
 
-/* File management */
-uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
-uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
-uint8_t DeleteFile(uint8_t FileNum);
-void CommitTransaction(void);
-void AbortTransaction(void);
-uint8_t SelectFile(uint8_t FileNum);
-uint8_t GetSelectedFileType(void);
-uint8_t GetSelectedFileCommSettings(void);
-uint16_t GetSelectedFileAccessRights(void);
-uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
-TransferStatus ReadDataFileTransfer(uint8_t* Buffer);
-uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
-uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount);
-uint8_t ReadValueFileSetup(uint8_t CommSettings);
-TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
+/*
+ * File management: creation, deletion, and misc routines
+ */
+static uint8_t GetFileControlBlockId(uint8_t FileNum);
+static uint8_t GetFileDataAreaBlockId(uint8_t FileNum);
+static uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileType *File);
+static uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileType *File);
+static uint8_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount, uint8_t *BlockIdPtr);
+
+static uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
+static uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
+static uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
+                               int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled);
+static uint8_t DeleteFile(uint8_t FileNum);
+
+/* Transactions */
+static void StartTransaction(void);
+static void MarkFileDirty(uint8_t FileNum);
+static void StopTransaction(void);
+static void SyncFileCopies(uint8_t FileNum, bool RollBack);
+static void FinaliseTransactiob(bool RollBack);
+static void CommitTransaction(void);
+static void AbortTransaction(void);
+
+/* File management: data transfer related routines */
+static uint8_t SelectFile(uint8_t FileNum);
+static uint8_t GetSelectedFileType(void);
+static uint8_t GetSelectedFileCommSettings(void);
+static uint16_t GetSelectedFileAccessRights(void);
+
+/* File transfers */
+static TransferStatus ReadDataFileTransfer(uint8_t* Buffer);
+static uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount);
+static uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+static uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+static uint16_t ReadDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
+static uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
+
+static TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
+static uint8_t ReadValueFileSetup(uint8_t CommSettings);
+
+/* Validation routines */
+#define VALIDATE_ACCESS_READWRITE          (1 << 0)
+#define VALIDATE_ACCESS_WRITE              (1 << 1)
+#define VALIDATE_ACCESS_READ               (1 << 2)
+
+#define VALIDATED_ACCESS_DENIED            0
+#define VALIDATED_ACCESS_GRANTED           1
+#define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
+
+static uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
+static uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask);
 
 // TODO: Page 57: Read file functions ... 
 // TODO: Create and write file functions ... 

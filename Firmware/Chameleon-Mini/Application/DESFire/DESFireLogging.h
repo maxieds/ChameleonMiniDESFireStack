@@ -10,7 +10,7 @@
 #include "DESFireFirmwareSettings.h"
 #include "DESFireAPDU.h"
 
-typedef enum {
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      OFF         = 0, 
      NORMAL      = 1, 
      VERBOSE     = 2, 

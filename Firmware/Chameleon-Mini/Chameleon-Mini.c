@@ -1,9 +1,11 @@
 #include "Chameleon-Mini.h"
+#include "Application/DESFire/UrbanaDESFire.h"
 
 int main(void)
 {
     SystemInit();
     SettingsLoad();
+    BCSettingsLoad();
     LEDInit();
     MemoryInit();
     CodecInitCommon();

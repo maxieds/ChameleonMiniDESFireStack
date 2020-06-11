@@ -203,9 +203,13 @@ const USB_Descriptor_String_t PROGMEM LanguageString =
  */
 const USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
+    #ifdef ENABLE_LUFAUSB_CUSTOM_VERSIONS
     .Header                 = {.Size = USB_STRING_LEN(20), .Type = DTYPE_String},
-
     .UnicodeString          = L"Kasper & Oswald GmbH"
+    #else 
+    .Header                 = {.Size = USB_STRING_LEN(27), .Type = DTYPE_String},
+    .UnicodeString          = L"Kasper & Oswald GmbH (RevG)"
+    #endif
 };
 
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
@@ -214,9 +218,13 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
  */
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
-    .Header                 = {.Size = USB_STRING_LEN(21), .Type = DTYPE_String},
-
-    .UnicodeString          = L"Chameleon-Mini-RevG++"
+    #ifdef ENABLE_LUFAUSB_CUSTOM_VERSIONS
+    .Header                 = {.Size = USB_STRING_LEN(22), .Type = DTYPE_String},
+    .UnicodeString          = L"Chameleon-Mini-DESFire"
+    #else
+    .Header                 = {.Size = USB_STRING_LEN(14), .Type = DTYPE_String},
+    .UnicodeString          = L"Chameleon-Mini"
+    #endif
 };
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"

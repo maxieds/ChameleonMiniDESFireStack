@@ -42,4 +42,9 @@ repositories and code bases:
 * [https://github.com/kevinvalk/android-hce-framework](https://github.com/kevinvalk/android-hce-framework)
 * [A solid crypto library for AVR in C](https://github.com/cantora/avr-crypto-lib) 
 
+# TODO
+
+* Add in logging and debugging print statements everywhere 
+* grep through the "TODO" marked parts in the source files 
+* Make sure **ALL** the commands we have definitions for are implemented (esp. different types of authenticate) 
 
