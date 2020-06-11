@@ -5,7 +5,7 @@
 
 #ifndef __DESFIRE_LOGGING_CODES_INCLUDE_C__ 
 #define __DESFIRE_LOGGING_CODES_INCLUDE_C__
-
+     
      /* Intended to log all routine, complete transaction records (verbose output), and 
         to source a list of debugging messages and TODO items in the 
         developing DESFire emulation support within the firmware sources. 
@@ -25,5 +25,14 @@
      LOG_INFO_DESFIRE_PICC_RESET_FROM_MEMORY      = 0XEB, 
      LOG_INFO_DESFIRE_PROTECTED_DATA_SET          = 0xEC, 
      LOG_INFO_DESFIRE_PROTECTED_DATA_SET_VERBOSE  = 0xED, 
+
+     /* DESFire app */
+     LOG_APP_AUTH_KEY            = 0xD0, ///< The key used for authentication
+     LOG_APP_NONCE_B             = 0xD1, ///< Nonce B's value (generated)
+     LOG_APP_NONCE_AB            = 0xD2, ///< Nonces A and B values (received)
+     
+     /* ISO 14443 related entries */
+     LOG_ISO14443_3A_STATE       = 0x53,
+     LOG_ISO14443_4_STATE        = 0x54,
 
 #endif

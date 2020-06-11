@@ -7,6 +7,7 @@
 #define __DESFIRE_INS_COMMANDS_H__
 
 #include "DESFireFirmwareSettings.h"
+#include "DESFireCrypto.h"
 
 /*
  * DESFire backend API functions
@@ -16,13 +17,6 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE BytesProcessed;
     BOOL IsComplete;
 } TransferStatus;
-
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-     DFCMD_SPEC_UNKNOWN   = 0, 
-     DFCMD_SPEC_NATIVE    = 1, 
-     DFCMD_SPEC_ISO1443   = 2, 
-     DFCMD_SPEC_ISO7816   = 3, 
-} DESFireCommandSet;
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     // CommandToContinue:
@@ -91,8 +85,16 @@ extern BYTE VERSION_3[];
 typedef union DESFIRE_FIRMWARE_PACKING {
     struct DESFIRE_FIRMWARE_PACKING {
         uint8_t KeyId;
-        uint8_t RndB[CRYPTO_DES_KEY_SIZE];
+        uint8_t RndB[CRYPTO_DES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     } Authenticate;
+    struct DESFIRE_FIRMWARE_PACKING {
+        uint8_t KeyId;
+        uint8_t RndB[CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    } AuthenticateIso;
+    struct DESFIRE_FIRMWARE_PACKING {
+        uint8_t KeyId;
+        uint8_t RndB[CRYPTO_AES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    } AuthenticateAES;
     struct DESFIRE_FIRMWARE_PACKING {
         uint8_t NextIndex;
     } GetApplicationIds;
@@ -106,48 +108,48 @@ extern DesfireSavedCommandStateType DesfireCommandState;
  */
 
 /* General commands */
-static uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdGetVersion2(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdGetVersion3(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdFormatPicc(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetVersion2(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetVersion3(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdFormatPicc(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Key management commands */
-static uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdGetKeySettings(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdChangeKeySettings(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetKeySettings(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdChangeKeySettings(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Application management commands */
-static uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdCreateApplication(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdSelectApplication(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCreateApplication(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdSelectApplication(uint8_t *Buffer, uint16_t ByteCount);
 
 /* File management commands */
-static uint16_t EV0CmdCreateStandardDataFile(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdCreateBackupDataFile(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdCreateValueFile(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdCreateLinearRecordFile(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdCreateCyclicRecordFile(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdDeleteFile(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdGetFileIds(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCreateStandardDataFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCreateBackupDataFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCreateValueFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCreateLinearRecordFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCreateCyclicRecordFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdDeleteFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetFileIds(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Data manipulation commands */
-static uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdGetValue(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdCredit(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdDebit(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdLimitedCredit(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdWriteRecord(uint8_t *Buffer, uint16_t ByteCount);
-static uint16_t EV0CmdClearRecords(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdGetValue(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdCredit(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdDebit(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdLimitedCredit(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdWriteRecord(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdClearRecords(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Transaction handling commands */
-static uint16_t EV0CmdCommitTransaction();
-static uint16_t EV0CmdAbortTransaction();
+uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif 

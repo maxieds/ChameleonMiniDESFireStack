@@ -47,4 +47,5 @@ repositories and code bases:
 * Add in logging and debugging print statements everywhere 
 * grep through the "TODO" marked parts in the source files 
 * Make sure **ALL** the commands we have definitions for are implemented (esp. different types of authenticate) 
+* Read though the old DESFire EV0 datasheet to make sure are correctly handling all of the SW response code cases 
 

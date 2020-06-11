@@ -7,6 +7,7 @@
 #define __DESFIRE_PICC_HDRLAYOUT_H__
 
 #include "DESFireFirmwareSettings.h"
+#include "DESFireISO14443Support.h"
 
 extern const BYTE PICC_FORMATTED_MARKER[]; 
 extern const BYTE DefaultDESFireATS[]; 
@@ -85,8 +86,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 /** Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
-#pragma pack (push)
-#pragma pack (1)
 typedef struct DESFIRE_FIRMWARE_PACKING {
     /* Static data: does not change during the PICC's lifetime */
     uint8_t Uid[DESFIRE_UID_SIZE];
@@ -102,8 +101,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t FirstFreeBlock;
     uint8_t TransactionStarted;
     uint8_t Spare[9];
-} DesfirePiccInfoType;
-#pragma pack (pop)
+} DESFirePICCInfoType;
 
 // TODO: Decode PICC master key settings (see datasheet, pp. 34-35) ... 
 
@@ -124,6 +122,6 @@ bit 0: PICC master key frozen (reversible with configuration change or when form
 
 BOOL IsPICCImageValid(int slotNumber);
 BOOL PrettyPrintPICCHeaderData(int slotNumber, BYTE outputBuffer, SIZET maxLength);
-BOOL PrettyPrintPICCImageDate(int slotNumber, BYTE outputBuffer, SIZET, maxLength, BOOL includeHdrInfo);
+BOOL PrettyPrintPICCImageData(int slotNumber, BYTE outputBuffer, SIZET maxLength, BOOL includeHdrInfo);
 
 #endif

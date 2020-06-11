@@ -14,14 +14,14 @@
 #include "DESFire/DESFirePICCControl.h"
 #include "DESFire/DESFireCrypto.h"
 #include "DESFire/DESFireISO14443Support.h"
+#include "DESFire/DESFireStatusCodes.h"
 
 /* Dispatching routines */
 
-static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
-{
+uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount) {
     
     // TODO: Check to make sure are handling *ALL* possible commands ... 
-    LogEntry(LOG_INFO_DESFIRE_IN, Buffer, ByteCount); // TODO
+    // TODO: LogEntry(LOG_INFO_DESFIRE_IN, Buffer, ByteCount); // TODO
     /* Handle EV0 commands */
     switch (Buffer[0]) {
     case CMD_GET_VERSION:
@@ -47,9 +47,9 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
     case CMD_SELECT_APPLICATION:
         return EV0CmdSelectApplication(Buffer, ByteCount);
 
-    case CMD_CREATE_STANDARD_DATA_FILE:
+    case CMD_CREATE_STDDATAFILE:
         return EV0CmdCreateStandardDataFile(Buffer, ByteCount);
-    case CMD_CREATE_BACKUP_DATA_FILE:
+    case CMD_CREATE_BACKUPDATAFILE:
         return EV0CmdCreateBackupDataFile(Buffer, ByteCount);
     case CMD_CREATE_VALUE_FILE:
         return EV0CmdCreateValueFile(Buffer, ByteCount);
@@ -108,8 +108,7 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
-static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
-{
+uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     if (DesfireState == DESFIRE_IDLE)
         return MifareDesfireProcessIdle(Buffer, ByteCount);
 
@@ -139,8 +138,7 @@ static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
     }
 }
 
-static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
-{
+uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount) {
     /* TODO: Properly detect ISO 7816-4 PDUs and switch modes to avoid doing ths all the time */
     if (Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
         /* Unwrap the PDU from ISO 7816-4 */
@@ -148,7 +146,7 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
         Buffer[0] = Buffer[1];
         memmove(&Buffer[1], &Buffer[5], ByteCount);
         /* Process the command */
-        LogEntry(LOG_INFO_DESFIRE_OUT, Buffer, ByteCount);
+        // TODO: LogEntry(LOG_INFO_DESFIRE_OUT, Buffer, ByteCount);
         ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
         if (ByteCount) {
             /* Re-wrap into ISO 7816-4 */
@@ -165,12 +163,12 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
     }
 }
 
-static void MifareDesfireReset(void)
-{
+void MifareDesfireReset(void) {
     ResetPiccBackend();
     DesfireState = DESFIRE_IDLE;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
 }
+
 void MifareDesfireEV0AppInit(void)
 {
     /* Init lower layers: nothing for now */

@@ -29,7 +29,6 @@
 #define __DESFIRE_ENDIAN_UTIL_H__
 
 #include <inttypes.h>
-#include <endian.h>
 
 /* 
  * Chameleon RevG Board FYI: *ATXMEGA128* is *LITTLE ENDIAN* for the byte order. 
@@ -90,7 +89,6 @@
     /* Note: Code borrowed from libfreefare 
      *       (https://github.com/nfc-tools/libfreefare/blob/master/libfreefare/freefare_internal.h) 
      */
-     #include <byteswap.h>
      #if !defined(le32toh) && defined(bswap_32)
           #define be32toh(x) (x)
 	  #define htobe32(x) (x)

@@ -5,6 +5,11 @@
 
 #include "DESFirePICCControl.h"
 #include "DESFirePICCHeaderLayout.h"
+#include "DESFireApplicationDirectory.h"
+#include "DESFireStatusCodes.h"
+#include "DESFireISO14443Support.h"
+#include "DESFireMemoryOperations.h"
+#include "DESFireUtils.h"
 
 const BYTE PICC_FORMATTED_MARKER[] = { 
      0xf0, 0x12, 0x34 
@@ -28,7 +33,7 @@ uint8_t AuthenticatedWithKey = 0x00;
 
 /* Transfer routines */
 
-static TransferStatus PiccToPcdTransfer(uint8_t* Buffer)
+TransferStatus PiccToPcdTransfer(uint8_t* Buffer)
 {
     TransferStatus Status;
     uint8_t XferBytes;
@@ -64,7 +69,7 @@ static TransferStatus PiccToPcdTransfer(uint8_t* Buffer)
     return Status;
 }
 
-static uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count)
+uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count)
 {
      // TODO: Setup logging ... 
      return STATUS_OPERATION_OK;
@@ -72,7 +77,7 @@ static uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count)
 
 /* Setup routines */
 
-static uint8_t ReadDataFilterSetup(uint8_t CommSettings)
+uint8_t ReadDataFilterSetup(uint8_t CommSettings)
 {
     memset(&TransferState, 0, sizeof(TransferState));
 
@@ -84,7 +89,7 @@ static uint8_t ReadDataFilterSetup(uint8_t CommSettings)
         TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
         TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
         TransferState.Checksums.MAC.MACFunc = &CryptoEncrypt2KTDEA_CBCSend;
-        memset(SessionIV, 0, sizeof(SessionIV));
+        memset(SessionIV.LegacyTransferIV, 0, sizeof(SessionIV.LegacyTransferIV));
         break;
 
     case DESFIRE_COMMS_CIPHERTEXT_DES:
@@ -92,7 +97,7 @@ static uint8_t ReadDataFilterSetup(uint8_t CommSettings)
         TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
         TransferState.Checksums.CRCA = ISO14443A_CRCA_INIT;
         TransferState.ReadData.Encryption.Func = &TransferEncryptTDEASend;
-        memset(SessionIV, 0, sizeof(SessionIV));
+        memset(SessionIV.IsoTransferIV, 0, sizeof(SessionIV.IsoTransferIV));
         break;
 
     default:
@@ -101,7 +106,7 @@ static uint8_t ReadDataFilterSetup(uint8_t CommSettings)
     return STATUS_OPERATION_OK;
 }
 
-static uint8_t WriteDataFilterSetup(uint8_t CommSettings)
+uint8_t WriteDataFilterSetup(uint8_t CommSettings)
 {
     memset(&TransferState, 0, sizeof(TransferState));
 
@@ -113,7 +118,7 @@ static uint8_t WriteDataFilterSetup(uint8_t CommSettings)
         TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
         TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
         TransferState.Checksums.MAC.MACFunc = &CryptoEncrypt2KTDEA_CBCReceive;
-        memset(SessionIV, 0, sizeof(SessionIV));
+        memset(SessionIV.LegacyTransferIV, 0, sizeof(SessionIV.LegacyTransferIV));
         break;
 
     case DESFIRE_COMMS_CIPHERTEXT_DES:
@@ -121,7 +126,7 @@ static uint8_t WriteDataFilterSetup(uint8_t CommSettings)
         TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
         TransferState.Checksums.CRCA = ISO14443A_CRCA_INIT;
         TransferState.WriteData.Encryption.Func = &TransferEncryptTDEAReceive;
-        memset(SessionIV, 0, sizeof(SessionIV));
+        memset(SessionIV.IsoTransferIV, 0, sizeof(SessionIV.IsoTransferIV));
         break;
 
     default:
@@ -202,7 +207,7 @@ void FormatPicc(void) {
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
 
-    SynchronizePiccInfo();
+    SynchronizePICCInfo();
     SynchronizeAppDir();
 }
 
@@ -255,6 +260,6 @@ void GetPiccUid(ConfigurationUidType Uid) {
 
 void SetPiccUid(ConfigurationUidType Uid) {
     memcpy(Picc.Uid, Uid, DESFIRE_UID_SIZE);
-    SynchronizePiccInfo();
+    SynchronizePICCInfo();
 }
 

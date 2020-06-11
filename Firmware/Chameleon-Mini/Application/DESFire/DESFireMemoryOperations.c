@@ -38,8 +38,11 @@ uint8_t AllocateBlocks(uint8_t BlockCount) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
-    SynchronizePiccInfo();
-    MemorySetBlock(0x00, Block * DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * DESFIRE_EEPROM_BLOCK_SIZE);
+    SynchronizePICCInfo();
+    uint8_t zeroFillBuffer[BlockCount * DESFIRE_EEPROM_BLOCK_SIZE];
+    memset(zeroFillBuffer, 0x00, BlockCount * DESFIRE_EEPROM_BLOCK_SIZE);
+    WriteBlockBytes(zeroFillBuffer, Block * DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * DESFIRE_EEPROM_BLOCK_SIZE);
+    //MemorySetBlock(0x00, Block * DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * DESFIRE_EEPROM_BLOCK_SIZE);
     return Block;
 }
 

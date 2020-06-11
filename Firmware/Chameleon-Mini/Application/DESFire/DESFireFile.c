@@ -5,6 +5,8 @@
 
 #include "DESFireFile.h"
 #include "DESFirePICCControl.h"
+#include "DESFireStatusCodes.h"
+#include "DESFireMemoryOperations.h"
 
 /*
  * File management: creation, deletion, and misc routines
@@ -24,7 +26,7 @@ uint8_t GetFileDataAreaBlockId(uint8_t FileNum) {
     return GetFileControlBlockId(FileNum) + 1;
 }
 
-uint8_t ReadFileControlBlock(uint8_t FileNum, DesfireFileType* File) {
+uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings* File) {
     uint8_t BlockId;
 
     /* Check whether the file exists */
@@ -37,7 +39,7 @@ uint8_t ReadFileControlBlock(uint8_t FileNum, DesfireFileType* File) {
     return STATUS_OPERATION_OK;
 }
 
-uint8_t WriteFileControlBlock(uint8_t FileNum, DesfireFileType* File) {
+uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings* File) {
     uint8_t BlockId;
 
     /* Check whether the file exists */
@@ -162,23 +164,23 @@ uint8_t DeleteFile(uint8_t FileNum) {
  * File management: transaction related routines
  */
 
-static void StartTransaction(void) {
+void StartTransaction(void) {
     Picc.TransactionStarted = SelectedApp.Slot;
-    SynchronizePiccInfo();
+    SynchronizePICCInfo();
     SelectedApp.DirtyFlags = 0;
 }
 
-static void MarkFileDirty(uint8_t FileNum) {
+void MarkFileDirty(uint8_t FileNum) {
     SelectedApp.DirtyFlags |= 1 << FileNum;
 }
 
-static void StopTransaction(void) {
+void StopTransaction(void) {
     Picc.TransactionStarted = 0;
-    SynchronizePiccInfo();
+    SynchronizePICCInfo();
 }
 
-static void SynchFileCopies(uint8_t FileNum, bool Rollback) {
-    DesfireFileType File;
+void SynchFileCopies(uint8_t FileNum, bool Rollback) {
+    DESFireFileTypeSettings File;
     uint8_t DataAreaBlockId;
 
     ReadFileControlBlock(FileNum, &File);
@@ -207,7 +209,7 @@ static void SynchFileCopies(uint8_t FileNum, bool Rollback) {
     /* TODO: implement other file types */
 }
 
-static void FinaliseTransaction(bool Rollback) {
+void FinaliseTransaction(bool Rollback) {
     uint8_t FileNum;
     uint16_t DirtyFlags = SelectedApp.DirtyFlags;
 
@@ -256,7 +258,7 @@ TransferStatus ReadDataFileTransfer(uint8_t* Buffer) {
     return PiccToPcdTransfer(Buffer);
 }
 
-uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount) {
+uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount) {
     return PcdToPiccTransfer(Buffer, ByteCount);
 }
 
@@ -267,7 +269,7 @@ uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length
     }
 
     /* Setup data source */
-    TransferState.ReadData.Source.Func = &ReadDataEepromSource;
+    TransferState.ReadData.Source.Func = &ReadDataEEPROMSource;
     if (!Length) {
         TransferState.ReadData.Encryption.FirstPaddingBitSet = true;
         TransferState.ReadData.BytesLeft = SelectedFile.File.StandardFile.FileSize - Offset;
@@ -290,7 +292,7 @@ uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Lengt
 
     /* Setup data sink */
     TransferState.WriteData.BytesLeft = Length;
-    TransferState.WriteData.Sink.Func = &WriteDataEepromSink;
+    TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
     /* Dirty data location depends on the file type; correct the offset as needed */
     if (GetSelectedFileType() == DESFIRE_FILE_BACKUP_DATA) {
         Offset += SelectedFile.File.BackupFile.BlockCount * DESFIRE_EEPROM_BLOCK_SIZE;
@@ -349,7 +351,7 @@ TransferStatus ReadValueFileTransfer(uint8_t* Buffer) {
 
 uint8_t ReadValueFileSetup(uint8_t CommSettings) {
     /* Setup data source (generic EEPROM source) */
-    TransferState.ReadData.Source.Func = &ReadDataEepromSource;
+    TransferState.ReadData.Source.Func = &ReadDataEEPROMSource;
     TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE;
     TransferState.ReadData.BytesLeft = 4;
     TransferState.ReadData.Encryption.FirstPaddingBitSet = false;
@@ -364,7 +366,7 @@ uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16
     }
     /* TODO: Validate communication settings */
     /* TODO: Validate the access rights */
-    /* TODO: Make sure the file number actually corresponds to an active file (/
+    /* TODO: Make sure the file number actually corresponds to an active file */
     return STATUS_OPERATION_OK;
 }
 

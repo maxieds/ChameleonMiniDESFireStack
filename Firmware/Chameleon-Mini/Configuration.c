@@ -5,11 +5,16 @@
  *      Author: skuser
  */
 
+#include <avr/pgmspace.h>
+
 #include "Configuration.h"
 #include "Settings.h"
-#include <avr/pgmspace.h>
 #include "Map.h"
 #include "AntennaLevel.h"
+
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+     #include "Application/MifareDESFire.h"
+#endif
 
 /* Map IDs to text */
 static const MapEntryType PROGMEM ConfigurationMap[] = {

@@ -2,3 +2,6 @@ unfinished-code
 unfinished-code/*
 *.swp*
 *.code
+.gitignore
+ExternalCryptoLib/
+ExternalCryptoLib/*

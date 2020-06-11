@@ -8,6 +8,8 @@
 
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCHeaderLayout.h"
+#include "DESFireInstructions.h"
+#include "DESFireFile.h"
 
 #define DFAID_SIZE                    (3)
 #define DF_DATA_CHUNK_SIZE            (32)
@@ -19,7 +21,7 @@
 #define DESFIRE_MAX_KEYS                            (14)
 #define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
 
-typedef BYTE DesfireAidType[DESFIRE_AID_SIZE];
+typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
 
 extern const BYTE DEFAULT_DESFIRE_AID[]; 
 extern const BYTE DEFAULT_ISO7816_AID[]; 
@@ -48,8 +50,8 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE FirstFreeSlot;
     BYTE Spare[8];
-    DesfireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; /* 84 */
-} DesfireAppDirType;
+    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; /* 84 */
+} DESFireAppDirType;
 
 /** Defines the block ID of each application's file on the card. */
 typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
@@ -58,7 +60,7 @@ typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
 #define DESFIRE_FILE_INDEX_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
 
 /* This resolves to 4 */
-#define DESFIRE_APP_DIR_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireAppDirType))
+#define DESFIRE_APP_DIR_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
 
 /* The actual layout */
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
@@ -95,36 +97,36 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 #define DESFIRE_READ_ACCESS_RIGHTS_SHIFT        (3*4)
 
 /* Global card structure support routines */
-static void SyncronizeAppDir(void);
-static void SyncronicPiccInfo(void);
-static uint8_t GetAppProperty(uint8_t BlockId, unit8_t AppSlot);
-static void SetAppProperty(uint8_t BlockId, uint8_t AppSlot, uint8_t Value);
-static void SetAppKeyCount(uint8_t AppSlot, uint8_t AppSlot);
-static uint8_t GetAppKeySettings(uint8_t AppSlot);
-static void SetAppKeySettings(uint8_t AppSlot, uint8_t Value);
-static void SetAppKeyStorageBlockId(uint8_t AppSlot, uint8_t Value);
-static uint8_t GetAppFileIndexBlockId(uint8_t AppSlot);
-static void SetAppFileIndexBlockId(uint8_t AppSlot, uint8_t Value);
+void SynchronizeAppDir(void);
+void SynchronizePICCInfo(void);
+uint8_t GetAppProperty(uint8_t BlockId, uint8_t AppSlot);
+void SetAppProperty(uint8_t BlockId, uint8_t AppSlot, uint8_t Value);
+void SetAppKeyCount(uint8_t AppSlot, uint8_t Value);
+uint8_t GetAppKeySettings(uint8_t AppSlot);
+void SetAppKeySettings(uint8_t AppSlot, uint8_t Value);
+void SetAppKeyStorageBlockId(uint8_t AppSlot, uint8_t Value);
+uint8_t GetAppFileIndexBlockId(uint8_t AppSlot);
+void SetAppFileIndexBlockId(uint8_t AppSlot, uint8_t Value);
 
 /* Application key management */
-static uint8_t GetSelectedAppKeyCount(void);
-static uint8_t GetSelectedAppKeySettings(void);
-static void SetSelectedAppKeySettings(uint8_t KeySettings);
-static void ReadSelectedAppKey(uint8_t KeyId, uint8_t* Key);
-static void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key);
+uint8_t GetSelectedAppKeyCount(void);
+uint8_t GetSelectedAppKeySettings(void);
+void SetSelectedAppKeySettings(uint8_t KeySettings);
+void ReadSelectedAppKey(uint8_t KeyId, uint8_t* Key);
+void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key);
 
 /* Application selection */
-static uint8_t LookupAppSlot(const DESFireAidType Aid);
-static void SelectAppBySlot(uint8_t AppSlot);
-static uint8_t SelectApp(const DesfireAidType Aid);
-static void SelectPiccApp(void);
-static bool IsPiccAppSelected(void);
+uint8_t LookupAppSlot(const DESFireAidType Aid);
+void SelectAppBySlot(uint8_t AppSlot);
+uint8_t SelectApp(const DESFireAidType Aid);
+void SelectPiccApp(void);
+bool IsPiccAppSelected(void);
 
 /* Application management */
-static uint8_t CreateApp(const DesfireAidType Aid, uint8_t KeyCount, uint8_t KeySettings);
-static uint8_t DeleteApp(const DesfireAidType Aid);
-static void GetApplicationIdsSetup(void);
-static TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer);
-static uint16_t GetApplicationIdsIterator(uint8_t *Buffer, uint16_t ByteCount);
+uint8_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings);
+uint8_t DeleteApp(const DESFireAidType Aid);
+void GetApplicationIdsSetup(void);
+TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer);
+uint16_t GetApplicationIdsIterator(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif

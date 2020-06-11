@@ -7,6 +7,9 @@
 #define __DESFIRE_FIRMWARE_SETTINGS_H__
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#include "../../Common.h"
 
 #define DESFIRE_FIRMWARE_DEBUGGING                  (1)
 
@@ -19,9 +22,9 @@
 #define DESFIRE_PICC_LAYOUT_REVISION                (0x01)
 #define DESFIRE_PICC_STRUCT_PACKING                 __attribute__((packed))
 #define DESFIRE_FIRMWARE_PACKING                    __attribute__((packed))
-#define DESFIRE_PICC_ARRAY_ALIGNAT                  __attribute__((aligned(1))
-#define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              __attribute__((aligned(1))
-#define DESFIRE_FIRMWARE_ENUM_PACKING               __attribute__((__packed__, __aligned__(1)))
+#define DESFIRE_PICC_ARRAY_ALIGNAT                  __attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              __attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ENUM_PACKING               __attribute__((aligned(1)))
 
 /* Some standard boolean interpreted and other values for types and return values: */
 typedef int      BOOL;
@@ -35,8 +38,6 @@ typedef uint32_t UINT;
 
 #define IsTrue(rcond)                                (rcond != FALSE)
 #define IsFalse(rcond)                               (rcond == FALSE)
-
-#define BITS_PER_BYTE                                (8)
 
 /* Allow users to modify typically reserved and protected read-only data on the tag 
    like the manufacturer bytes and the serial number (set in Makefile)? */

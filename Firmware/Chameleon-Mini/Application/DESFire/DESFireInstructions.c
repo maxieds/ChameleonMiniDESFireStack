@@ -3,9 +3,9 @@
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
-#include "DESFireCommands.h"
 #include "DESFireInstructions.h"
 #include "DESFirePICCControl.h"
+#include "DESFireStatusCodes.h"
 
 #include "../../Configuration.h"
 #include "../../Memory.h"
@@ -136,6 +136,7 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
 uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
     Desfire2KTDEAKeyType Key;
     DesfireState = DESFIRE_IDLE;
+    ActiveAuthType = DESFIRE_AUTH_LEGACY;
 
     /* Validate command length */
     if (ByteCount != 1 + 2 * CRYPTO_DES_BLOCK_SIZE) {
@@ -147,8 +148,8 @@ uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
     ReadSelectedAppKey(DesfireCommandState.Authenticate.KeyId, Key);
     LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
     /* Encipher to obtain plain text; zero IV = no CBC */
-    memset(SessionIV, 0, sizeof(SessionIV));
-    CryptoEncrypt2KTDEA_CBCReceive(2, &Buffer[1], &Buffer[1], SessionIV, Key);
+    memset(ExtractIVBufferData(ActiveAuthType, &SessionIV), 0, sizeof(ExtractIVBufferData(ActiveAuthType, &SessionIV)));
+    CryptoEncrypt2KTDEA_CBCReceive(2, &Buffer[1], &Buffer[1], ExtractIVBufferData(ActiveAuthType, &SessionIV), Key);
     LogEntry(LOG_APP_NONCE_AB, &Buffer[1], 2 * DESFIRE_2KTDEA_NONCE_SIZE);
     /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
     if (memcmp(&Buffer[9], &DesfireCommandState.Authenticate.RndB[1], DESFIRE_2KTDEA_NONCE_SIZE - 1) || 
@@ -159,22 +160,23 @@ uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Compose the session key */
-    SessionKey[0] = Buffer[1];
-    SessionKey[1] = Buffer[2];
-    SessionKey[2] = Buffer[3];
-    SessionKey[3] = Buffer[4];
-    SessionKey[4] = DesfireCommandState.Authenticate.RndB[0];
-    SessionKey[5] = DesfireCommandState.Authenticate.RndB[1];
-    SessionKey[6] = DesfireCommandState.Authenticate.RndB[2];
-    SessionKey[7] = DesfireCommandState.Authenticate.RndB[3];
-    SessionKey[8] = Buffer[5];
-    SessionKey[9] = Buffer[6];
-    SessionKey[10] = Buffer[7];
-    SessionKey[11] = Buffer[8];
-    SessionKey[12] = DesfireCommandState.Authenticate.RndB[4];
-    SessionKey[13] = DesfireCommandState.Authenticate.RndB[5];
-    SessionKey[14] = DesfireCommandState.Authenticate.RndB[6];
-    SessionKey[15] = DesfireCommandState.Authenticate.RndB[7];
+    BYTE *SessionKeyData = ExtractSessionKeyData(ActiveAuthType, &SessionKey);
+    SessionKeyData[0] = Buffer[1];
+    SessionKeyData[1] = Buffer[2];
+    SessionKeyData[2] = Buffer[3];
+    SessionKeyData[3] = Buffer[4];
+    SessionKeyData[4] = DesfireCommandState.Authenticate.RndB[0];
+    SessionKeyData[5] = DesfireCommandState.Authenticate.RndB[1];
+    SessionKeyData[6] = DesfireCommandState.Authenticate.RndB[2];
+    SessionKeyData[7] = DesfireCommandState.Authenticate.RndB[3];
+    SessionKeyData[8] = Buffer[5];
+    SessionKeyData[9] = Buffer[6];
+    SessionKeyData[10] = Buffer[7];
+    SessionKeyData[11] = Buffer[8];
+    SessionKeyData[12] = DesfireCommandState.Authenticate.RndB[4];
+    SessionKeyData[13] = DesfireCommandState.Authenticate.RndB[5];
+    SessionKeyData[14] = DesfireCommandState.Authenticate.RndB[6];
+    SessionKeyData[15] = DesfireCommandState.Authenticate.RndB[7];
     AuthenticatedWithKey = DesfireCommandState.Authenticate.KeyId;
     /* Rotate the nonce A left by 8 bits */
     Buffer[9] = Buffer[1];
@@ -233,8 +235,9 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Encipher to obtain plaintext */
-    memset(SessionIV, 0, sizeof(SessionIV));
-    CryptoEncrypt2KTDEA_CBCReceive(3, &Buffer[2], &Buffer[2], SessionIV, SessionKey);
+    memset(ExtractIVBufferData(ActiveAuthType, &SessionIV), 0, sizeof(ExtractIVBufferData(ActiveAuthType, &SessionIV)));
+    CryptoEncrypt2KTDEA_CBCReceive(3, &Buffer[2], &Buffer[2], 
+         ExtractIVBufferData(ActiveAuthType, &SessionIV), ExtractSessionKeyData(ActiveAuthType, &SessionKey));
     /* Verify the checksum first */
     if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Desfire2KTDEAKeyType))) {
         Buffer[0] = STATUS_INTEGRITY_ERROR;
@@ -311,7 +314,7 @@ uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Encipher to obtain plaintext */
-    CryptoEncrypt2KTDEA(&Buffer[2], &Buffer[2], SessionKey);
+    CryptoEncrypt2KTDEA(&Buffer[2], &Buffer[2], ExtractSessionKeyData(ActiveAuthType, &SessionKey));
     /* Verify the checksum first */
     if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Desfire2KTDEAKeyType))) {
         Buffer[0] = STATUS_INTEGRITY_ERROR;
@@ -359,7 +362,7 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
-    const DesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
+    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t KeyCount;
     uint8_t KeySettings;
 
@@ -397,7 +400,7 @@ exit_with_status:
 
 uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
-    const DesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
+    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t PiccKeySettings;
 
     /* Validate command length */
@@ -439,7 +442,7 @@ exit_with_status:
 }
 
 uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount) {
-    const DesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
+    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
 
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -535,7 +538,7 @@ uint16_t EV0CmdCreateLinearRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
-uint16_t EV0CmdCreateCyclicRecordFile(uint8_t* Buffer, uint16_t ByteCount) `{
+uint16_t EV0CmdCreateCyclicRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }

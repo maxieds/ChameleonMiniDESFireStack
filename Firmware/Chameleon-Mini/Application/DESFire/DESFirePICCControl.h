@@ -6,9 +6,14 @@
 #ifndef __DESFIRE_PICC_CONTROL_H__
 #define __DESFIRE_PICC_CONTROL_H__
 
+#include "../../Configuration.h"
+
 #include "DESFireFirmwareSettings.h" 
 #include "DESFirePICCHeaderLayout.h"
+#include "DESFireInstructions.h"
+#include "DESFireApplicationDirectory.h"
 #include "DESFireFile.h"
+#include "DESFireCrypto.h"
 
 /*
  * Internal state variables: 
@@ -25,7 +30,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE Num;
-    DesfireFileType File;
+    DESFireFileTypeSettings File;
 } SelectedFileCacheType;
 
 extern SIZET CardCapacityBlocks;
@@ -56,10 +61,14 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         TransferChecksumFinalFuncType FinalFunc;
         BYTE AvailablePlaintext;
         union {
-            struct {
+            struct DESFIRE_FIRMWARE_PACKING {
                 CryptoTDEACBCFuncType MACFunc;
-                BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE];
+                BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
             } MAC;
+            struct DESFIRE_FIRMWARE_PACKING {
+                CryptoTDEACBCFuncType MACFunc;
+                BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+            } CipherTextTransferMAC;
             SIZET CRCA;
         };
     } Checksums;
@@ -74,11 +83,17 @@ typedef union DESFIRE_FIRMWARE_PACKING {
             TransferEncryptFuncType Func;
             BYTE AvailablePlaintext;
             union {
-                struct {
-                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE];
+                struct DESFIRE_FIRMWARE_PACKING {
+                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
                 } TDEA;
+                struct DESFIRE_FIRMWARE_PACKING {
+                    BYTE BlockBuffer[CRYPTO_3KTDEA_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+                } IsoTransferTDEA;
+                struct DESFIRE_FIRMWARE_PACKING {
+                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+                } AESTransferTDEA;
             };
-        } Encryption; // TODO: More types of encrypted comms to be added
+        } Encryption; 
     } ReadData;
     struct DESFIRE_FIRMWARE_PACKING {
         SIZET BytesLeft;
@@ -90,13 +105,25 @@ typedef union DESFIRE_FIRMWARE_PACKING {
             TransferEncryptFuncType Func;
             BYTE AvailablePlaintext;
             union {
-                struct {
-                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE];
+                struct DESFIRE_FIRMWARE_PACKING {
+                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
                 } TDEA;
+                struct DESFIRE_FIRMWARE_PACKING {
+                    BYTE BlockBuffer[CRYPTO_3KTDEA_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+                } CipherTextTransferTDEA;
             };
         } Encryption;
     } WriteData;
 } TransferStateType;
+
+#define ExtractTransferMACData(commMode, tstate) \
+	(commMode == DESFIRE_COMMS_CIPHERTEXT) ? \
+	tstate.Checksums.CipherTextTransferMAC : \
+	tstate.Checksums.MAC
+#define ExtractTransferTDEAData(commMode, tstate) \
+	(commMode == DESFIRE_COMMS_CIPHERTEXT) ? \
+tstate.Encryption.CipherTextTransferTDEA : \
+	tstate.Encryption.TDEA
 
 extern TransferStateType TransferState;
 
@@ -113,7 +140,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 extern DesfireStateType DesfireState;
 extern uint8_t AuthenticatedWithKey;
 
-static void SyncronizePICCInfo(void);
+void SyncronizePICCInfo(void);
 
 BOOL SetProtectedHeaderData(PICCHeaderField hfield, BYTE *byteBuf, SIZET bufSize);
 BOOL ResetProtectedHeaderData(PICCHeaderField hfield); 
@@ -121,27 +148,27 @@ BOOL ResetAndZeroFillPICCImage(int slotNumber);
 BOOL WriteByteArrayToPICC(int slotNum, SIZET piccOffset, BYTE *byteBuf, SIZET bufSize);
 
 /* Transfer routines */
-static TransferStatus PiccToPcdTransfer(uint8_t *Buffer);
-static uint8_t PcdToPiccTransfer(uint8_t *Buffer, uint8_t Count);
+TransferStatus PiccToPcdTransfer(uint8_t *Buffer);
+uint8_t PcdToPiccTransfer(uint8_t *Buffer, uint8_t Count);
 
 /* Setup routines */
-static uint8_t ReadDataFilterSetup(uint8_t CommSettings);
-static uint8_t WriteDataFilterSetup(uint8_t CommSettings);
+uint8_t ReadDataFilterSetup(uint8_t CommSettings);
+uint8_t WriteDataFilterSetup(uint8_t CommSettings);
 
 /* PICC management */
-static void InitialisePiccBackendEV0(uint8_t StorageSize);
-static void InitialisePiccBackendEV1(uint8_t StorageSize);
-static void ResetPiccBackend(void);
-static bool IsEmulatingEV1(void);
-static void GetPiccHardwareVersionInfo(uint8_t* Buffer);
-static void GetPiccSoftwareVersionInfo(uint8_t* Buffer);
-static void GetPiccManufactureInfo(uint8_t* Buffer);
-static uint8_t GetPiccKeySettings(void);
-static void FormatPicc(void);
-static void CreatePiccApp(void);
-static void FactoryFormatPiccEV0(void);
-static void FactoryFormatPiccEV1(uint8_t StorageSize);
-static void GetPiccUid(ConfigurationUidType Uid);
-static void SetPiccUid(ConfigurationUidType Uid);
+void InitialisePiccBackendEV0(uint8_t StorageSize);
+void InitialisePiccBackendEV1(uint8_t StorageSize);
+void ResetPiccBackend(void);
+bool IsEmulatingEV1(void);
+void GetPiccHardwareVersionInfo(uint8_t* Buffer);
+void GetPiccSoftwareVersionInfo(uint8_t* Buffer);
+void GetPiccManufactureInfo(uint8_t* Buffer);
+uint8_t GetPiccKeySettings(void);
+void FormatPicc(void);
+void CreatePiccApp(void);
+void FactoryFormatPiccEV0(void);
+void FactoryFormatPiccEV1(uint8_t StorageSize);
+void GetPiccUid(ConfigurationUidType Uid);
+void SetPiccUid(ConfigurationUidType Uid);
 
 #endif

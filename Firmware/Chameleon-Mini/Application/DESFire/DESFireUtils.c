@@ -5,6 +5,7 @@
 
 #include "../../Terminal/Terminal.h"
 #include "DESFireUtils.h" 
+#include "DESFireEndianUtil.h"
 
 void DebugPrintP(const char *fmt, ...) {
     char Format[80];

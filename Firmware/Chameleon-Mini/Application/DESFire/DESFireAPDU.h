@@ -7,9 +7,9 @@
 #define __DESFIRE_APDU_H__
 
 #include "DESFireFirmwareSettings.h" 
-#include "DESFireCommands.h"
 
-#define DESFIRE_MAX_PAYLOAD_SIZE            59 /* Bytes */
+//#define DESFIRE_MAX_PAYLOAD_SIZE            59 /* Bytes */
+#define DESFIRE_MAX_PAYLOAD_SIZE            64
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
      BYTE  cla;
@@ -35,10 +35,17 @@ extern APDUResponse DESFireInternalAPDUResponse;
 BOOL ByteBufferToAPDUCommand(BYTE *buf, SIZET bufSize, APDUCommand *apduCmd);
 BOOL ByteBufferToAPDUResponse(BYTE *buf, SIZET bufSize, APDUResponse *apduResp);
 BOOL APDUCommandToByteBuffer(APDUCommand *apduCmd, BYTE *destBuf, SIZET maxSize);
-BOOL APDUResponseToByteBuffer(APDUResponse *apduResp, BYTE *destBuf, SUZET maxSize);
+BOOL APDUResponseToByteBuffer(APDUResponse *apduResp, BYTE *destBuf, SIZET maxSize);
 
 BOOL APDUCommandToPPrintString(APDUCommand *apduCmd, BYTE *destBuf, SIZET maxSize);
 BOOL APDUResponseToPPrintString(APDUResponse *apduResp, BYTE *destBuf, SIZET maxSize);
+
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+     DFCMD_SPEC_UNKNOWN   = 0,
+     DFCMD_SPEC_NATIVE    = 1,
+     DFCMD_SPEC_ISO1443   = 2,
+     DFCMD_SPEC_ISO7816   = 3,
+} DESFireCommandSet;
 
 DESFireCommandSet GetAPDUCommandInstructionSet(APDUCommand *apduCmd);
 

@@ -3,7 +3,11 @@
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#include "../Application.h"
+
 #include "DESFireISO14443Support.h"
+#include "DESFirePICCControl.h"
+#include "../MifareDESFire.h"
 
 /*
  * ISO/IEC 14443-4 implementation
@@ -168,6 +172,17 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
 /*
  * ISO/IEC 14443-3A implementation
  */
+
+#include <util/crc16.h>
+uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA) {
+    uint16_t Checksum = InitCRCA;
+    uint8_t* DataPtr = (uint8_t*) Buffer;
+    while(ByteCount--) {
+        uint8_t Byte = *DataPtr++;
+        Checksum = _crc_ccitt_update(Checksum, Byte);
+    }
+    return Checksum;
+}
 
 Iso144433AStateType Iso144433AState = ISO14443_3A_STATE_IDLE;
 Iso144433AStateType Iso144433AIdleState = ISO14443_3A_STATE_IDLE;

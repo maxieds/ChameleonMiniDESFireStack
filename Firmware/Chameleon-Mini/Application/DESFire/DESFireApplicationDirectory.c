@@ -5,6 +5,10 @@
 
 #include "DESFireApplicationDirectory.h"
 #include "DESFirePICCControl.h"
+#include "DESFireCrypto.h"
+#include "DESFireStatusCodes.h"
+#include "DESFireInstructions.h"
+#include "DESFireMemoryOperations.h"
 
 const BYTE DEFAULT_DESFIRE_AID[] = { 
      0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 
@@ -18,10 +22,10 @@ const BYTE DEFAULT_ISO7816_AID[] = {
  */
 
 void SynchronizeAppDir(void) {
-    WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DesfireAppDirType));
+    WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
 }
 
-void SynchronizePiccInfo(void) {
+void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
 }
 
@@ -93,7 +97,7 @@ void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key) {
  * Application selection
  */
 
-uint8_t LookupAppSlot(const DesfireAidType Aid) {
+uint8_t LookupAppSlot(const DESFireAidType Aid) {
     uint8_t Slot;
 
     for (Slot = 0; Slot < DESFIRE_MAX_SLOTS; ++Slot) {
@@ -116,7 +120,7 @@ void SelectAppBySlot(uint8_t AppSlot) {
     SelectedApp.FilesAddress = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot) * DESFIRE_EEPROM_BLOCK_SIZE;
 }
 
-uint8_t SelectApp(const DesfireAidType Aid) {
+uint8_t SelectApp(const DESFireAidType Aid) {
     uint8_t Slot;
 
     /* Search for the app slot */
@@ -141,7 +145,7 @@ bool IsPiccAppSelected(void) {
  * Application management
  */
 
-uint8_t CreateApp(const DesfireAidType Aid, uint8_t KeyCount, uint8_t KeySettings) {
+uint8_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings) {
     uint8_t Slot;
     uint8_t FreeSlot;
     uint8_t KeysBlockId, FilesBlockId;
@@ -187,7 +191,7 @@ uint8_t CreateApp(const DesfireAidType Aid, uint8_t KeyCount, uint8_t KeySetting
     return STATUS_OPERATION_OK;
 }
 
-uint8_t DeleteApp(const DesfireAidType Aid) {
+uint8_t DeleteApp(const DESFireAidType Aid) {
     uint8_t Slot;
 
     /* Search for the app slot */

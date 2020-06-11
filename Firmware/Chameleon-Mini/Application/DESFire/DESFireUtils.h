@@ -10,8 +10,8 @@
 
 #include "DESFireFirmwareSettings.h"
 
-#define MAX(x, y)      ((x) > (y) ? (x) : (y))
-#define MIN(x, y)      ((x) < (y) ? (x) : (y))
+#define MAX2(x, y)      ((x) > (y) ? (x) : (y))
+#define MIN2(x, y)      ((x) < (y) ? (x) : (y))
 
 BOOL PadBuffer(BYTE *buf, SIZET startIdx, SIZET endIdx, BYTE fillByte);
 BOOL RightPadBuffer(BYTE *buf, SIZET origBufSize, SIZET padBytes, BYTE fillByte);
@@ -24,8 +24,8 @@ BOOL XorByteArray(BYTE *arrA, BYTE *arrB, SIZET arrSize);
 BOOL GetConstantArray(BYTE *buf, SIZET byteSizeToCopy, BYTE fillByte);
 BOOL GetZeroArray(BYTE *destArr, SIZET byteSizeToCopy);
 
-BOOL ShortToByteArray(SIZET shortValue, BYTE &outputArr[2]);
-BOOL IntegerToByteArray(UINT intValue, BYTE &outputArr[4]);
+BOOL ShortToByteArray(SIZET shortValue, BYTE *outputArr);
+BOOL IntegerToByteArray(UINT intValue, BYTE *outputArr);
 BOOL ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BYTE *destArr);
 BOOL CopySubByteArray(BYTE *inputData, SIZET startIdx, SIZET byteSizeToCopy, BYTE *destArr);
 
@@ -37,7 +37,6 @@ BOOL ByteArrayToAsciiString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, 
 BOOL StringArrayJoin(char **strArray, SIZET arrSize, char joinDelim, char *destStrBuf, SIZET maxDestSize);
 
 // TODO: Need to account for endianness: 
-BYTE ExtractByteN(SIZET fullValue, BYTE byteNumber);
 BYTE ExtractByteN(UINT fullValue, BYTE byteNumber);
 
 void DebugPrintP(const char *fmt, ...);

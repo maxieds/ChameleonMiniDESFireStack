@@ -6,6 +6,11 @@
 #ifndef __DESFIRE_CRYPTO_H__
 #define __DESFIRE_CRYPTO_H__
 
+#include "../../Common.h"
+
+#include "DESFireFirmwareSettings.h"
+#include "DESFireAPDU.h"
+
 /** Cryptography related definitions **/
 
 /* Communication modes */
@@ -27,11 +32,15 @@ extern BYTE ActiveCommMode;
 #define CRYPTO_3KTDEA_KEY_SIZE      (3 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_AES_KEY_SIZE         (16)
 #define CRYPTO_DES_BLOCK_SIZE       (1) // ???: 8
+#define CRYPTO_3KTDEA_BLOCK_SIZE    (CRYPTO_DES_BLOCK_SIZE) // ???
 #define CRYPTO_AES_BLOCK_SIZE       (4) // ???
 
 #define DESFIRE_DES_IV_SIZE                (CRYPTO_DES_BLOCK_SIZE)
 #define DESFIRE_AES_IV_SIZE                (CRYPTO_AES_BLOCK_SIZE)
 #define DESFIRE_CRYPTO_SESSION_KEY_SIZE    (CRYPTO_3KTDEA_KEY_SIZE)
+
+typedef uint8_t Desfire2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
+typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 
 #define MAC_LENGTH          4
 #define CMAC_LENGTH         8
@@ -50,13 +59,16 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_AUTH_AES,
 } DesfireAuthType;
 
+extern DesfireAuthType ActiveAuthType;
+
 extern const BYTE InitialMasterKeyDataDES[CRYPTO_DES_KEY_SIZE]; 
 extern const BYTE InitialMasterKeyDataAES[CRYPTO_AES_KEY_SIZE]; 
-extern const BYTE InitialMasterKeyData3KTDEA[CRYPTO_AES_KEY_SIZE]; 
+extern const BYTE InitialMasterKeyData3KTDEA[CRYPTO_3KTDEA_KEY_SIZE]; 
 
 extern BYTE NO_KEY_AUTHENTICATED;
 extern BYTE CHECKSUM_IV[4];
 
+// TODO: Remove this???
 typedef struct DESFIRE_FIRMWARE_PACKING {
      SIZET keySize;
      SIZET randomBlockSize;
@@ -64,15 +76,52 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
      BYTE  cryptoMethod;
      BYTE  *keyData;
 } CryptoKey;
-
 extern CryptoKey SessionCryptoKeyData;
-extern BYTE SessionKey[DESFIRE_CRYPTO_SESSION_KEY_SIZE];
-extern BYTE SessionIV[DESFIRE_CRYPTO_IV_SIZE];
 
-BOOL InitDESFireKey(CryptoKey &ckey, SIZET ksize, SIZET rbsize, SIZET bsize, BYTE cmethod);
+typedef union DESFIRE_FIRMWARE_PACKING {
+     BYTE LegacyTransfer[DESFIRE_CRYPTO_SESSION_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+     BYTE IsoTransfer[DESFIRE_CRYPTO_SESSION_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+     BYTE AESTransfer[CRYPTO_AES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+} CryptoSessionKey;
+
+INLINE BYTE* ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey) {
+     switch(authType) {
+          case DESFIRE_AUTH_LEGACY:
+               return skey->LegacyTransfer;
+          case DESFIRE_AUTH_AES:
+               return skey->AESTransfer;
+          default:
+               return skey->IsoTransfer;
+     }
+}
+
+typedef union DESFIRE_FIRMWARE_PACKING {
+     BYTE LegacyTransferIV[DESFIRE_DES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+     BYTE IsoTransferIV[DESFIRE_DES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+     BYTE AESTransferIV[DESFIRE_AES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+} CryptoIVBuffer;
+
+INLINE BYTE* ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf) {
+     switch(authType) {
+          case DESFIRE_AUTH_LEGACY:
+               return ivBuf->LegacyTransferIV;
+          case DESFIRE_AUTH_AES:
+               return ivBuf->AESTransferIV;
+          default:
+               return ivBuf->IsoTransferIV;
+     }
+}
+
+extern CryptoSessionKey SessionKey;
+extern CryptoIVBuffer SessionIV;
+
+BOOL InitDESFireKey(CryptoKey *ckey, SIZET ksize, SIZET rbsize, SIZET bsize, BYTE cmethod);
 BYTE * GetDefaultKeyBuffer(BYTE keyType);
-BOOL CreateNewSessionKey(CryptoKey &ckey, BYTE *arrA, BYTE *arrB, BYTE keyType);
-SIZET BuildSessionKey(CryptoKey *keyData, BYTE *arrA, BYTE *arrB);
+
+// TODO: See LibFreefare implementation ... 
+// TODO: Split implementation into calling separate methods by key type ... 
+//BOOL CreateNewSessionKey(CryptoKey *ckey, BYTE *arrA, BYTE *arrB, BYTE keyType);
+//SIZET BuildSessionKey(CryptoKey *keyData, BYTE *arrA, BYTE *arrB);
 
 SIZET CRC16(BYTE *inputData, SIZET dataLength);
 UINT  CRC32(BYTE *inputData, SIZET dataLength);
@@ -86,17 +135,17 @@ typedef enum {
 
 /* Checksum routines: */
 // TODO: Need AES equivalents? 
-static void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);
-static uint8_t TransferChecksumFinalCRCA(uint8_t *Buffer);
-static void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
-static void TransferChecksumFinalMACTDEA(uint8_t *Buffer);
+void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);
+uint8_t TransferChecksumFinalCRCA(uint8_t *Buffer);
+void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
+uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
 
 /* Encryption routines */
 // TODO: Need AES equivalents? 
 #define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
 
-static uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
-static uint8_t TransferEncryptoTDEAReceive(uint8_t *Buffer, uint8_t Count);
+uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
+uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count);
 
 /** The following is modified from devzzo's DESFire firmware implementation sources: **/
 /* Notes on cryptography in DESFire cards
@@ -165,15 +214,6 @@ void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void*
  * \param BytesInBuffer	How much data there is in the buffer already
  * \param FirstPaddingBitSet Whether the very first bit (MSB) will be set or not
  */
-INLINE void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet)
-{
-    uint8_t PaddingByte = FirstPaddingBitSet << 7;
-    uint8_t i;
-
-    for (i = BytesInBuffer; i < CRYPTO_DES_BLOCK_SIZE; ++i) {
-        Buffer[i] = PaddingByte;
-        PaddingByte = 0x00;
-    }
-}
+void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet);
 
 #endif

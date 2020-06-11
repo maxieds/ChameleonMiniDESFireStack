@@ -24,9 +24,8 @@ DESFireLoggingMode GetActiveDESFireSlotLoggingMode(int slotIndex);
 BOOL StoreActiveDESFireSlotLoggingMode(int slotIndex, DESFireLoggingMode nextLogMode);
 BOOL SetActiveDESFireSlotLoggingMode(int slotIndex, DESFireLoggingMode nextLogMode);
 
-BOOL DESFireLogError(BYTE[2] swRespCodes, BYTE *bufMsg, SIZET bufSize);
-BOOL DESFireLogError(BYTE *bufMsg, SIZET bufSize);
-BOOL DESFireLogError(BYTE *fmtMsg, SIZET fmtLength, ...);
+BOOL DESFireLogErrorMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
+BOOL DESFireLogError(SIZET swRespCodes, BYTE *bufMsg, SIZET bufSize);
 BOOL DESFireLogStatus(BYTE *bufMsg, SIZET bufSize);
 BOOL DESFireLogDebuggingMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
 BOOL DESFireLogIncomingData(BYTE *byteBuf, SIZET bufLength);

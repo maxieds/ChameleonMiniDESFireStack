@@ -8,6 +8,7 @@
 
 #include "DESFireFirmwareSettings.h"
 
+#include "../ISO1443-4.h"
 #include "../ISO14443-3A.h"
 #include "../../Codec/ISO14443-2A.h"
 
@@ -32,13 +33,17 @@ extern uint8_t Iso144434LastBlockLength;
 extern uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
 
 /* Support functions */
-static void ISO144434SwitchState(Iso144434StateType NewState);
-static void ISO144434Reset(void);
-static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount);
+void ISO144434SwitchState(Iso144434StateType NewState);
+void ISO144434Reset(void);
+uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount);
 
 /*
  * ISO/IEC 14443-3A implementation
  */
+
+#define ISO14443A_CRCA_INIT      ((uint16_t) 0x0000)
+
+uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* The card is powered up but not selected */
@@ -56,10 +61,10 @@ extern Iso144433AStateType Iso144433AState;
 extern Iso144433AStateType Iso144433AIdleState;
 
 /* Support functions */
-static void ISO144433ASwitchState(Iso144433AStateType NewState);
+void ISO144433ASwitchState(Iso144433AStateType NewState);
 void ISO144433AReset(void);
 void ISO144433AHalt(void);
-static bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount);
+bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount);
 uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount);
 
 #endif

@@ -316,6 +316,9 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc        = NO_FUNCTION,
     .GetFunc        = NO_FUNCTION
   },
+  #if defined(CONFIG_MF_DESFIRE_SUPPORT) && defined(ALLOW_DESFIRE_TERMINAL_COMMANDS)
+       #include "../Application/DESFire/DESFireChameleonTerminalInclude.c"
+  #endif
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,

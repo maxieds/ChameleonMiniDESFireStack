@@ -187,6 +187,10 @@ CommandStatusIdType CommandGetField(char* OutMessage);
 #define COMMAND_CLONE  "CLONE"
 CommandStatusIdType CommandExecClone(char* OutMessage);
 
+#if defined(CONFIG_MF_DESFIRE_SUPPORT) && defined(ALLOW_DESFIRE_TERMINAL_COMMANDS)
+     #include "../Application/DESFire/DESFireChameleonTerminal.h"
+#endif
+
 #define COMMAND_LIST_END    ""
 /* Defines the end of command list. This is no actual command */
 

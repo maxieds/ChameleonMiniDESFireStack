@@ -67,10 +67,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 // TODO: See p. 72 of the datasheet for descriptions of these response codes ...
 
-BYTE[2] GetResponseTrailerFromError(BYTE ins, BYTE errorCode);
-BYTE[2] GetResponseTrialerFromOK(BYTE ins, BYTE, respCode);
+SIZET GetResponseTrailerFromError(BYTE ins, SIZET errorCode);
+SIZET GetResponseTrialerFromOK(BYTE ins, SIZET respCode);
 
-BOOL ResolveErrorAsString(BYTE ins, BYTE[2] swResp, BYTE *destBuf, SIZET maxSize);
-BOOL ResolveResponseAsString(BYTE ins, BYTE[2] swResp, BYTE *destBuf, SIZET maxSize);
+BOOL ResolveErrorAsString(BYTE ins, SIZET swResp, BYTE *destBuf, SIZET maxSize);
+BOOL ResolveResponseAsString(BYTE ins, SIZET swResp, BYTE *destBuf, SIZET maxSize);
 
 #endif

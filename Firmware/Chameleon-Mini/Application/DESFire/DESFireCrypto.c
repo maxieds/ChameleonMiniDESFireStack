@@ -5,7 +5,12 @@
 
 #include <string.h>
 
-BYTE ActuveCommMode = DESFIRE_COMMS_PLAINTEXT;
+#include "DESFireCrypto.h"
+#include "DESFireInstructions.h"
+#include "DESFirePICCControl.h"
+#include "DESFireISO14443Support.h"
+
+BYTE ActveCommMode = DESFIRE_COMMS_PLAINTEXT;
 
 const BYTE InitialMasterKeyDataDES[CRYPTO_DES_KEY_SIZE] = { 
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
@@ -14,7 +19,7 @@ const BYTE InitialMasterKeyDataAES[CRYPTO_AES_KEY_SIZE] = {
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
 };
-const BYTE InitialMasterKeyData3KTDEA[CRYPTO_AES_KEY_SIZE] = { 
+const BYTE InitialMasterKeyData3KTDEA[CRYPTO_3KTDEA_KEY_SIZE] = { 
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
@@ -25,16 +30,21 @@ BYTE CHECKSUM_IV[4] = {
      0x00, 0x00, 0x00, 0x00 
 };
 
-CryptoKey DefaultCryptoKey;
-BYTE SessionKey[DESFIRE_CRYPTO_SESSION_KEY_SIZE];
-BYTE SessionIV[DESFIRE_CRYPTO_IV_SIZE];
+DesfireAuthType ActiveAuthType = DESFIRE_AUTH_LEGACY;
 
-BOOL InitDESFireKey(CryptoKey &ckey, SIZET ksize, SIZET rbsize, SIZET bsize, BYTE cmethod) {
-     ckey.keySize = ksize;
-     ckey.randomBlockSize = rbsize;
-     ckey.blockSize = bsize;
-     ckey.cryptoMethod = cmethod;
-     ckey.keyData = GetDefaultKeyBuffer(cmethod);
+CryptoKey DefaultCryptoKey = { 0 };
+CryptoSessionKey SessionKey = { 0 };
+CryptoIVBuffer SessionIV = { 0 };
+
+BOOL InitDESFireKey(CryptoKey *ckey, SIZET ksize, SIZET rbsize, SIZET bsize, BYTE cmethod) {
+     if(ckey == NULL) {
+          return FALSE;
+     }
+     ckey->keySize = ksize;
+     ckey->randomBlockSize = rbsize;
+     ckey->blockSize = bsize;
+     ckey->cryptoMethod = cmethod;
+     ckey->keyData = GetDefaultKeyBuffer(cmethod);
      return TRUE;
 }
 
@@ -42,84 +52,22 @@ BYTE * GetDefaultKeyBuffer(BYTE keyType) {
      switch(keyType) {
           case CRYPTO_TYPE_2K3DES:
                return (BYTE *) InitialMasterKeyDataAES;
-          case CRYPTO_3K3DES:
+          case CRYPTO_TYPE_3K3DES:
                return (BYTE *) InitialMasterKeyData3KTDEA;
           case CRYPTO_TYPE_AES:
                return (BYTE *) InitialMasterKeyDataAES;
-          case CRYPTO_TYPE_DES:
           default:
                return (BYTE *) InitialMasterKeyDataDES;
      }
 }
 
-// TODO: See LibFreefare implementation ... 
-// TODO: Split implementation into calling separate methods by key type ... 
-BOOL CreateNewSessionKey(CryptoKey &ckey, BYTE *arrA, BYTE *arrB, BYTE keyType) {
-     if(arrA == NULL || arrB == NULL) {
-          return ckey;
-     }
-     switch(keyType) {
-          case CRYPTO_DES:
-               ckey = InitDESFireKey(8, 4, CRYPTO_DES_BLOCK_SIZE, CRYPTO_DES);
-               for(int i = 0; i < 4; i++) {
-                    ckey->keyData[i] = arrA[i];
-                    ckey->keyData[i + 4] = arrB[i];
-               }
-               return ckey;
-          case CRYPTO_TDES:
-               ckey = InitDESFireKey(16, 8, 8, CRYPTO_TDES);
-               for(int i = 0; i < 4; i++) {
-                    ckey->keyData[i] = arrA[i];
-                    ckey->keyData[i + 4] = arrB[i];
-               }
-               for(int i = 4; i < 8; i++) {
-                    ckey->keyData[i + 4] = arrA[i];
-                    ckey->keyData[i + 8] = arrB[i];
-               }
-               return ckey;
-          case CRYPTO_TKDES:
-               ckey = InitDESFireKey(24, 16, 16, CRYPTO_TKDES);
-               for(int i = 0; i < 4; i++) {
-                    ckey->keyData[i] = arrA[i];
-                    ckey->keyData[i + 4] = arrB[i];
-               }
-               for(int i = 4; i < 8; i++) {
-                    ckey->keyData[i + 4] = arrA[i + 2];
-                    ckey->keyData[i + 8] = arrB[i + 2];
-               }
-               for(int i = 12; i < 16; i++) {
-                    ckey->keyData[i + 4] = arrA[i];
-                    ckey->keyData[i + 8] = arrB[i];
-               }
-               return ckey;
-          case CRYPTO_AES:
-               ckey = InitDESFireKey(16, 16, 16, CRYPTO_AES);
-               for(int i = 0; i < 4; i++) {
-                    ckey->keyData[i] = arrA[i];
-               }
-               for(int i = 4; i < 8; i++) {
-                    ckey->keyData[i] = arrB[i - 4];
-               }
-               for(int i = 8; i < 12; i++) {
-                    ckey->keyData[i] = arrA[i + 4];
-               }
-               for(int i = 12; i < 16; i++) {
-                    ckey->keyData[i] = arrB[i];
-               }
-               return ckey;
-          default:
-               break;
-     }
-     return TRUE;
-}
-
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
      switch(authCmdMethod) {
-          case AUTHENTICATE_AES:
+          case CMD_AUTHENTICATE_AES:
                return CRYPTO_TYPE_AES;
-          case AUTHENTICATE_ISO:
-               return CRYPTO_TYPE_3K3DES:
-          case AUTHENTICATE_LEGACY:
+          case CMD_AUTHENTICATE_ISO:
+               return CRYPTO_TYPE_3K3DES;
+          case CMD_AUTHENTICATE:
           default:
                return CRYPTO_TYPE_DES;
      }
@@ -152,12 +100,17 @@ void TransferChecksumUpdateMACTDEA(const uint8_t* Buffer, uint8_t Count) {
         Count -= TempBytes;
         Buffer += TempBytes;
         /* MAC the partial block */
-        TransferState.Checksums.MAC.MACFunc(1, &TransferState.Checksums.MAC.BlockBuffer[0], &TempBuffer[0], SessionIV, SessionKey);
+        TransferState.Checksums.MAC.MACFunc(1, &TransferState.Checksums.MAC.BlockBuffer[0], 
+                                            &TempBuffer[0], SessionIV.LegacyTransferIV, 
+                                            SessionKey.LegacyTransfer);
     }
     /* MAC complete blocks in the buffer */
     while (Count >= CRYPTO_DES_BLOCK_SIZE) {
-        /* NOTE: This is block-by-block, hence slow. See if it's better to just allocate a temp buffer large enough (64 bytes). */
-        TransferState.Checksums.MAC.MACFunc(1, &Buffer[0], &TempBuffer[0], SessionIV, SessionKey);
+        /* NOTE: This is block-by-block, hence slow. 
+         *       See if it's better to just allocate a temp buffer large enough (64 bytes). */
+        TransferState.Checksums.MAC.MACFunc(1, &Buffer[0], &TempBuffer[0], 
+                                            SessionIV.LegacyTransferIV, 
+                                            SessionKey.LegacyTransfer);
         Count -= CRYPTO_DES_BLOCK_SIZE;
         Buffer += CRYPTO_DES_BLOCK_SIZE;
     }
@@ -176,11 +129,13 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t* Buffer) {
         /* Apply padding */
         CryptoPaddingTDEA(&TransferState.Checksums.MAC.BlockBuffer[0], AvailablePlaintext, false);
         /* MAC the partial block */
-        TransferState.Checksums.MAC.MACFunc(1, &TransferState.Checksums.MAC.BlockBuffer[0], &TempBuffer[0], SessionIV, SessionKey);
+        TransferState.Checksums.MAC.MACFunc(1, &TransferState.Checksums.MAC.BlockBuffer[0], 
+                                            &TempBuffer[0], SessionIV.LegacyTransferIV, 
+                                            SessionKey.LegacyTransfer);
         TransferState.Checksums.AvailablePlaintext = 0;
     }
     /* Copy the checksum to destination */
-    memcpy(Buffer, SessionIV, 4);
+    memcpy(Buffer, SessionIV.LegacyTransferIV, 4);
     /* Return the checksum size */
     return 4;
 }
@@ -207,7 +162,9 @@ uint8_t TransferEncryptTDEASend(uint8_t* Buffer, uint8_t Count) {
     }
     TransferState.ReadData.Encryption.AvailablePlaintext = AvailablePlaintext;
     /* Encrypt complete blocks in the buffer */
-    CryptoEncrypt2KTDEA_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], SessionIV, SessionKey);
+    CryptoEncrypt2KTDEA_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], 
+                                SessionIV.LegacyTransferIV, 
+                                SessionKey.LegacyTransfer);
     /* Return byte count to transfer */
     return BlockCount * CRYPTO_DES_BLOCK_SIZE;
 }
@@ -217,4 +174,14 @@ uint8_t TransferEncryptTDEAReceive(uint8_t* Buffer, uint8_t Count) {
      return 0;
 }
 
+void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet)
+{
+    uint8_t PaddingByte = FirstPaddingBitSet << 7;
+    uint8_t i;
+
+    for (i = BytesInBuffer; i < CRYPTO_DES_BLOCK_SIZE; ++i) {
+        Buffer[i] = PaddingByte;
+        PaddingByte = 0x00;
+    }
+}
 
