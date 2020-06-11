@@ -33,6 +33,10 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     DESFireFileTypeSettings File;
 } SelectedFileCacheType;
 
+extern const SIZET DESFIRE_PICC_INFO_BLOCK_ID;
+extern const SIZET DESFIRE_APP_DIR_BLOCK_ID;
+extern const SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
+
 extern SIZET CardCapacityBlocks;
 
 /* Cached data: flush to FRAM if changed */

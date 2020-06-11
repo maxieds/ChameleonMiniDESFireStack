@@ -7,6 +7,7 @@
 #include "DESFirePICCControl.h"
 #include "DESFireStatusCodes.h"
 #include "DESFireMemoryOperations.h"
+#include "DESFireInstructions.h"
 
 /*
  * File management: creation, deletion, and misc routines
@@ -390,5 +391,4 @@ uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask) {
     }
     return HaveFreeAccess ? VALIDATED_ACCESS_GRANTED_PLAINTEXT : VALIDATED_ACCESS_DENIED;
 }
-
 

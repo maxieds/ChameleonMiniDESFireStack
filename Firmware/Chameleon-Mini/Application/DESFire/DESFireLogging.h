@@ -17,7 +17,16 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      DEBUGGING   = 3, 
 } DESFireLoggingMode;
 
-extern DESFireLoggingMode localSlotLoggingMode;
+extern DESFireLoggingMode LocalLoggingMode;
+
+/* 
+ * This variable can be toggled to indicated whether to employ 
+ * testable pseudo-randomness in the encrypted transfers. 
+ * When this value id non-zero, then any random session numbers 
+ * (e.g., RndA) and IV salt vectors should default back to 
+ * predictable constant values for testing purposes. 
+ */
+extern BYTE LocalTestingMode; 
 
 DESFireLoggingMode StringToLoggingMode(BYTE *strParamBuf, SIZET strLength);
 DESFireLoggingMode GetActiveDESFireSlotLoggingMode(int slotIndex);

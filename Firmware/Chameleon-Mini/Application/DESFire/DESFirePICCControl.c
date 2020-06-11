@@ -21,7 +21,12 @@ const BYTE DefaultJCOPDESFireATS[] = {
      0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80 
 };
 
+const SIZET DESFIRE_PICC_INFO_BLOCK_ID = 0;
+const SIZET DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID + sizeof(DESFirePICCInfoType);
+const SIZET DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + sizeof(DESFireAppDirType);
+
 SIZET CardCapacityBlocks = 0;
+
 DESFirePICCInfoType Picc = { 0 };
 DESFireAppDirType AppDir = { 0 };
 SelectedAppCacheType SelectedApp = { 0 };
@@ -141,30 +146,34 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
 
 void InitialisePiccBackendEV0(uint8_t StorageSize) {
     /* Init backend junk */
-    ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
+    CardCapacityBlocks = StorageSize;
+    ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
-        DEBUG_PRINT("\r\nFactory resetting the device\r\n");
+        const char *logMsg = "\r\nFactory resetting the device\r\n";
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
         FactoryFormatPiccEV0();
     }
     else {
-        ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
+        ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
     }
 }
 
 void InitialisePiccBackendEV1(uint8_t StorageSize) {
     /* Init backend junk */
-    ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
+    CardCapacityBlocks = StorageSize;
+    ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
-        DEBUG_PRINT("\r\nFactory resetting the device\r\n");
+        const char *logMsg = "\r\nFactory resetting the device\r\n";
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
         FactoryFormatPiccEV1(StorageSize);
     }
     else {
-        ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
+        ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
     }
 }
 
 void ResetPiccBackend(void) {
-    SelectPiccApp();
+    SelectPiccApp(); // TODO: in ApplicationDirectory.c ... 
 }
 
 bool IsEmulatingEV1(void) {
@@ -184,7 +193,7 @@ void GetPiccSoftwareVersionInfo(uint8_t* Buffer) {
 }
 
 void GetPiccManufactureInfo(uint8_t* Buffer) {
-    /* UID/Serial number; does not depend on card mode */
+    /* UID / serial number does not depend on card mode: */
     memcpy(&Buffer[0], &Picc.Uid[0], DESFIRE_UID_SIZE);
     Buffer[7] = Picc.BatchNumber[0];
     Buffer[8] = Picc.BatchNumber[1];
@@ -196,24 +205,23 @@ void GetPiccManufactureInfo(uint8_t* Buffer) {
 }
 
 uint8_t GetPiccKeySettings(void) {
-    return GetAppKeySettings(DESFIRE_PICC_APP_SLOT);
+    return GetAppKeySettings(DESFIRE_PICC_APP_SLOT); // TODO: Need to look at this ... 
 }
 
 void FormatPicc(void) {
     /* Wipe application directory */
-    memset(&AppDir, 0, sizeof(AppDir));
+    memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 1;
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
-
+    /* Flush the new local struct data out to the EEPROM: */
     SynchronizePICCInfo();
     SynchronizeAppDir();
 }
 
-void CreatePiccApp(void) {
+void CreatePiccApp(void) { // TODO: Check 
     Desfire2KTDEAKeyType Key;
-
     SetAppKeySettings(DESFIRE_PICC_APP_SLOT, 0x0F);
     SetAppKeyCount(DESFIRE_PICC_APP_SLOT, 1);
     SetAppKeyStorageBlockId(DESFIRE_PICC_APP_SLOT, AllocateBlocks(1));

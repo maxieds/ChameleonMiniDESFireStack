@@ -26,19 +26,17 @@ void SynchronizeAppDir(void) {
 }
 
 void SynchronizePICCInfo(void) {
-    WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
+    WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
 }
 
 uint8_t GetAppProperty(uint8_t BlockId, uint8_t AppSlot) {
     DesfireApplicationDataType Data;
-
     ReadBlockBytes(&Data, BlockId, sizeof(Data));
     return Data.AppData[AppSlot];
 }
 
 void SetAppProperty(uint8_t BlockId, uint8_t AppSlot, uint8_t Value) {
     DesfireApplicationDataType Data;
-
     ReadBlockBytes(&Data, BlockId, sizeof(Data));
     Data.AppData[AppSlot] = Value;
     WriteBlockBytes(&Data, BlockId, sizeof(Data));

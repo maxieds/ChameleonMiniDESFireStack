@@ -33,9 +33,17 @@ extern const BYTE DEFAULT_ISO7816_AID[];
  * using a fixed structure for this makes sense.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
+    //BYTE AppData[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE IsValid;
     BYTE Spare0;
-    BYTE AppData[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     SIZET Checksum; /* Not actually used atm */
+    BYTE FirstFreeFileSlot;
+    BYTE FileNumbersArrayMap[MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    SIZET FilePiccBlockOffsets[MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE KeyData[MAX_KEYS - 1][CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE KeyCryptoMethodTypes[MAX_KEYS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE KeyVersions[MAX_KEYS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE AppCryptoStandard;
 } DesfireApplicationDataType;
 
 /* Mifare DESFire EV1 Application crypto operations */
@@ -43,14 +51,23 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 #define APPLICATION_CRYPTO_3K3DES 0x40
 #define APPLICATION_CRYPTO_AES    0x80
 
-/** Defines the application directory contents.
+/* 
+ * Defines the application directory contents.
  * The application directory maps AIDs to application slots:
  * the AID's index in `AppIds` is the slot number.
+ * 
+ * This is the "global" structure that gets stored in the header 
+ * data for the directory. To see the actual byte-for-byte storage 
+ * of the accounting data for each instantiated AID slot, refer to the 
+ * `DesfireApplicationDataType` structure from above.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE FirstFreeSlot;
     BYTE Spare[8];
     DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; /* 84 */
+    SIZET AppIdPiccBlockOffsets[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE AppMasterKey[CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE AppMasterKeyCryptoMethod;
 } DESFireAppDirType;
 
 /** Defines the block ID of each application's file on the card. */
@@ -62,23 +79,9 @@ typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
 /* This resolves to 4 */
 #define DESFIRE_APP_DIR_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
 
-/* The actual layout */
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    /* PICC related informaton is kept here */
-    DESFIRE_PICC_INFO_BLOCK_ID = 0,
-    /* Keeps the list of all applications created */
-    DESFIRE_APP_DIR_BLOCK_ID,
-    /* AppData keeping track of apps' key settings */
-    DESFIRE_APP_KEY_SETTINGS_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + DESFIRE_APP_DIR_BLOCKS,
-    /* AppData keeping track how many keys each app has */
-    DESFIRE_APP_KEY_COUNT_BLOCK_ID,
-    /* AppData keeping track of apps' key locations */
-    DESFIRE_APP_KEYS_PTR_BLOCK_ID,
-    /* AppData keeping track of apps' file index blocks */
-    DESFIRE_APP_FILES_PTR_BLOCK_ID,
-    /* Free space starts here */
-    DESFIRE_FIRST_FREE_BLOCK_ID,
-} DesfireCardLayout;
+extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
+extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
+extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
 
 /* Mifare DESFire Application settings
  * bit 7 - 4: Number of key needed to change application keys (key 0 - 13; 0 = master key; 14 = key itself required for key change; 15 = all keys are frozen)

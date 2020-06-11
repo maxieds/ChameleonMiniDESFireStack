@@ -71,17 +71,21 @@ extern const BYTE DefaultJCOPDESFireATS[];
 #define DESFIRE_SW_MAJOR_EV2     0x12
 #define DESFIRE_SW_MINOR_EV2     0x01
 
+/* Other HW product types for DESFire tags: See page 7 of 
+ * https://www.nxp.com/docs/en/application-note/AN12343.pdf 
+ */
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+     NATIVEIC_PHYS_CARD                 = 0x01, 
+     LIGHT_NATIVEIC_PHYS_CARD           = 0x08, 
+     MICROCONTROLLER_PHYS_CARDI         = 0x81, 
+     MICROCONTROLLER_PHYS_CARDII        = 0x83, 
+     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91, 
+     HCE_MIFARE_2GO                     = 0xa1, 
+} DESFireHWProductCodes;
+
 #define DESFIRE_STORAGE_SIZE_2K  0x16
 #define DESFIRE_STORAGE_SIZE_4K  0x18
 #define DESFIRE_STORAGE_SIZE_8K  0x1A
-
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-     PICCHDR_SERIALNO     = 1,
-     // TODO
-} PICCHeaderField;
-
-// TODO: Insist on defaults (or zero fill of bytes ... )
-// TODO: Validate lengths on these fields (set defines) ...
 
 /** Defines the global PICC configuration.
  * This is located in the very first block on the card.
@@ -107,12 +111,18 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 
 /* PICC / Application master key settings */
 /* Mifare DESFire master key settings
-bit 7 - 4: Always 0.
-bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible); PICC master key settings changeable when authenticated with PICC master key = 1
-bit 2: PICC master key authentication required for creating or deleting applications = 0; Authentication not required = 1
-bit 1: PICC master key authentication required for listing of applications or reading key settings = 0; Free listing of applications and reading key settings = 1
-bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; PICC master key changeable = 1
+   bit 7 - 4: Always 0.
+   bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible); 
+          PICC master key settings changeable when authenticated with PICC master key = 1
+   bit 2: PICC master key authentication required for creating or deleting applications = 0; 
+          Authentication not required = 1
+   bit 1: PICC master key authentication required for listing of applications or 
+          reading key settings = 0; 
+          Free listing of applications and reading key settings = 1
+   bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; 
+          PICC master key changeable = 1
 */
+// TODO: Where is this getting stored in the EEPROM? 
 #define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (1 << 0)
 #define DESFIRE_FREE_DIRECTORY_LIST      (1 << 1)
 #define DESFIRE_FREE_CREATE_DELETE       (1 << 2)

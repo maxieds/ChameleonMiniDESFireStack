@@ -31,6 +31,10 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam);
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam);
 CommandStatusIdType CommandDESFireSetLoggingMode(char *OutMessage, const char *InParams);
 
+#define DFCOMMAND_TESTING_MODE                "DF_TESTMODE"
+CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam);
+CommandStatusIdType CommandDESFireSetTestingMode(char *OutMessage, const char *InParams);
+
 #define DFCOMMAND_READ_AIDDF                  "DF_READ_APPDIR"
 CommandStatusIdType CommandDESFireReadAppDirectory(char *OutMessage, const char *InParams);
 

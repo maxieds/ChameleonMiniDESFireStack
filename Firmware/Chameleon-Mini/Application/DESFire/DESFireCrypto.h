@@ -18,6 +18,12 @@
 #define DESFIRE_COMMS_PLAINTEXT_MAC     1
 #define DESFIRE_COMMS_CIPHERTEXT_DES    3
 
+/* Note there is also an AES wrapped COMMS variant called 
+ * LRP Secure Messaging detailed starting on page 37 
+ * (Section 7.2) of 
+ * https://www.nxp.com/docs/en/application-note/AN12343.pdf
+ */
+
 /* Define the modes of communication over the RFID channel: */
 extern BYTE ActiveCommMode;
 

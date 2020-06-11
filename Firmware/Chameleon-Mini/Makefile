@@ -80,7 +80,13 @@ SETTINGS	+= -DENABLE_LUFAUSB_CUSTOM_VERSIONS
 SETTINGS	+= -DENABLE_PERMISSIVE_DESFIRE_SETTINGS
 SETTINGS	+= -DALLOW_DESFIRE_TERMINAL_COMMANDS
 
-DESFIRE_MAINSRC = Application/DESFire
+#Set a default logging mode for debugging with the DESFire 
+#emulation code:
+SETTINGS	+= -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+#SETTINGS	+= -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+
+#Set a default testing mode setting:
+SETTINGS	+= -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
@@ -103,7 +109,9 @@ F_CPU        = 27120000
 F_USB        = 48000000
 TARGET       = Chameleon-Mini
 OPTIMIZATION = s
-SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c MemoryAsm.S \
+DESFIRE_MAINSRC = Application/DESFire
+SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c \
+		Common.c Memory.c MemoryAsm.S \
 		Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S

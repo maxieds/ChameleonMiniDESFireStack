@@ -44,8 +44,13 @@ repositories and code bases:
 
 # TODO
 
+## Short list 
+
 * Add in logging and debugging print statements everywhere 
 * grep through the "TODO" marked parts in the source files 
 * Make sure **ALL** the commands we have definitions for are implemented (esp. different types of authenticate) 
 * Read though the old DESFire EV0 datasheet to make sure are correctly handling all of the SW response code cases 
 
+## List of (mostly) checked / cleaned new source files: 
+* ``DESFirePICCControl.c`` (mostly, see TODO notes)
+* 

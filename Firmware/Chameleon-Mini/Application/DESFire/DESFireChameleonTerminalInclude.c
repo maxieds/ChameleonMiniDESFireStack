@@ -48,6 +48,13 @@
           .GetFunc        = CommandDESFireGetLoggingMode
      },
      {
+          .Command        = DFCOMMAND_TESTING_MODE, 
+          .ExecFunc       = NO_FUNCTION,
+          .ExecParamFunc  = NO_FUNCTION,
+          .SetFunc        = CommandDESFireSetTestingMode,
+          .GetFunc        = CommandDESFireGetTestingMode
+     },
+     {
           .Command        = DFCOMMAND_READ_AIDDF, 
           .ExecFunc       = NO_FUNCTION,
           .ExecParamFunc  = CommandDESFireReadAppDirectory,

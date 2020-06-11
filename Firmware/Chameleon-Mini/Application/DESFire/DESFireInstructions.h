@@ -24,6 +24,8 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_AUTHENTICATE = 0x0A, /* Authenticate Legacy */
     CMD_AUTHENTICATE_ISO = 0x1A,
     CMD_AUTHENTICATE_AES = 0xAA,
+    CMD_AUTHENTICATE_EV2_FIRST = 0x71,     /* See page 32 of AN12343.pdf */
+    CMD_AUTHENTICATE_EV2_NONFIRST = 0x77,  /* See page 32 of AN12343.pdf */
     CMD_CHANGE_KEY_SETTINGS = 0x54,
     CMD_SET_CONFIGURATION =  0x5C,
     CMD_CHANGE_KEY =  0xC4,
@@ -60,6 +62,17 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_COMMIT_TRANSACTION = 0xC7,
     CMD_ABORT_TRANSACTION = 0xA7,
     CMD_CONTINUE =  0xAF,
+    // ISO7816 Command Set Support:
+    CMD_ISO7816_SELECT = 0xa4, 
+    CMD_ISO7816_GET_CHALLENGE = 0x84, 
+    CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82, 
+    CMD_ISO7816_INTERNAL_AUTHENTICATE = 0x88, 
+    CMD_ISO7816_READ_BINARY = 0xb0, 
+    CMD_ISO7816_UPDATE_BINARY = 0xd6, 
+    CMD_ISO7816_READ_RECORDS = 0xb2,
+    CMD_ISO7816_APPEND_RECORD = 0xe2, 
+    // Undocumented command codes: 
+    // CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf */
 } DESFireCommandType;
 
 // TODO: Need to add in support for the ISO7816-4 commands we support
@@ -106,6 +119,8 @@ extern DesfireSavedCommandStateType DesfireCommandState;
  * The following section implements:
  * DESFire EV0 / D40 specific commands
  */
+
+uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount); // TODO
 
 /* General commands */
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);

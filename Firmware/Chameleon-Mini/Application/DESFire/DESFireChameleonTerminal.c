@@ -51,6 +51,14 @@ CommandStatusIdType CommandDESFireSetLoggingMode(char *OutParam, const char *InP
      return CommandNotYetImplemented(OutParam);
 }
 
+CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam) {
+     return CommandNotYetImplemented(OutParam);
+}
+
+CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InParams) {
+     return CommandNotYetImplemented(OutParam);
+}
+
 CommandStatusIdType CommandDESFireReadAppDirectory(char *OutParam, const char *InParams) {
      return CommandNotYetImplemented(OutParam);
 }

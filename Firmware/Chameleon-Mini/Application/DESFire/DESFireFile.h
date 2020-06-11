@@ -103,6 +103,8 @@ uint16_t ReadDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 
+p
+p
 TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
 uint8_t ReadValueFileSetup(uint8_t CommSettings);
 
@@ -110,13 +112,33 @@ uint8_t ReadValueFileSetup(uint8_t CommSettings);
 #define VALIDATE_ACCESS_READWRITE          (1 << 0)
 #define VALIDATE_ACCESS_WRITE              (1 << 1)
 #define VALIDATE_ACCESS_READ               (1 << 2)
-
 #define VALIDATED_ACCESS_DENIED            0
 #define VALIDATED_ACCESS_GRANTED           1
 #define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
 
+/* 
+ * [READ (4 bits) | WRITE | READ-WRITE | CHANGE] 
+ * Stored in little endian format from memory:
+ */
+#define GetReadPermissions(AccessRights) \
+	(BYTE) (AccessRights & 0x000f)
+#define GetWritePermissions(AccessRights) \
+        (BYTE) (((0x00f0 & AccessRights) >> 4) & 0x000f)
+#define GetReadWritePermissions(AccessRights) \
+        (BYTE) (((0x0f00 & AccessRights) >> 8) & 0x000f)
+#define GetChangePermissions(AccessRights) \
+	(BYTE) (((0xf000 & AccessRights) >> 12) & 0x000f)
+
 uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
 uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask);
+
+/*
+ * The following function implements the command/instruction-wise
+ * applications given a file's access permissions. This data is taken
+ * from the table on page 21 of the NXP application note:
+ * https://www.nxp.com/docs/en/application-note/AN12343.pdf
+ */
+//uint8_t VerifyCommandPermissions(uint8_t CmdIns, uint16_t FileAccessRights);
 
 // TODO: Page 57: Read file functions ... 
 // TODO: Create and write file functions ... 
