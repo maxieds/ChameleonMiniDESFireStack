@@ -137,6 +137,8 @@ SRC         += Application/MifareUltralight.c Application/MifareClassic.c Applic
 SRC         += Application/MifareDESFire.c $(DESFIRE_MAINSRC)/DESFireAPDU.c \
 		$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 		$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
+		$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/gf256mul/gf256mul.S \
+		$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/AVRCryptoLib-SingleSource.c \
 		$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S $(DESFIRE_MAINSRC)/DESFireCrypto.c \
 		$(DESFIRE_MAINSRC)/DESFireFile.c $(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
 		$(DESFIRE_MAINSRC)/DESFireInstructions.c $(DESFIRE_MAINSRC)/DESFireLogging.c \
@@ -144,7 +146,9 @@ SRC         += Application/MifareDESFire.c $(DESFIRE_MAINSRC)/DESFireAPDU.c \
 		$(DESFIRE_MAINSRC)/DESFireStatusCodes.c $(DESFIRE_MAINSRC)/DESFireUtils.c 
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
+		-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
+		-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES = 

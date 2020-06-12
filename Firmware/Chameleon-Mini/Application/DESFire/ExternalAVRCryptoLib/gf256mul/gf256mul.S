@@ -37,6 +37,7 @@
 A = 23
 B = 22
 P = 24
+
 .global gf256mul
 
 #ifdef OPTIMIZE_SMALL_A
@@ -80,3 +81,4 @@ gf256mul:
 	ret
 
 #endif
+

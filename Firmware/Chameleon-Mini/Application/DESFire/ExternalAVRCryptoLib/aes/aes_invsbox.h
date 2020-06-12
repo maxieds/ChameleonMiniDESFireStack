@@ -28,6 +28,6 @@
 #define AES_INVSBOX_H_
 #include <stdint.h>
 
-extern uint8_t aes_invsbox[];
+extern const uint8_t aes_invsbox[];
 
 #endif
