@@ -8,17 +8,35 @@
 #include "DESFireStatusCodes.h"
 #include "DESFireMemoryOperations.h"
 #include "DESFireInstructions.h"
+#include "DESFireApplicationDirectory.h"
 
 /*
  * File management: creation, deletion, and misc routines
  */
+
+uint8_t LookupActiveFileSlotByFileNumber(uint8_t fileNumber) {
+     uint8_t FileSlot;
+     for(FileSlot = 0; FileSlot < DESFIRE_MAX_FILES; ++FileSlot) {
+          if(SelectedAppData.FileNumbersArrayMap[FileSlot] == fileNumber)
+               break;
+     }
+     return FileSlot;
+}
+
+uint8_t GetAppFileIndexBlockId(uint8_t FileNum) {
+    uint8_t fileSlotNumber = LookupActiveFileSlotByFileNumber(FileNum);
+    if(fileSlotNumber >= DESFIRE_MAX_FILES) {
+         return 0x00;
+    }
+    return SelectedAppData.FilePiccBlockOffsets[fileSlotNumber];
+}
 
 uint8_t GetFileControlBlockId(uint8_t FileNum) {
     uint8_t FileIndexBlock;
     DesfireFileIndexType FileIndex;
 
     /* Read in the file index */
-    FileIndexBlock = GetAppFileIndexBlockId(SelectedApp.Slot);
+    FileIndexBlock = GetAppFileIndexBlockId(FileNum);
     ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     return FileIndex[FileNum];
 }
@@ -59,7 +77,7 @@ uint8_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount, uint8_t* BlockI
     uint8_t BlockId;
 
     /* Read in the file index */
-    FileIndexBlock = GetAppFileIndexBlockId(SelectedApp.Slot);
+    FileIndexBlock = GetAppFileIndexBlockId(FileNum);
     ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     /* Check if the file already exists */
     if (FileIndex[FileNum]) {
@@ -149,7 +167,7 @@ uint8_t DeleteFile(uint8_t FileNum) {
     uint8_t FileIndexBlock;
     uint8_t FileIndex[DESFIRE_MAX_FILES];
 
-    FileIndexBlock = GetAppFileIndexBlockId(SelectedApp.Slot);
+    FileIndexBlock = GetAppFileIndexBlockId(FileNum);
     ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     if (FileIndex[FileNum]) {
         FileIndex[FileNum] = 0;

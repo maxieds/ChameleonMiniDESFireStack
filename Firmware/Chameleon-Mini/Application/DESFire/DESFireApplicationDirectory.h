@@ -18,22 +18,29 @@
 #define MAX_AID_SIZE                                (12)
 #define DESFIRE_AID_SIZE                            (3)
 
+#ifdef DESFIRE_USE_FACTORY_SIZES
+     #undef  DESFIRE_CUSTOM_MAX_APPS
+     #define DESFIRE_CUSTOM_MAX_APPS                (28)
+     #undef  DESFIRE_CUSTOM_MAX_KEYS
+     #define DESFIRE_CUSTOM_MAX_KEYS                (14)
+#endif
+
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
      #define DESFIRE_MAX_APPS                       (6)
 #elif defined(DESFIRE_CUSTOM_MAX_APPS)
      #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
 #else
-     #define DESFIRE_MAX_APPS                            (28)
+     #define DESFIRE_MAX_APPS                       (28)
 #endif 
 
 #define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_KEYS)
-     #define DESFIRE_MAX_KEYS                            (4)
+     #define DESFIRE_MAX_KEYS                       (4)
 #elif defined(DESFIRE_CUSTOM_MAX_KEYS)
-     #define DESFIRE_MAX_KEYS                            (DESFIRE_CUSTOM_MAX_KEYS)
+     #define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)
 #else
-     #define DESFIRE_MAX_KEYS                            (14)
+     #define DESFIRE_MAX_KEYS                       (14)
 #endif
 
 typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
@@ -119,6 +126,9 @@ void SynchronizePICCInfo(void);
 uint8_t GetApplicationData(uint8_t AppSlot, DesfireApplicationDataType *appData);
 
 /* Application key management */
+BYTE GetSelectedAppKeySettings(void);
+void SetSelectedAppKeySettings(BYTE KeySettings);
+BYTE GetAppKeySettings(uint8_t Slot);
 void ReadSelectedAppKey(uint8_t KeyId, uint8_t* Key);
 void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key);
 

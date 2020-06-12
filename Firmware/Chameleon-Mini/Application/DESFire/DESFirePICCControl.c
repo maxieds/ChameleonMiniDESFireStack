@@ -226,9 +226,8 @@ void FormatPicc(void) {
 
 void CreatePiccApp(void) { // TODO: Check 
     Desfire2KTDEAKeyType Key;
-    SetAppKeySettings(DESFIRE_PICC_APP_SLOT, 0x0F);
-    SetAppKeyCount(DESFIRE_PICC_APP_SLOT, 1);
-    SetAppKeyStorageBlockId(DESFIRE_PICC_APP_SLOT, AllocateBlocks(1));
+    BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
+    CreateApp(MasterAppAID, DESFIRE_MAX_KEYS - 1, 0x0f);
     SelectPiccApp();
     memset(Key, 0, sizeof(Key));
     WriteSelectedAppKey(0, Key);

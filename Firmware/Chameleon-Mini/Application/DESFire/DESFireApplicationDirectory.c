@@ -49,6 +49,24 @@ uint8_t GetApplicationData(uint8_t AppSlot, DesfireApplicationDataType *appData)
  * Application key management
  */
 
+BYTE GetSelectedAppKeySettings(void) {
+     uint8_t SelectedAppSlot = SelectedApp.Slot;
+     return AppDir.AppKeySettings[SelectedAppSlot];
+}
+
+void SetSelectedAppKeySettings(BYTE KeySettings) {
+     uint8_t SelectedAppSlot = SelectedApp.Slot;
+     AppDir.AppKeySettings[SelectedAppSlot] = KeySettings;
+     SynchronizeAppDir();
+}
+
+BYTE GetAppKeySettings(uint8_t Slot) {
+     if(Slot >= DESFIRE_MAX_SLOTS) {
+          return 0x00;
+     }
+     return AppDir.AppKeySettings[Slot];
+}
+
 void ReadSelectedAppKey(uint8_t KeyId, uint8_t *Key) {
     if(KeyId == 0x00 || KeyId >= DESFIRE_MAX_KEYS) {
          return;

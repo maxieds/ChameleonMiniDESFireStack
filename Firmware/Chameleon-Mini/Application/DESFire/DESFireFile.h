@@ -67,6 +67,8 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 /*
  * File management: creation, deletion, and misc routines
  */
+uint8_t LookupActiveFileSlotByFileNumber(uint8_t fileNumber);
+uint8_t GetAppFileIndexBlockId(uint8_t FileNum);
 uint8_t GetFileControlBlockId(uint8_t FileNum);
 uint8_t GetFileDataAreaBlockId(uint8_t FileNum);
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);

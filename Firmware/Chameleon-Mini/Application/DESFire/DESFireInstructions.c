@@ -6,6 +6,7 @@
 #include "DESFireInstructions.h"
 #include "DESFirePICCControl.h"
 #include "DESFireStatusCodes.h"
+#include "DESFireLogging.h"
 
 #include "../../Configuration.h"
 #include "../../Memory.h"
@@ -96,7 +97,7 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     }
     KeyId = Buffer[1];
     /* Validate number of keys: less than max */
-    if (KeyId >= GetSelectedAppKeyCount()) {
+    if (KeyId >= DESFIRE_MAX_KEYS) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -108,19 +109,21 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     ReadSelectedAppKey(KeyId, Key);
     LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
     /* Generate the nonce B */
-#if 1 // TODO
-    RandomGetBuffer(DesfireCommandState.Authenticate.RndB, DESFIRE_2KTDEA_NONCE_SIZE);
-#else
-    /* Fixed nonce for testing */
-    DesfireCommandState.Authenticate.RndB[0] = 0xCA;
-    DesfireCommandState.Authenticate.RndB[1] = 0xFE;
-    DesfireCommandState.Authenticate.RndB[2] = 0xBA;
-    DesfireCommandState.Authenticate.RndB[3] = 0xBE;
-    DesfireCommandState.Authenticate.RndB[4] = 0x00;
-    DesfireCommandState.Authenticate.RndB[5] = 0x11;
-    DesfireCommandState.Authenticate.RndB[6] = 0x22;
-    DesfireCommandState.Authenticate.RndB[7] = 0x33;
-#endif
+    
+    if(LocalTestingMode != 0) {
+         RandomGetBuffer(DesfireCommandState.Authenticate.RndB, DESFIRE_2KTDEA_NONCE_SIZE);
+    }
+    else {
+         /* Fixed nonce for testing */
+         DesfireCommandState.Authenticate.RndB[0] = 0xCA;
+         DesfireCommandState.Authenticate.RndB[1] = 0xFE;
+         DesfireCommandState.Authenticate.RndB[2] = 0xBA;
+         DesfireCommandState.Authenticate.RndB[3] = 0xBE;
+         DesfireCommandState.Authenticate.RndB[4] = 0x00;
+         DesfireCommandState.Authenticate.RndB[5] = 0x11;
+         DesfireCommandState.Authenticate.RndB[6] = 0x22;
+         DesfireCommandState.Authenticate.RndB[7] = 0x33;
+    }
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.Authenticate.RndB, DESFIRE_2KTDEA_NONCE_SIZE);
     /* Encipher the nonce B with the selected key; <= 8 bytes = no CBC */
     CryptoEncrypt2KTDEA(DesfireCommandState.Authenticate.RndB, &Buffer[1], Key);
@@ -203,7 +206,7 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
     }
     KeyId = Buffer[1];
     /* Validate number of keys: less than max */
-    if (KeyId >= GetSelectedAppKeyCount()) {
+    if (KeyId >= DESFIRE_MAX_KEYS) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -287,7 +290,7 @@ uint16_t EV0CmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     Buffer[1] = GetSelectedAppKeySettings();
-    Buffer[2] = GetSelectedAppKeyCount();
+    Buffer[2] = DESFIRE_MAX_KEYS - 1;
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
