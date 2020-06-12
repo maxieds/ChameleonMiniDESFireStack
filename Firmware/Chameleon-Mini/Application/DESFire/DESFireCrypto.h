@@ -27,7 +27,7 @@
 /* Define the modes of communication over the RFID channel: */
 extern BYTE ActiveCommMode;
 
-#define CRYPTO_TYPE_DES         (0x0A)
+#define CRYPTO_TYPE_DES         (0x00)
 #define CRYPTO_TYPE_2K3DES      (0x0A)
 #define CRYPTO_TYPE_3K3DES      (0x1A)
 #define CRYPTO_TYPE_AES         ((BYTE) 0xAA)
@@ -48,19 +48,7 @@ extern BYTE ActiveCommMode;
 typedef uint8_t Desfire2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 
-INLINE BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
-     switch(cryptoType) {
-          //case CRYPTO_TYPE_DES:
-          case CRYPTO_TYPE_2K3DES:
-               return CRYPTO_2KTDEA_KEY_SIZE;
-          case CRYPTO_TYPE_3K3DES:
-               return CRYPTO_3KTDEA_KEY_SIZE;
-          case CRYPTO_TYPE_AES:
-               return CRYPTO_AES_KEY_SIZE;
-          default:
-               return 0;
-     }
-}
+BYTE GetCryptoMethodKeySize(uint8_t cryptoType);
 
 #define MAC_LENGTH          4
 #define CMAC_LENGTH         8
@@ -88,32 +76,11 @@ extern const BYTE InitialMasterKeyData3KTDEA[CRYPTO_3KTDEA_KEY_SIZE];
 extern BYTE NO_KEY_AUTHENTICATED;
 extern BYTE CHECKSUM_IV[4];
 
-// TODO: Remove this???
-typedef struct DESFIRE_FIRMWARE_PACKING {
-     SIZET keySize;
-     SIZET randomBlockSize;
-     SIZET blockSize;
-     BYTE  cryptoMethod;
-     BYTE  *keyData;
-} CryptoKey;
-extern CryptoKey SessionCryptoKeyData;
-
 typedef union DESFIRE_FIRMWARE_PACKING {
      BYTE LegacyTransfer[DESFIRE_CRYPTO_SESSION_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
      BYTE IsoTransfer[DESFIRE_CRYPTO_SESSION_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
      BYTE AESTransfer[CRYPTO_AES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
 } CryptoSessionKey;
-
-INLINE BYTE* ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey) {
-     switch(authType) {
-          case DESFIRE_AUTH_LEGACY:
-               return skey->LegacyTransfer;
-          case DESFIRE_AUTH_AES:
-               return skey->AESTransfer;
-          default:
-               return skey->IsoTransfer;
-     }
-}
 
 typedef union DESFIRE_FIRMWARE_PACKING {
      BYTE LegacyTransferIV[DESFIRE_DES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
@@ -121,30 +88,15 @@ typedef union DESFIRE_FIRMWARE_PACKING {
      BYTE AESTransferIV[DESFIRE_AES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
 } CryptoIVBuffer;
 
-INLINE BYTE* ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf) {
-     switch(authType) {
-          case DESFIRE_AUTH_LEGACY:
-               return ivBuf->LegacyTransferIV;
-          case DESFIRE_AUTH_AES:
-               return ivBuf->AESTransferIV;
-          default:
-               return ivBuf->IsoTransferIV;
-     }
-}
-
 extern CryptoSessionKey SessionKey;
 extern CryptoIVBuffer SessionIV;
 
-BOOL InitDESFireKey(CryptoKey *ckey, SIZET ksize, SIZET rbsize, SIZET bsize, BYTE cmethod);
+BYTE * ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey);
+BYTE * ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf);
 BYTE * GetDefaultKeyBuffer(BYTE keyType);
 
 // TODO: See LibFreefare implementation ... 
 // TODO: Split implementation into calling separate methods by key type ... 
-//BOOL CreateNewSessionKey(CryptoKey *ckey, BYTE *arrA, BYTE *arrB, BYTE keyType);
-//SIZET BuildSessionKey(CryptoKey *keyData, BYTE *arrA, BYTE *arrB);
-
-SIZET CRC16(BYTE *inputData, SIZET dataLength);
-UINT  CRC32(BYTE *inputData, SIZET dataLength);
 
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 

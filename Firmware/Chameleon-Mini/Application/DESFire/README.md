@@ -31,6 +31,12 @@ Additionally, the following weblinks and posts clarify some common reference poi
 * [StackOverflow post on emulating DESFire on Android](https://stackoverflow.com/a/20068329)
 * [StackOverflow post on Android NFC support for DESFire](https://stackoverflow.com/a/26775311)
 
+## ISO7816 Command set implementation hints:
+
+* [External Authenticate](https://stackoverflow.com/questions/34425494/external-authentication-in-desfire-card-with-iso-7816-4-apdus)
+* [Overview of command structure](https://www.informit.com/articles/article.aspx?p=29265&seqNum=6)
+* [Detailed Docs](https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/)
+
 # External credits
 
 The source code for much of this implementation has been directly adapted, or modified, from mostly Java 
@@ -53,18 +59,23 @@ repositories and code bases:
 * If ``LocalTestingMode != 0``, then need to implement a solution so can test with predictable 
   (non-randomized) crypto vectors. In particular, ``RndA`` (random number associated with the authenticate 
   session) and the value of the ``SessionIV`` crypto salt should be fixed to facilitate debugging.
+* **All** the crypto needs to be re-routed through the well tested AVR board crypto library. 
+  This is going to require writing wrappers around their excellent existing GPL routines. 
+  Then can consult with the LibFreeFare implementation for DESFire tags to glue this together with the 
+  Send / Receive protocol exchanges with MAC/CRC checksums going on.
 
 ## List of (mostly) checked / cleaned new source files: 
-* :interrobang: :large_orange_diamond: ``DESFireAPDU.c``
+* :large_orange_diamond: ``DESFireAPDU.c``
 * :white_check_mark: ``DESFireApplicationDirectory.c``
-* :interrobang: :large_orange_diamond: ``DESFireChameleonTerminal.c``
-* :interrobang: ``DESFireCrypto.c``
-* :interrobang: ``DESFireFile.c``
+* :large_orange_diamond: ``DESFireChameleonTerminal.c``
+* :large_orange_diamond: ``DESFireCrypto.c``
+* :white_check_mark: ``DESFireFile.c``
 * :interrobang: ``DESFireISO14443Support.c``
 * :interrobang: ``DESFireInstructions.c``
-* :interrobang: :large_orange_diamond: ``DESFireLogging.c``
+* :large_orange_diamond: ``DESFireLogging.c``
 * :interrobang: ``DESFireMemoryOperations.c``
-* :white_check_mark: ``DESFirePICCControl.c`` (:wavy_dash: mostly, see TODO notes)
+* :white_check_mark: ``DESFirePICCControl.c`` 
 * :interrobang: ``DESFireStatusCodes.c``
-* :interrobang: :large_orange_diamond: ``DESFireUtils.c``
+* :large_orange_diamond: ``DESFireUtils.c``
+* :interrobang: ``../MifareDESFire.c``
 

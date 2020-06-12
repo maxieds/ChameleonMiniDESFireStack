@@ -32,20 +32,42 @@ BYTE CHECKSUM_IV[4] = {
 
 DesfireAuthType ActiveAuthType = DESFIRE_AUTH_LEGACY;
 
-CryptoKey DefaultCryptoKey = { 0 };
 CryptoSessionKey SessionKey = { 0 };
 CryptoIVBuffer SessionIV = { 0 };
 
-BOOL InitDESFireKey(CryptoKey *ckey, SIZET ksize, SIZET rbsize, SIZET bsize, BYTE cmethod) {
-     if(ckey == NULL) {
-          return FALSE;
+BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
+     switch(cryptoType) {
+          case CRYPTO_TYPE_2K3DES:
+               return CRYPTO_2KTDEA_KEY_SIZE;
+          case CRYPTO_TYPE_3K3DES:
+               return CRYPTO_3KTDEA_KEY_SIZE;
+          case CRYPTO_TYPE_AES:
+               return CRYPTO_AES_KEY_SIZE;
+          default:
+               return 0;
      }
-     ckey->keySize = ksize;
-     ckey->randomBlockSize = rbsize;
-     ckey->blockSize = bsize;
-     ckey->cryptoMethod = cmethod;
-     ckey->keyData = GetDefaultKeyBuffer(cmethod);
-     return TRUE;
+}
+
+BYTE * ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey) {
+     switch(authType) {
+          case DESFIRE_AUTH_LEGACY:
+               return skey->LegacyTransfer;
+          case DESFIRE_AUTH_AES:
+               return skey->AESTransfer;
+          default:
+               return skey->IsoTransfer;
+     }
+}
+
+BYTE * ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf) {
+     switch(authType) {
+          case DESFIRE_AUTH_LEGACY:
+               return ivBuf->LegacyTransferIV;
+          case DESFIRE_AUTH_AES:
+               return ivBuf->AESTransferIV;
+          default:
+               return ivBuf->IsoTransferIV;
+     }
 }
 
 BYTE * GetDefaultKeyBuffer(BYTE keyType) {
@@ -64,12 +86,16 @@ BYTE * GetDefaultKeyBuffer(BYTE keyType) {
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
      switch(authCmdMethod) {
           case CMD_AUTHENTICATE_AES:
+          case CMD_AUTHENTICATE_EV2_FIRST:
+          case CMD_AUTHENTICATE_EV2_NONFIRST:
                return CRYPTO_TYPE_AES;
           case CMD_AUTHENTICATE_ISO:
                return CRYPTO_TYPE_3K3DES;
           case CMD_AUTHENTICATE:
+          case CMD_ISO7816_EXTERNAL_AUTHENTICATE:
+          case CMD_ISO7816_INTERNAL_AUTHENTICATE:
           default:
-               return CRYPTO_TYPE_DES;
+               return CRYPTO_TYPE_2K3DES;
      }
 }
 

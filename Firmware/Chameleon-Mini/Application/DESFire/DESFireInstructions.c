@@ -12,19 +12,24 @@
 #include "../../Memory.h"
 #include "../../Random.h"
 
-BYTE VERSION1[] = { 
+const BYTE VERSION1[] = { 
      0x04, 0x01, 0x01, 0x01, 0x00, 0x1a, 0x05 
 };
-BYTE VERSION2[] = { 
+const BYTE VERSION2[] = { 
      0x04, 0x01, 0x01, 0x01, 0x03, 0x1a, 0x05 
 };
-BYTE VERSION3[] = { 
+const BYTE VERSION3[] = { 
     // Expected Response: 00  04  91  3a  29  93  26  80  00  00  00  00  00  39  08  91  00
     0x04, (BYTE) 0x91, 0x3a, 0x29, (BYTE) 0x93, 
     0x26, (BYTE) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x39, 0x08 
 };
 
 DesfireSavedCommandStateType DesfireCommandState = { 0 };
+
+static uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t DefaultReturnValue) {
+     Buffer[0] = StatusCode;
+     return DefaultReturnValue;
+}
 
 /*
  * DESFire general commands
@@ -38,7 +43,7 @@ uint16_t EV0CmdGetVersion1(uint8_t* Buffer, uint16_t ByteCount) {
     GetPiccHardwareVersionInfo(&Buffer[4]);
     Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
     DesfireState = DESFIRE_GET_VERSION2;
-    return 8;
+    return VERSION1_BYTES_PROCESSED;
 }
 
 uint16_t EV0CmdGetVersion2(uint8_t* Buffer, uint16_t ByteCount) {
@@ -49,14 +54,14 @@ uint16_t EV0CmdGetVersion2(uint8_t* Buffer, uint16_t ByteCount) {
     GetPiccSoftwareVersionInfo(&Buffer[4]);
     Buffer[7] = DESFIRE_SW_PROTOCOL_TYPE;
     DesfireState = DESFIRE_GET_VERSION3;
-    return 8;
+    return VERSION2_BYTES_PROCESSED;
 }
 
 uint16_t EV0CmdGetVersion3(uint8_t* Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_OPERATION_OK;
     GetPiccManufactureInfo(&Buffer[1]);
     DesfireState = DESFIRE_IDLE;
-    return 15;
+    return VERSION3_BYTES_PROCESSED;
 }
 
 uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
@@ -76,7 +81,6 @@ uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-
     FormatPicc();
     Buffer[0] = STATUS_OPERATION_OK;
     return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -372,87 +376,76 @@ uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
     /* Require the PICC app to be selected */
     if (!IsPiccAppSelected()) {
         Status = STATUS_PERMISSION_DENIED;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate command length */
     if (ByteCount != 1 + 3 + 1 + 1) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Verify authentication settings */
     if (!(GetSelectedAppKeySettings() & DESFIRE_FREE_CREATE_DELETE) && 
         AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* PICC master key authentication is required */
         Status = STATUS_AUTHENTICATION_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate number of keys: less than max */
     KeyCount = Buffer[5];
     if (KeyCount > DESFIRE_MAX_KEYS) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     KeySettings = Buffer[4];
     /* Done */
     Status = CreateApp(Aid, KeyCount, KeySettings);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t PiccKeySettings;
-
     /* Validate command length */
     if (ByteCount != 1 + 3) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate AID: AID of all zeros cannot be deleted */
     if ((Aid[0] | Aid[1] | Aid[2]) == 0x00) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate authentication: a master key is always required */
     if (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         Status = STATUS_AUTHENTICATION_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate authentication: deletion with PICC master key is always OK, 
        but if another app is selected... */
     if (!IsPiccAppSelected()) {
         /* TODO: verify the selected application is the one being deleted */
-
         PiccKeySettings = GetPiccKeySettings();
         /* Check the PICC key settings whether it is OK to delete using app master key */
         if (!(PiccKeySettings & DESFIRE_FREE_CREATE_DELETE)) {
             Status = STATUS_AUTHENTICATION_ERROR;
-            goto exit_with_status;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
         }
         SelectPiccApp();
         AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     }
-
     /* Done */
     Status = DeleteApp(Aid);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount) {
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
-
     /* Validate command length */
     if (ByteCount != 1 + 3) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-
     /* Done */
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     Buffer[0] = SelectApp(Aid);
@@ -469,11 +462,10 @@ uint16_t EV0CmdCreateStandardDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t CommSettings;
     uint16_t AccessRights;
     __uint24 FileSize;
-
     /* Validate command length */
     if (ByteCount != 1 + 1 + 1 + 2 + 3) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Common args validation */
     FileNum = Buffer[1];
@@ -481,20 +473,16 @@ uint16_t EV0CmdCreateStandardDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     AccessRights = Buffer[3] | (Buffer[4] << 8);
     Status = CreateFileCommonValidation(FileNum, CommSettings, AccessRights);
     if (Status != STATUS_OPERATION_OK) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate the file size */
     FileSize = GET_LE24(&Buffer[5]);
     if (FileSize > 8160) {
         Status = STATUS_OUT_OF_EEPROM_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
     Status = CreateStandardFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdCreateBackupDataFile(uint8_t* Buffer, uint16_t ByteCount) {
@@ -507,7 +495,7 @@ uint16_t EV0CmdCreateBackupDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate command length */
     if (ByteCount != 1 + 1 + 1 + 2 + 3) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Common args validation */
     FileNum = Buffer[1];
@@ -515,20 +503,16 @@ uint16_t EV0CmdCreateBackupDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     AccessRights = Buffer[3] | (Buffer[4] << 8);
     Status = CreateFileCommonValidation(FileNum, CommSettings, AccessRights);
     if (Status != STATUS_OPERATION_OK) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate the file size */
     FileSize = GET_LE24(&Buffer[5]);
     if (FileSize > 4096) {
         Status = STATUS_OUT_OF_EEPROM_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
     Status = CreateBackupFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdCreateValueFile(uint8_t* Buffer, uint16_t ByteCount) {
@@ -549,29 +533,24 @@ uint16_t EV0CmdCreateCyclicRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
 uint16_t EV0CmdDeleteFile(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     uint8_t FileNum;
-
     /* Validate command length */
     if (ByteCount != 1 + 1) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     FileNum = Buffer[1];
     /* Validate file number */
     if (FileNum >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate access settings */
     if (!(GetSelectedAppKeySettings() & DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         Status = STATUS_AUTHENTICATION_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
     Status = DeleteFile(FileNum);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdGetFileIds(uint8_t* Buffer, uint16_t ByteCount) {
@@ -603,27 +582,27 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate command length */
     if (ByteCount != 1 + 1 + 3 + 3) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     FileNum = Buffer[1];
     /* Validate file number */
     if (FileNum >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     Status = SelectFile(FileNum);
     if (Status != STATUS_OPERATION_OK) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     CommSettings = GetSelectedFileCommSettings();
     /* Verify authentication: read or read&write required */
     switch (ValidateAuthentication(GetSelectedFileAccessRights(), 
-            VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_READ)) {
+            VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
         CommSettings = DESFIRE_COMMS_PLAINTEXT;
         /* Fall through */
@@ -637,26 +616,22 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
     if (GetSelectedFileType() != DESFIRE_FILE_STANDARD_DATA && 
         GetSelectedFileType() != DESFIRE_FILE_BACKUP_DATA) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate offset and length (preliminary) */
     Offset = GET_LE24(&Buffer[2]);
     Length = GET_LE24(&Buffer[5]);
     if (Offset > 8192 || Length > 8192) {
         Status = STATUS_BOUNDARY_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     /* Setup and start the transfer */
     Status = ReadDataFileSetup(CommSettings, (uint16_t)Offset, (uint16_t)Length);
     if (Status) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     return ReadDataFileIterator(Buffer, 1);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
@@ -669,18 +644,18 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate command length */
     if (ByteCount < 1 + 1 + 3 + 3) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     FileNum = Buffer[1];
     /* Validate file number */
     if (FileNum >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     Status = SelectFile(FileNum);
     if (Status != STATUS_OPERATION_OK) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     CommSettings = GetSelectedFileCommSettings();
@@ -689,7 +664,7 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
             VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_WRITE)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
         CommSettings = DESFIRE_COMMS_PLAINTEXT;
         /* Fall through */
@@ -703,26 +678,23 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
     if (GetSelectedFileType() != DESFIRE_FILE_STANDARD_DATA && 
         GetSelectedFileType() != DESFIRE_FILE_BACKUP_DATA) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate offset and length (preliminary) */
     Offset = GET_LE24(&Buffer[2]);
     Length = GET_LE24(&Buffer[5]);
     if (Offset > 8192 || Length > 8192) {
         Status = STATUS_BOUNDARY_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     /* Setup and start the transfer */
     Status = WriteDataFileSetup(CommSettings, (uint16_t)Offset, (uint16_t)Length);
     if (Status) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     Status = WriteDataFileIterator(&Buffer[8], ByteCount - 8);
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
@@ -734,18 +706,18 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate command length */
     if (ByteCount != 1 + 1) {
         Status = STATUS_LENGTH_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     FileNum = Buffer[1];
     /* Validate file number */
     if (FileNum >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     Status = SelectFile(FileNum);
     if (Status != STATUS_OPERATION_OK) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     CommSettings = GetSelectedFileCommSettings();
@@ -754,7 +726,7 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
             VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_READ|VALIDATE_ACCESS_WRITE)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
         CommSettings = DESFIRE_COMMS_PLAINTEXT;
         /* Fall through */
@@ -766,21 +738,17 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate the file type */
     if (GetSelectedFileType() != DESFIRE_FILE_VALUE_DATA) {
         Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
 
     /* Setup and start the transfer */
     Status = ReadValueFileSetup(CommSettings);
     if (Status) {
-        goto exit_with_status;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     XferStatus = ReadDataFileTransfer(&Buffer[1]);
     Buffer[0] = STATUS_OPERATION_OK;
     return DESFIRE_STATUS_RESPONSE_SIZE + XferStatus.BytesProcessed;
-
-exit_with_status:
-    Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdCredit(uint8_t* Buffer, uint16_t ByteCount) {

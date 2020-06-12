@@ -1,4 +1,4 @@
-/* 
+/*
  * DESFireMemoryOperations.h : 
  * Maxie D. Schmidt (github.com/maxieds) 
  */

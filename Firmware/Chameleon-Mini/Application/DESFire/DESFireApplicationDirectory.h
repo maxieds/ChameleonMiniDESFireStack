@@ -61,7 +61,10 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     SIZET Checksum; /* Not actually used atm */
     BYTE FirstFreeFileSlot;
     BYTE FileNumbersArrayMap[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    SIZET FilePiccBlockOffsets[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE FilePiccBlockOffsets[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE FileBlockCounts[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE FileCommSettings[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    SIZET FileAccessRights[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE KeyData[DESFIRE_MAX_KEYS - 1][CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE KeyCryptoMethodTypes[DESFIRE_MAX_KEYS - 1] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE KeyVersions[DESFIRE_MAX_KEYS - 1] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
@@ -89,7 +92,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE FirstFreeSlot;
     BYTE Spare[8];
     DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; /* 84 */
-    SIZET AppIdPiccBlockOffsets[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE AppIdPiccBlockOffsets[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE AppMasterKey[CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE AppMasterKeyCryptoMethod;
     BYTE AppKeySettings[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
@@ -123,7 +126,9 @@ typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
 /* Global card structure support routines */
 void SynchronizeAppDir(void);
 void SynchronizePICCInfo(void);
+
 uint8_t GetApplicationData(uint8_t AppSlot, DesfireApplicationDataType *appData);
+void SynchronizeSelectedAppData(void);
 
 /* Application key management */
 BYTE GetSelectedAppKeySettings(void);

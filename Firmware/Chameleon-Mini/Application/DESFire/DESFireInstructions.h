@@ -19,9 +19,10 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 } TransferStatus;
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    // CommandToContinue:
+    
+    /* DESFire native command support: */
     NO_COMMAND_TO_CONTINUE = 0x00,
-    CMD_AUTHENTICATE = 0x0A, /* Authenticate Legacy */
+    CMD_AUTHENTICATE = 0x0A,               /* Authenticate Legacy */
     CMD_AUTHENTICATE_ISO = 0x1A,
     CMD_AUTHENTICATE_AES = 0xAA,
     CMD_AUTHENTICATE_EV2_FIRST = 0x71,     /* See page 32 of AN12343.pdf */
@@ -62,7 +63,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_COMMIT_TRANSACTION = 0xC7,
     CMD_ABORT_TRANSACTION = 0xA7,
     CMD_CONTINUE =  0xAF,
-    // ISO7816 Command Set Support:
+    
+    /* ISO7816 Command Set Support: */
+    // TODO: See p. 72 of the data sheet for response codes 
+    //       and detailed descriptions of the parameters ... 
     CMD_ISO7816_SELECT = 0xa4, 
     CMD_ISO7816_GET_CHALLENGE = 0x84, 
     CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82, 
@@ -71,29 +75,30 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_ISO7816_UPDATE_BINARY = 0xd6, 
     CMD_ISO7816_READ_RECORDS = 0xb2,
     CMD_ISO7816_APPEND_RECORD = 0xe2, 
-    // Undocumented command codes: 
-    // CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf */
+    
+    /* Space for undocumented command codes: */
+    //CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf (for Mifare DESFire Light tags) */
+
 } DESFireCommandType;
 
-// TODO: Need to add in support for the ISO7816-4 commands we support
-// TODO: See p. 72 of the data sheet for response codes ... 
-
 #define CLA_PROTECTED_APDU           (0x0c)
-#define CLA_ISO7816                  (0)
-#define INS_SELECT                   ((uint8_t) -92)
-#define INS_EXTERNAL_AUTHENTICATE    ((uint8_t) -126)
+#define CLA_ISO7816                  (0x00)
 #define P1_DF                        (0x04)
 #define P2_SELECT                    (0x0C)
+#define LE_MAX                       ((uint16_t) 256)
 
-#define DO87_START     ((uint8_t) 0x87)
-#define DO87_TYPE      ((uint32_t) 0x00000080)
-#define DO87_BYTENO    ((uint8_t) 0x7F)
-#define DO87_END       ((uint8_t) 0x01);
-#define LE_MAX         ((uint16_t) 256);
+#define DO87_START                   ((uint8_t) 0x87)
+#define DO87_TYPE                    ((uint32_t) 0x00000080)
+#define DO87_BYTENO                  ((uint8_t) 0x7F)
+#define DO87_END                     ((uint8_t) 0x01)
 
-extern BYTE VERSION_1[];
-extern BYTE VERSION_2[];
-extern BYTE VERSION_3[];
+#define VERSION1_BYTES_PROCESSED     (8) 
+#define VERSION2_BYTES_PROCESSED     (8)
+#define VERSION3_BYTES_PROCESSED     (15)
+
+extern const BYTE VERSION_1[];
+extern const BYTE VERSION_2[];
+extern const BYTE VERSION_3[];
 
 typedef union DESFIRE_FIRMWARE_PACKING {
     struct DESFIRE_FIRMWARE_PACKING {
@@ -111,6 +116,7 @@ typedef union DESFIRE_FIRMWARE_PACKING {
     struct DESFIRE_FIRMWARE_PACKING {
         uint8_t NextIndex;
     } GetApplicationIds;
+    uint8_t ActiveCommMode;
 } DesfireSavedCommandStateType;
 
 extern DesfireSavedCommandStateType DesfireCommandState;

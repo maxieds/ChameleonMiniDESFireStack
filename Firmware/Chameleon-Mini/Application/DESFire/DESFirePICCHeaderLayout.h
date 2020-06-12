@@ -126,7 +126,6 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
    bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; 
           PICC master key changeable = 1
 */
-// TODO: Where is this getting stored in the EEPROM? 
 #define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (1 << 0)
 #define DESFIRE_FREE_DIRECTORY_LIST      (1 << 1)
 #define DESFIRE_FREE_CREATE_DELETE       (1 << 2)
@@ -134,8 +133,10 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 #define DESFIRE_USE_TARGET_KEY           0xE
 #define DESFIRE_ALL_KEYS_FROZEN          0xF
 
-BOOL IsPICCImageValid(int slotNumber);
-BOOL PrettyPrintPICCHeaderData(int slotNumber, BYTE outputBuffer, SIZET maxLength);
-BOOL PrettyPrintPICCImageData(int slotNumber, BYTE outputBuffer, SIZET maxLength, BOOL includeHdrInfo);
+// TODO: 
+BOOL PrettyPrintPICCHeaderData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength);
+BOOL PrettyPrintPICCImageData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength);
+BOOL PrettyPrintPICCApplicationDir(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength);
+BOOL PrettyPrintPICCFile(uint8_t slotNumber, uint8_t fileIndex, BYTE *outputBuffer, SIZET maxLength);
 
 #endif

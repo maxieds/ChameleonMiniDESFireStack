@@ -40,9 +40,16 @@ uint8_t GetApplicationData(uint8_t AppSlot, DesfireApplicationDataType *appData)
           return FALSE;
      }
      memset(appData, PICC_EMPTY_BYTE, sizeof(DesfireApplicationDataType));
-     SIZET appIdAtSlotBlockOffset = AppDir.AppIdPiccBlockOffsets[AppSlot];
+     BYTE appIdAtSlotBlockOffset = AppDir.AppIdPiccBlockOffsets[AppSlot];
      ReadBlockBytes(appData, appIdAtSlotBlockOffset, sizeof(DesfireApplicationDataType));
+     SelectedApp.Slot = AppSlot;
      return TRUE;
+}
+
+void SynchronizeSelectedAppData(void) {
+     uint8_t SelectedAppSlot = SelectedApp.Slot;
+     BYTE appDirBlockAddress = AppDir.AppIdPiccBlockOffsets[SelectedAppSlot];
+     WriteBlockBytes(&SelectedAppData, appDirBlockAddress, sizeof(DesfireApplicationDataType));
 }
 
 /*

@@ -31,6 +31,27 @@ uint8_t GetAppFileIndexBlockId(uint8_t FileNum) {
     return SelectedAppData.FilePiccBlockOffsets[fileSlotNumber];
 }
 
+uint8_t AddFileToAppDataTypeStorage(uint8_t FileNum, uint8_t BlockId, uint8_t BlockCount) {
+     uint8_t NextFreeSlot = SelectedAppData.FirstFreeFileSlot;
+     if(NextFreeSlot >= DESFIRE_MAX_SLOTS) {
+          return STATUS_FILE_NOT_FOUND;
+     }
+     SelectedAppData.FileNumbersArrayMap[NextFreeSlot] = FileNum;
+     SelectedAppData.FilePiccBlockOffsets[NextFreeSlot] = BlockId;
+     SelectedAppData.FileBlockCounts[NextFreeSlot] = BlockCount;
+     SelectedAppData.FirstFreeFileSlot += 1;
+     SynchronizeSelectedAppData();
+     return STATUS_OPERATION_OK;
+}
+
+uint8_t UpdateAppDirDataFileInfo(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights) {
+     uint8_t FileSlotIndex = LookupActiveFileSlotByFileNumber(FileNum);
+     SelectedAppData.FileCommSettings[FileSlotIndex] = CommSettings;
+     SelectedAppData.FileAccessRights[FileSlotIndex] = AccessRights;
+     SynchronizeSelectedAppData();
+     return STATUS_OPERATION_OK;
+}
+
 uint8_t GetFileControlBlockId(uint8_t FileNum) {
     uint8_t FileIndexBlock;
     DesfireFileIndexType FileIndex;
@@ -54,7 +75,7 @@ uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings* File) {
         return STATUS_FILE_NOT_FOUND;
     }
     /* Read the file control block */
-    ReadBlockBytes(File, BlockId, sizeof(File));
+    ReadBlockBytes(File, BlockId, sizeof(DESFireFileTypeSettings));
     return STATUS_OPERATION_OK;
 }
 
@@ -67,7 +88,7 @@ uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings* File) {
         return STATUS_FILE_NOT_FOUND;
     }
     /* Write the file control block */
-    WriteBlockBytes(File, BlockId, sizeof(File));
+    WriteBlockBytes(File, BlockId, sizeof(DESFireFileTypeSettings));
     return STATUS_OPERATION_OK;
 }
 
@@ -76,6 +97,10 @@ uint8_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount, uint8_t* BlockI
     uint8_t FileIndex[DESFIRE_MAX_FILES];
     uint8_t BlockId;
 
+    /* Make sure there is a free slot to store a new file */
+    if(SelectedAppData.FirstFreeFileSlot >= DESFIRE_MAX_FILES) {
+        return STATUS_FILE_NOT_FOUND;
+    }
     /* Read in the file index */
     FileIndexBlock = GetAppFileIndexBlockId(FileNum);
     ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
@@ -91,12 +116,13 @@ uint8_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount, uint8_t* BlockI
         WriteBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
         /* Write the output value */
         *BlockIdPtr = BlockId;
-        return STATUS_OPERATION_OK;
+        return AddFileToAppDataTypeStorage(FileNum, BlockId, BlockCount);
     }
     return STATUS_OUT_OF_EEPROM_ERROR;
 }
 
-uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize) {
+uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, 
+                           uint16_t AccessRights, uint16_t FileSize) {
     uint8_t Status;
     uint8_t BlockId;
 
@@ -104,18 +130,20 @@ uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t Acces
     Status = AllocateFileStorage(FileNum, 1 + DESFIRE_BYTES_TO_BLOCKS(FileSize), &BlockId);
     if (Status == STATUS_OPERATION_OK) {
         /* Fill in the control structure and write it */
-        memset(&SelectedFile, 0, sizeof(SelectedFile));
+        memset(&SelectedFile, PICC_EMPTY_BYTE, sizeof(SelectedFile));
         SelectedFile.File.Type = DESFIRE_FILE_STANDARD_DATA;
         SelectedFile.File.CommSettings = CommSettings;
         SelectedFile.File.AccessRights = AccessRights;
         SelectedFile.File.StandardFile.FileSize = FileSize;
         WriteBlockBytes(&SelectedFile.File, BlockId, sizeof(SelectedFile.File));
+        UpdateAppDirDataFileInfo(FileNum, CommSettings, AccessRights);
     }
     /* Done */
     return Status;
 }
 
-uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize) {
+uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, 
+                         uint16_t AccessRights, uint16_t FileSize) {
     uint8_t Status;
     uint8_t BlockId;
     uint8_t BlockCount;
@@ -125,20 +153,22 @@ uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessR
     Status = AllocateFileStorage(FileNum, 1 + 2 * BlockCount, &BlockId);
     if (Status == STATUS_OPERATION_OK) {
         /* Fill in the control structure and write it */
-        memset(&SelectedFile, 0, sizeof(SelectedFile));
+        memset(&SelectedFile, PICC_EMPTY_BYTE, sizeof(SelectedFile));
         SelectedFile.File.Type = DESFIRE_FILE_BACKUP_DATA;
         SelectedFile.File.CommSettings = CommSettings;
         SelectedFile.File.AccessRights = AccessRights;
         SelectedFile.File.BackupFile.FileSize = FileSize;
         SelectedFile.File.BackupFile.BlockCount = BlockCount;
         WriteBlockBytes(&SelectedFile.File, BlockId, sizeof(SelectedFile.File));
+        UpdateAppDirDataFileInfo(FileNum, CommSettings, AccessRights);
     }
     /* Done */
     return Status;
 }
 
 uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights,
-                        int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled) {
+                        int32_t LowerLimit, int32_t UpperLimit, int32_t Value, 
+                        bool LimitedCreditEnabled) {
     uint8_t Status;
     uint8_t BlockId;
 
@@ -146,7 +176,7 @@ uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRi
     Status = AllocateFileStorage(FileNum, 1, &BlockId);
     if (Status == STATUS_OPERATION_OK) {
         /* Fill in the control structure and write it */
-        memset(&SelectedFile, 0, sizeof(SelectedFile));
+        memset(&SelectedFile, PICC_EMPTY_BYTE, sizeof(SelectedFile));
         SelectedFile.File.Type = DESFIRE_FILE_VALUE_DATA;
         SelectedFile.File.CommSettings = CommSettings;
         SelectedFile.File.AccessRights = AccessRights;
@@ -157,15 +187,26 @@ uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRi
         SelectedFile.File.ValueFile.LimitedCreditEnabled = LimitedCreditEnabled;
         SelectedFile.File.ValueFile.PreviousDebit = 0;
         WriteBlockBytes(&SelectedFile.File, BlockId, sizeof(SelectedFile.File));
+        UpdateAppDirDataFileInfo(FileNum, CommSettings, AccessRights);
     }
     /* Done */
     return Status;
 }
 
-// TODO: Need to check access permissions? 
 uint8_t DeleteFile(uint8_t FileNum) {
     uint8_t FileIndexBlock;
     uint8_t FileIndex[DESFIRE_MAX_FILES];
+
+    /* Need change permissions to delete the file */
+    uint8_t fileNumSlotIndex = LookupActiveFileSlotByFileNumber(FileNum);
+    if(fileNumSlotIndex >= DESFIRE_MAX_FILES) {
+         return STATUS_FILE_NOT_FOUND;
+    }
+    BYTE FileChangePermissions = GetChangePermissions(SelectedAppData.FileAccessRights[fileNumSlotIndex]);
+    if(FileChangePermissions == DESFIRE_ACCESS_DENY || 
+       ((FileChangePermissions != DESFIRE_ACCESS_FREE) && (FileChangePermissions != AuthenticatedWithKey))) {
+         return STATUS_PERMISSION_DENIED;
+    }
 
     FileIndexBlock = GetAppFileIndexBlockId(FileNum);
     ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
@@ -176,6 +217,13 @@ uint8_t DeleteFile(uint8_t FileNum) {
         return STATUS_FILE_NOT_FOUND;
     }
     WriteBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    
+    /* Update the AppData storage to reflect that the file has been deleted */
+    SelectedAppData.FileNumbersArrayMap[fileNumSlotIndex] = 0x00;
+    SelectedAppData.FileBlockCounts[fileNumSlotIndex] = 0x00;
+    SelectedAppData.FileAccessRights[fileNumSlotIndex] = 0xffff;
+    SynchronizeSelectedAppData();
+
     return STATUS_OPERATION_OK;
 }
 
@@ -198,7 +246,7 @@ void StopTransaction(void) {
     SynchronizePICCInfo();
 }
 
-void SynchFileCopies(uint8_t FileNum, bool Rollback) {
+void SynchronizeFileCopies(uint8_t FileNum, bool Rollback) {
     DESFireFileTypeSettings File;
     uint8_t DataAreaBlockId;
 
@@ -225,18 +273,16 @@ void SynchFileCopies(uint8_t FileNum, bool Rollback) {
         }
         break;
     }
-    /* TODO: implement other file types */
 }
 
 void FinaliseTransaction(bool Rollback) {
     uint8_t FileNum;
     uint16_t DirtyFlags = SelectedApp.DirtyFlags;
-
     if (!Picc.TransactionStarted) 
         return;
     for (FileNum = 0; FileNum < DESFIRE_MAX_FILES; ++FileNum) {
         if (DirtyFlags & (1 << FileNum)) {
-            SynchFileCopies(FileNum, Rollback);
+            SynchronizeFileCopies(FileNum, Rollback);
         }
     }
     StopTransaction();
@@ -298,7 +344,8 @@ uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length
         TransferState.ReadData.BytesLeft = Length;
     }
     /* Clean data is always located in the beginning of data area */
-    TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE + Offset;
+    TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * 
+                                            DESFIRE_EEPROM_BLOCK_SIZE + Offset;
     /* Setup data filter */
     return ReadDataFilterSetup(CommSettings);
 }
@@ -312,19 +359,19 @@ uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Lengt
     /* Setup data sink */
     TransferState.WriteData.BytesLeft = Length;
     TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
-    /* Dirty data location depends on the file type; correct the offset as needed */
+    /* TODO: Dirty data location depends on the file type: correct the offset as needed */
     if (GetSelectedFileType() == DESFIRE_FILE_BACKUP_DATA) {
         Offset += SelectedFile.File.BackupFile.BlockCount * DESFIRE_EEPROM_BLOCK_SIZE;
     }
-    TransferState.WriteData.Sink.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE + Offset;
+    TransferState.WriteData.Sink.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * 
+                                           DESFIRE_EEPROM_BLOCK_SIZE + Offset;
     /* Setup data filter */
     return WriteDataFilterSetup(CommSettings);
 }
 
 uint16_t ReadDataFileIterator(uint8_t* Buffer, uint16_t ByteCount) {
+    /* NOTE: incoming ByteCount is not verified here for now */
     TransferStatus Status;
-    /* TODO: NOTE: incoming ByteCount is not verified here for now */
-
     Status = ReadDataFileTransfer(&Buffer[1]);
     if (Status.IsComplete) {
         Buffer[0] = STATUS_OPERATION_OK;
@@ -339,10 +386,8 @@ uint16_t ReadDataFileIterator(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint8_t WriteDataFileInternal(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
-
     Status = WriteDataFileTransfer(Buffer, ByteCount);
-
-    switch (Status) {
+    switch(Status) {
     default:
         /* In case anything goes wrong, abort things */
         AbortTransaction();
@@ -380,33 +425,39 @@ uint8_t ReadValueFileSetup(uint8_t CommSettings) {
 
 uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights) {
     /* Validate file number */
-    if (FileNum >= DESFIRE_MAX_FILES) {
+    if (SelectedAppData.FirstFreeFileSlot >= DESFIRE_MAX_FILES) {
         return STATUS_PARAMETER_ERROR;
     }
-    /* TODO: Validate communication settings */
-    /* TODO: Validate the access rights */
-    /* TODO: Make sure the file number actually corresponds to an active file */
+    /* Validate basic access permissions */
+    uint8_t accessPermissions = ValidateAuthentication(AccessRights, 
+                                                       VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_WRITE);
+    if(accessPermissions == VALIDATED_ACCESS_DENIED) {
+        return STATUS_PERMISSION_DENIED;
+    }
+    /* TODO: Validate basic communication protocol settings are met */
+    //if(CommSettings != DesfireCommandState.ActiveCommMode) {
+    //     return STATUS_AUTHENTICATION_ERROR;
+    //}
     return STATUS_OPERATION_OK;
 }
 
 uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask) {
     uint8_t RequiredKeyId;
     bool HaveFreeAccess = false;
-
-    AccessRights >>= 4;
-    while (CheckMask) {
-        if (CheckMask & 1) {
-            RequiredKeyId = AccessRights & 0x0F;
-            if (AuthenticatedWithKey == RequiredKeyId) {
-                return VALIDATED_ACCESS_GRANTED;
-            }
-            if (RequiredKeyId == DESFIRE_ACCESS_FREE) {
-                HaveFreeAccess = true;
-            }
-        }
-        CheckMask >>= 1;
-        AccessRights >>= 4;
-    }
-    return HaveFreeAccess ? VALIDATED_ACCESS_GRANTED_PLAINTEXT : VALIDATED_ACCESS_DENIED;
+    uint8_t SplitPerms[] = {
+         GetReadPermissions(CheckMask & AccessRights), 
+         GetWritePermissions(CheckMask & AccessRights), 
+         GetReadWritePermissions(CheckMask & AccessRights), 
+         GetChangePermissions(CheckMask & AccessRights)
+    };
+    for(int bpos = 0; bpos < 4; bpos++) {
+         if (SplitPerms[bpos] == AuthenticatedWithKey) {
+              return VALIDATED_ACCESS_GRANTED;
+         }
+         else if (SplitPerms[bpos] == DESFIRE_ACCESS_FREE) {
+              return VALIDATED_ACCESS_GRANTED_PLAINTEXT;
+         }
+    } 
+    return VALIDATED_ACCESS_DENIED;
 }
 

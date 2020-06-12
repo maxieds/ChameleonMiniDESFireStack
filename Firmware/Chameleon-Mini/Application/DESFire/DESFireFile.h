@@ -69,6 +69,9 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
  */
 uint8_t LookupActiveFileSlotByFileNumber(uint8_t fileNumber);
 uint8_t GetAppFileIndexBlockId(uint8_t FileNum);
+uint8_t AddFileToAppDataTypeStorage(uint8_t FileNum, uint8_t BlockId, uint8_t BlockCount);
+uint8_t UpdateAppDirDataFileInfo(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
+
 uint8_t GetFileControlBlockId(uint8_t FileNum);
 uint8_t GetFileDataAreaBlockId(uint8_t FileNum);
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
@@ -85,8 +88,8 @@ uint8_t DeleteFile(uint8_t FileNum);
 void StartTransaction(void);
 void MarkFileDirty(uint8_t FileNum);
 void StopTransaction(void);
-void SyncFileCopies(uint8_t FileNum, bool RollBack);
-void FinaliseTransactiob(bool RollBack);
+void SyncronizeFileCopies(uint8_t FileNum, bool RollBack);
+void FinaliseTransaction(bool RollBack);
 void CommitTransaction(void);
 void AbortTransaction(void);
 
@@ -108,9 +111,9 @@ TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
 uint8_t ReadValueFileSetup(uint8_t CommSettings);
 
 /* Validation routines */
-#define VALIDATE_ACCESS_READWRITE          (1 << 0)
-#define VALIDATE_ACCESS_WRITE              (1 << 1)
-#define VALIDATE_ACCESS_READ               (1 << 2)
+#define VALIDATE_ACCESS_READWRITE          (0x000f << 0)
+#define VALIDATE_ACCESS_WRITE              (0x000f << 4)
+#define VALIDATE_ACCESS_READ               (0x000f << 8)
 #define VALIDATED_ACCESS_DENIED            0
 #define VALIDATED_ACCESS_GRANTED           1
 #define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
@@ -128,16 +131,14 @@ uint8_t ReadValueFileSetup(uint8_t CommSettings);
 #define GetChangePermissions(AccessRights) \
 	(BYTE) (((0xf000 & AccessRights) >> 12) & 0x000f)
 
-uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
-uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask);
-
 /*
- * The following function implements the command/instruction-wise
- * applications given a file's access permissions. This data is taken
+ * There are also command/instruction-wise
+ * citations given from file's access permissions. This data is taken
  * from the table on page 21 of the NXP application note:
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
-//uint8_t VerifyCommandPermissions(uint8_t CmdIns, uint16_t FileAccessRights);
+uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
+uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask);
 
 // TODO: Page 57: Read file functions ... 
 // TODO: Create and write file functions ... 
