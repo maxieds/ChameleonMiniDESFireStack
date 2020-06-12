@@ -95,9 +95,6 @@ BYTE * ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey);
 BYTE * ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf);
 BYTE * GetDefaultKeyBuffer(BYTE keyType);
 
-// TODO: See LibFreefare implementation ... 
-// TODO: Split implementation into calling separate methods by key type ... 
-
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 
 typedef enum {
@@ -113,7 +110,6 @@ void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
 
 /* Encryption routines */
-// TODO: Need AES equivalents? 
 #define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
 
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);

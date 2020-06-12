@@ -7,7 +7,11 @@
 #include "DESFireCrypto.h"
 #include "DESFireStatusCodes.h"
 
-AESCryptoContext AESCryptoContext = { 0 };
+DesfireAESCryptoContext AESCryptoContext = { 0 };
+
+DesfireAESCryptoKey AESCryptoKey      = { 0 };
+DesfireAESCryptoKey AESCryptoRndB     = { 0 };
+DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 
 void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx) {
      memset(cryptoCtx, 0x00, sizeof(DesfireAESCryptoContext));
@@ -106,7 +110,34 @@ uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *pla
 }
 
 uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, 
-                                uint8_t *encSrcBuf, uint8_t *plainDestBuf, uint16_t bufSize);
+                                uint8_t *encSrcBuf, uint8_t *plainDestBuf, uint16_t bufSize) {
+     if(cryptoCtx == NULL || encSrcBuf == NULL || plainDestBuf == NULL) {
+          return STATUS_PARAMETER_ERROR;
+     }
+     else if((bufSize % CRYPTO_AES_BLOCK_SIZE) != 0) {
+          return STATUS_PARAMETER_ERROR;
+     }
+     uint8_t decBlockData[CRYPTO_AES_BLOCK_SIZE];
+     for(int blockOffset = 0; blockOffset < bufSize / CRYPTO_AES_BLOCK_SIZE; blockOffset += CRYPTO_AES_BLOCK_SIZE) {
+          memcpy(decBlockData, encSrcBuf + blockOffset, CRYPTO_AES_BLOCK_SIZE);
+          switch(cryptoCtx->keySizeBytes) {
+               case 16:
+                    aes128_dec(decBlockData, cryptoCtx->aes128Context);
+                    break;
+               case 24:
+                    aes192_dec(decBlockData, cryptoCtx->aes192Context);
+                    break;
+               case 32:
+                    aes256_dec(decBlockData, cryptoCtx->aes256Context);
+                    break;
+               default:
+                    return STATUS_NO_SUCH_KEY;
+          }
+          memcpy(plainDestBuf + blockOffset, decBlockData, CRYPTOAES_BLOCK_SIZE);
+     }
+     return STATUS_OPERATION_OK;
+}
 
+DesfireAESAuthState AESAuthState = { 0 };
 
 

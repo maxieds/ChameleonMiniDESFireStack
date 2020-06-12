@@ -88,6 +88,10 @@ SETTINGS	+= -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
 SETTINGS	+= -DDESFIRE_DEFAULT_TESTING_MODE=1
 
+#Feature: Use randomized UIDs that mask the actual secret UID until 
+#the tag has been issued a successful authentication sequence: 
+SETTINGS	+= -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
+
 #Anticipating that the implementation overhead is high with the 
 #maximum storage allocations for the number of possible keys per 
 #application directory, and/or the total number of AID numbered 
