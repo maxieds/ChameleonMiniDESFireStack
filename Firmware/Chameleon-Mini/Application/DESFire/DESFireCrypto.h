@@ -37,9 +37,9 @@ extern BYTE ActiveCommMode;
 #define CRYPTO_2KTDEA_KEY_SIZE      (2 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_3KTDEA_KEY_SIZE      (3 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_AES_KEY_SIZE         (16)
-#define CRYPTO_DES_BLOCK_SIZE       (1) // ???: 8
+#define CRYPTO_DES_BLOCK_SIZE       (8) 
 #define CRYPTO_3KTDEA_BLOCK_SIZE    (CRYPTO_DES_BLOCK_SIZE) // ???
-#define CRYPTO_AES_BLOCK_SIZE       (4) // ???
+#define CRYPTO_AES_BLOCK_SIZE       (16)
 
 #define DESFIRE_DES_IV_SIZE                (CRYPTO_DES_BLOCK_SIZE)
 #define DESFIRE_AES_IV_SIZE                (CRYPTO_AES_BLOCK_SIZE)
