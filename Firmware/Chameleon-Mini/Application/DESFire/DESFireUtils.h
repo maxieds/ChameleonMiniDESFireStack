@@ -44,4 +44,6 @@ void DebugPrintP(const char *fmt, ...);
 #define DEBUG_PRINT(fmt, ...) \
     DebugPrintP(PSTR(fmt), ##__VA_ARGS__)
 
+SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize);
+
 #endif

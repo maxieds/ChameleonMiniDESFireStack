@@ -33,9 +33,9 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     DESFireFileTypeSettings File;
 } SelectedFileCacheType;
 
-extern const SIZET DESFIRE_PICC_INFO_BLOCK_ID;
-extern const SIZET DESFIRE_APP_DIR_BLOCK_ID;
-extern const SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
+extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
+extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
+extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
 
 extern SIZET CardCapacityBlocks;
 
@@ -145,11 +145,6 @@ extern DesfireStateType DesfireState;
 extern uint8_t AuthenticatedWithKey;
 
 void SyncronizePICCInfo(void);
-
-BOOL SetProtectedHeaderData(PICCHeaderField hfield, BYTE *byteBuf, SIZET bufSize);
-BOOL ResetProtectedHeaderData(PICCHeaderField hfield); 
-BOOL ResetAndZeroFillPICCImage(int slotNumber); 
-BOOL WriteByteArrayToPICC(int slotNum, SIZET piccOffset, BYTE *byteBuf, SIZET bufSize);
 
 /* Transfer routines */
 TransferStatus PiccToPcdTransfer(uint8_t *Buffer);

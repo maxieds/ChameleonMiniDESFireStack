@@ -17,9 +17,24 @@
 
 #define MAX_AID_SIZE                                (12)
 #define DESFIRE_AID_SIZE                            (3)
-#define DESFIRE_MAX_APPS                            (28)
-#define DESFIRE_MAX_KEYS                            (14)
+
+#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
+     #define DESFIRE_MAX_APPS                       (6)
+#elif defined(DESFIRE_CUSTOM_MAX_APPS)
+     #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
+#else
+     #define DESFIRE_MAX_APPS                            (28)
+#endif 
+
 #define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
+
+#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_KEYS)
+     #define DESFIRE_MAX_KEYS                            (4)
+#elif defined(DESFIRE_CUSTOM_MAX_KEYS)
+     #define DESFIRE_MAX_KEYS                            (DESFIRE_CUSTOM_MAX_KEYS)
+#else
+     #define DESFIRE_MAX_KEYS                            (14)
+#endif
 
 typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
 
@@ -38,13 +53,15 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE Spare0;
     SIZET Checksum; /* Not actually used atm */
     BYTE FirstFreeFileSlot;
-    BYTE FileNumbersArrayMap[MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    SIZET FilePiccBlockOffsets[MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    BYTE KeyData[MAX_KEYS - 1][CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    BYTE KeyCryptoMethodTypes[MAX_KEYS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    BYTE KeyVersions[MAX_KEYS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE FileNumbersArrayMap[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    SIZET FilePiccBlockOffsets[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE KeyData[DESFIRE_MAX_KEYS - 1][CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE KeyCryptoMethodTypes[DESFIRE_MAX_KEYS - 1] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    BYTE KeyVersions[DESFIRE_MAX_KEYS - 1] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE AppCryptoStandard;
 } DesfireApplicationDataType;
+
+extern DesfireApplicationDataType SelectedAppData;
 
 /* Mifare DESFire EV1 Application crypto operations */
 #define APPLICATION_CRYPTO_DES    0x00
@@ -68,6 +85,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     SIZET AppIdPiccBlockOffsets[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE AppMasterKey[CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     BYTE AppMasterKeyCryptoMethod;
+    BYTE AppKeySettings[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
 } DESFireAppDirType;
 
 /** Defines the block ID of each application's file on the card. */
@@ -78,10 +96,6 @@ typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
 
 /* This resolves to 4 */
 #define DESFIRE_APP_DIR_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
-
-extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
-extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
-extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
 
 /* Mifare DESFire Application settings
  * bit 7 - 4: Number of key needed to change application keys (key 0 - 13; 0 = master key; 14 = key itself required for key change; 15 = all keys are frozen)
@@ -102,32 +116,22 @@ extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
 /* Global card structure support routines */
 void SynchronizeAppDir(void);
 void SynchronizePICCInfo(void);
-uint8_t GetAppProperty(uint8_t BlockId, uint8_t AppSlot);
-void SetAppProperty(uint8_t BlockId, uint8_t AppSlot, uint8_t Value);
-void SetAppKeyCount(uint8_t AppSlot, uint8_t Value);
-uint8_t GetAppKeySettings(uint8_t AppSlot);
-void SetAppKeySettings(uint8_t AppSlot, uint8_t Value);
-void SetAppKeyStorageBlockId(uint8_t AppSlot, uint8_t Value);
-uint8_t GetAppFileIndexBlockId(uint8_t AppSlot);
-void SetAppFileIndexBlockId(uint8_t AppSlot, uint8_t Value);
+uint8_t GetApplicationData(uint8_t AppSlot, DesfireApplicationDataType *appData);
 
 /* Application key management */
-uint8_t GetSelectedAppKeyCount(void);
-uint8_t GetSelectedAppKeySettings(void);
-void SetSelectedAppKeySettings(uint8_t KeySettings);
 void ReadSelectedAppKey(uint8_t KeyId, uint8_t* Key);
 void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key);
 
 /* Application selection */
 uint8_t LookupAppSlot(const DESFireAidType Aid);
 void SelectAppBySlot(uint8_t AppSlot);
-uint8_t SelectApp(const DESFireAidType Aid);
+uint16_t SelectApp(const DESFireAidType Aid);
 void SelectPiccApp(void);
 bool IsPiccAppSelected(void);
 
 /* Application management */
-uint8_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings);
-uint8_t DeleteApp(const DESFireAidType Aid);
+uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings);
+uint16_t DeleteApp(const DESFireAidType Aid);
 void GetApplicationIdsSetup(void);
 TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer);
 uint16_t GetApplicationIdsIterator(uint8_t *Buffer, uint16_t ByteCount);

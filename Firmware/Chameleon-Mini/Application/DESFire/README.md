@@ -50,7 +50,21 @@ repositories and code bases:
 * grep through the "TODO" marked parts in the source files 
 * Make sure **ALL** the commands we have definitions for are implemented (esp. different types of authenticate) 
 * Read though the old DESFire EV0 datasheet to make sure are correctly handling all of the SW response code cases 
+* If ``LocalTestingMode != 0``, then need to implement a solution so can test with predictable 
+  (non-randomized) crypto vectors. In particular, ``RndA`` (random number associated with the authenticate 
+  session) and the value of the ``SessionIV`` crypto salt should be fixed to facilitate debugging.
 
 ## List of (mostly) checked / cleaned new source files: 
-* ``DESFirePICCControl.c`` (mostly, see TODO notes)
-* 
+* :interrobang: :large_orange_diamond: ``DESFireAPDU.c``
+* :interrobang: ``DESFireApplicationDirectory.c``
+* :interrobang: :large_orange_diamond: ``DESFireChameleonTerminal.c``
+* :interrobang: ``DESFireCrypto.c``
+* :interrobang: ``DESFireFile.c``
+* :interrobang: ``DESFireISO14443Support.c``
+* :interrobang: ``DESFireInstructions.c``
+* :interrobang: :large_orange_diamond: ``DESFireLogging.c``
+* :interrobang: ``DESFireMemoryOperations.c``
+* :white_check_mark: ``DESFirePICCControl.c`` (:wavy_dash: mostly, see TODO notes)
+* :interrobang: ``DESFireStatusCodes.c``
+* :interrobang: :large_orange_diamond: ``DESFireUtils.c``
+

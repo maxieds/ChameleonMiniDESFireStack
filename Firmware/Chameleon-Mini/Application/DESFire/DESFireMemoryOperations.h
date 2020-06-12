@@ -11,8 +11,8 @@
 /* Reserve some space on the stack (text / data segment) for intermediate 
    storage of strings and data we need to write so we do not have to rely 
    on a bothersome heap-based scheme for passing pointers to functions: */
-#define MAX_DATA_BUFFER_SIZE                (256)
-#define MAX_STRING_BUFFER_SIZE              (256)
+#define MAX_DATA_BUFFER_SIZE                (64)
+#define MAX_STRING_BUFFER_SIZE              (64)
 
 extern BYTE DESFireInternalDataBuffer[MAX_DATA_BUFFER_SIZE];
 extern BYTE DESFireInternalStringBuffer[MAX_STRING_BUFFER_SIZE];

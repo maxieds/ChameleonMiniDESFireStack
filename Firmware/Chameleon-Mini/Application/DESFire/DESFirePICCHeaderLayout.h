@@ -87,9 +87,13 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 #define DESFIRE_STORAGE_SIZE_4K  0x18
 #define DESFIRE_STORAGE_SIZE_8K  0x1A
 
-/** Defines the global PICC configuration.
+/* 
+ * Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
+#define PICC_FORMAT_BYTE                   (0xff)
+#define PICC_EMPTY_BYTE                    (0x00)
+
 typedef struct DESFIRE_FIRMWARE_PACKING {
     /* Static data: does not change during the PICC's lifetime */
     uint8_t Uid[DESFIRE_UID_SIZE];

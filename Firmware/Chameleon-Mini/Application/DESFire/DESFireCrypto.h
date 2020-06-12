@@ -48,6 +48,20 @@ extern BYTE ActiveCommMode;
 typedef uint8_t Desfire2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 
+INLINE BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
+     switch(cryptoType) {
+          //case CRYPTO_TYPE_DES:
+          case CRYPTO_TYPE_2K3DES:
+               return CRYPTO_2KTDEA_KEY_SIZE;
+          case CRYPTO_TYPE_3K3DES:
+               return CRYPTO_3KTDEA_KEY_SIZE;
+          case CRYPTO_TYPE_AES:
+               return CRYPTO_AES_KEY_SIZE;
+          default:
+               return 0;
+     }
+}
+
 #define MAC_LENGTH          4
 #define CMAC_LENGTH         8
 

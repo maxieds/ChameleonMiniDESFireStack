@@ -85,8 +85,20 @@ SETTINGS	+= -DALLOW_DESFIRE_TERMINAL_COMMANDS
 SETTINGS	+= -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 #SETTINGS	+= -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
-#Set a default testing mode setting:
+#Set a default testing mode setting (0 = OFF, non-NULL = ON):
 SETTINGS	+= -DDESFIRE_DEFAULT_TESTING_MODE=1
+
+#Anticipating that the implementation overhead is high with the 
+#maximum storage allocations for the number of possible keys per 
+#application directory, and/or the total number of AID numbered 
+#directory slots, the following options will tweak this limitation: 
+# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults 
+# -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID), 
+# -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT## 
+#    (total number of AID spaces available, not including the master 0x00)
+SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
+#SETTINGS	+= -DDESFIRE_CUSTOM_MAX_KEYS=6
+#SETTINGS	+= -DDESFIRE_CUSTOM_MAX_APPS=8
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash

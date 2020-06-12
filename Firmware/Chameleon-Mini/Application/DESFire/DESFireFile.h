@@ -102,9 +102,6 @@ uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Lengt
 uint16_t ReadDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
-
-p
-p
 TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
 uint8_t ReadValueFileSetup(uint8_t CommSettings);
 
