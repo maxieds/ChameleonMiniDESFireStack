@@ -11,42 +11,48 @@
 #include "DESFireFirmwareSettings.h"
 #include "DESFireAPDU.h"
 
-/** Cryptography related definitions **/
-
-/* Communication modes */
-#define DESFIRE_COMMS_PLAINTEXT         0
-#define DESFIRE_COMMS_PLAINTEXT_MAC     1
-#define DESFIRE_COMMS_CIPHERTEXT_DES    3
-
-/* Note there is also an AES wrapped COMMS variant called 
+/* Communication modes: 
+ * Define the modes of communication over the RFID channel
+ * 
+ * Note there is also an AES wrapped COMMS variant called 
  * LRP Secure Messaging detailed starting on page 37 
  * (Section 7.2) of 
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
 
-/* Define the modes of communication over the RFID channel: */
-extern BYTE ActiveCommMode;
+#define DESFIRE_COMMS_PLAINTEXT            0
+#define DESFIRE_COMMS_PLAINTEXT_MAC        1
+#define DESFIRE_COMMS_CIPHERTEXT_DES       3
+#define DESFIRE_COMMS_CIPHERTEXT_AES128    4
+#define DESFIRE_COMMS_CIPHERTEXT_AES192    5
+#define DESFIRE_COMMS_CIPHERTEXT_AES256    6
 
 #define CRYPTO_TYPE_DES         (0x00)
 #define CRYPTO_TYPE_2K3DES      (0x0A)
 #define CRYPTO_TYPE_3K3DES      (0x1A)
-#define CRYPTO_TYPE_AES         ((BYTE) 0xAA)
+#define CRYPTO_TYPE_AES         ((BYTE) 0xAA) /* Key size determined by the initial auth buffer */
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_DES_KEY_SIZE         (8)
 #define CRYPTO_2KTDEA_KEY_SIZE      (2 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_3KTDEA_KEY_SIZE      (3 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_AES_KEY_SIZE         (16)
+#define CRYPTO_MAX_KEY_SIZE         (32)
 #define CRYPTO_DES_BLOCK_SIZE       (8) 
-#define CRYPTO_3KTDEA_BLOCK_SIZE    (CRYPTO_DES_BLOCK_SIZE) // ???
+#define CRYPTO_3KTDEA_BLOCK_SIZE    (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_AES_BLOCK_SIZE       (16)
+#define CRYPTO_MAX_BLOCK_SIZE       (16)
+#define DESFIRE_DES_IV_SIZE         (CRYPTO_DES_BLOCK_SIZE)
+#define DESFIRE_AES_IV_SIZE         (CRYPTO_AES_BLOCK_SIZE)
+#define DESFIRE_SESSION_KEY_SIZE    (CRYPTO_3KTDEA_KEY_SIZE)
 
-#define DESFIRE_DES_IV_SIZE                (CRYPTO_DES_BLOCK_SIZE)
-#define DESFIRE_AES_IV_SIZE                (CRYPTO_AES_BLOCK_SIZE)
-#define DESFIRE_CRYPTO_SESSION_KEY_SIZE    (CRYPTO_3KTDEA_KEY_SIZE)
+typedef BYTE Crypto2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
+typedef BYTE Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
+typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
+typedef BYTE CryptoIVBufferType[CRYPTO_MAX_BLOCK_SIZE];
 
-typedef uint8_t Desfire2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
-typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
+extern CryptoIVBufferType SessionIV;
+extern BYTE SessionIVByteSize;
 
 BYTE GetCryptoMethodKeySize(uint8_t cryptoType);
 
@@ -67,43 +73,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_AUTH_AES,
 } DesfireAuthType;
 
-extern DesfireAuthType ActiveAuthType;
-
-extern const BYTE InitialMasterKeyDataDES[CRYPTO_DES_KEY_SIZE]; 
-extern const BYTE InitialMasterKeyDataAES[CRYPTO_AES_KEY_SIZE]; 
-extern const BYTE InitialMasterKeyData3KTDEA[CRYPTO_3KTDEA_KEY_SIZE]; 
-
-extern BYTE NO_KEY_AUTHENTICATED;
-extern BYTE CHECKSUM_IV[4];
-
-typedef union DESFIRE_FIRMWARE_PACKING {
-     BYTE LegacyTransfer[DESFIRE_CRYPTO_SESSION_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-     BYTE IsoTransfer[DESFIRE_CRYPTO_SESSION_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-     BYTE AESTransfer[CRYPTO_AES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-} CryptoSessionKey;
-
-typedef union DESFIRE_FIRMWARE_PACKING {
-     BYTE LegacyTransferIV[DESFIRE_DES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-     BYTE IsoTransferIV[DESFIRE_DES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-     BYTE AESTransferIV[DESFIRE_AES_IV_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-} CryptoIVBuffer;
-
-extern CryptoSessionKey SessionKey;
-extern CryptoIVBuffer SessionIV;
-
-BYTE * ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey);
-BYTE * ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf);
-BYTE * GetDefaultKeyBuffer(BYTE keyType);
-
-BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
-
-typedef enum {
-    MCD_SEND,
-    MCD_RECEIVE
-} DESFireCryptoDirection;
+BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod, SIZET KeyBufferSize);
 
 /* Checksum routines: */
-// TODO: Need AES equivalents? 
+// TODO: Need AES equivalents ... 
 void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalCRCA(uint8_t *Buffer);
 void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
@@ -115,7 +88,6 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count);
 
-/** The following is modified from devzzo's DESFire firmware implementation sources: **/
 /* Notes on cryptography in DESFire cards
 
 The EV0 was the first chip in the DESFire series. It makes use of the TDEA

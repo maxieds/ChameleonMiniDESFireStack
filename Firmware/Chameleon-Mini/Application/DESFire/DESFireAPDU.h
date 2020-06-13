@@ -8,8 +8,7 @@
 
 #include "DESFireFirmwareSettings.h" 
 
-//#define DESFIRE_MAX_PAYLOAD_SIZE            59 /* Bytes */
-#define DESFIRE_MAX_PAYLOAD_SIZE            64
+#define DESFIRE_MAX_PAYLOAD_SIZE            64 // 59 /* Bytes */
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
      BYTE  cla;

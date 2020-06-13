@@ -63,13 +63,33 @@ repositories and code bases:
   This is going to require writing wrappers around their excellent existing GPL routines. 
   Then can consult with the LibFreeFare implementation for DESFire tags to glue this together with the 
   Send / Receive protocol exchanges with MAC/CRC checksums going on.
+* Need to document the reasons for the obscured file system layout that has to 
+  put in-use accounting arrays into EEPROM and fetch them every time a request is made: 
+  The ATXMega128 avr chip (even, for upgraded RevG boards) has severely limited ``.data`` segment 
+  space. To the point that even a window of 1024bytes is the difference between colliding with other 
+  critical data at runtime. The slower EEPROM, on the other hand, is substantially more plentiful. 
+  And with a moderately small number of requests for small-ish files going through the tag at 
+  any given time, this solution is the only way to maintain all the runtime data for actively selected 
+  applications in a somewhat state-of-art pushing standard that is the ever spec-wise unknown DESFire stack. 
+* See what data segment space can be saved by setting ``__attribute__((...))`` packed on big union 
+  structures like ``TransferStateType`` versus aligned at one for the component structs?
+
+## Feature requests (for debugging) 
+* Have an action where a (long) push of a button allows for 
+     1. A dump of the stored internal logging data to get written LIVE-style to the serial USB 
+     2. A dump of the pretty-printed DESFire tag layout to get written to the serial USB 
+* Store some compile-time randomized system bits (from openssl) to get stored to a special 
+  small enough segment within the EEPROM for reference (sort of like a secret UID data, or even 
+  unique serial number that should get reprogrammed everytime the firmware is re-compiled ... 
+  1. ``#define EEPROM_ATTR __attribute__ ((section (".eeprom")))``
+
 
 ## List of (mostly) checked / cleaned new source files: 
 * :large_orange_diamond: ``DESFireAPDU.c``
-* :white_check_mark: ``DESFireApplicationDirectory.c``
+* :interrobang: ``DESFireApplicationDirectory.c``
 * :large_orange_diamond: ``DESFireChameleonTerminal.c``
 * :large_orange_diamond: ``DESFireCrypto.c``
-* :white_check_mark: ``DESFireFile.c``
+* :interrobang: ``DESFireFile.c``
 * :interrobang: ``DESFireISO14443Support.c``
 * :interrobang: ``DESFireInstructions.c``
 * :large_orange_diamond: ``DESFireLogging.c``

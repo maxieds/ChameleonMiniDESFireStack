@@ -46,4 +46,7 @@ void DebugPrintP(const char *fmt, ...);
 
 SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize);
 
+#define ExtractLSBLE(ui) \
+    (((ui & 0xff000000) >> 24) & 0x000000ff)
+
 #endif

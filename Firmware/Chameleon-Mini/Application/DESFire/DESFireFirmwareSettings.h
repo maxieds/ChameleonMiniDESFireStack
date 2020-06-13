@@ -16,12 +16,13 @@
 #define DESFIRE_FIRMWARE_BUILD_TIMESTAMP            (BUILD_DATE)
 #define DESFIRE_FIRMWARE_GIT_COMMIT_ID              (COMMIT_ID)
 #define DESFIRE_FIRMWARE_REVISION                   ("0.0.1")
+#define DESFIRE_FIRMWARE_PICC_LAYOUT_REVISION       (0x01)
 
 #define DESFIRE_LITTLE_ENDIAN                       (1)
 
-#define DESFIRE_PICC_LAYOUT_REVISION                (0x01)
 #define DESFIRE_PICC_STRUCT_PACKING                 __attribute__((packed))
 #define DESFIRE_FIRMWARE_PACKING                    __attribute__((packed))
+#define DESFIRE_FIRMWARE_ALIGNAT                    __attribute__((aligned(1)))
 #define DESFIRE_PICC_ARRAY_ALIGNAT                  __attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              __attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_ENUM_PACKING               __attribute__((aligned(1)))
@@ -49,6 +50,6 @@ typedef uint32_t UINT;
 
 /* Whether to auto select application ID and file before the user (input system) 
    even invokes an ISO SELECT APPLICATION [0x00 0xa4 0x04] command? */
-#define DESFIRE_LEGACY_SUPPORT                      (1)
+#define DESFIRE_LEGACY_SUPPORT                      (0)
 
 #endif 

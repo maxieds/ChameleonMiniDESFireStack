@@ -19,14 +19,43 @@
  * Internal state variables: 
  */
 
-typedef struct DESFIRE_FIRMWARE_PACKING {
+typedef struct {
     BYTE  Slot;
-    BYTE  KeySettings;
     BYTE  KeyCount;
-    SIZET FilesAddress; /* in FRAM */
-    SIZET KeyAddress;   /* in FRAM */
+    BYTE  FileCount;
+    BYTE  CryptoCommStandard;
+    BYTE  KeySettings;            /* Block offset in EEPROM */
+    BYTE  FileNumbersArrayMap;    /* Block offset in EEPROM */ 
+    BYTE  FileCommSettings;       /* Block offset in EEPROM */
+    BYTE  FileAccessRights;       /* Block offset in EEPROM */
+    BYTE  KeyVersionsArray;       /* Block offset in EEPROM */
+    SIZET FilesAddress;           /* in FRAM */
+    SIZET KeyAddress;             /* in FRAM */
     UINT  DirtyFlags;
 } SelectedAppCacheType;
+
+extern BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
+
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+    /* AppData keeping track how many keys each app has */
+    DESFIRE_APP_KEY_COUNT_BLOCK_ID,
+    /* AppData active file count */
+    DESFIRE_APP_FILE_COUNT_BLOCK_ID,
+    /* AppData keeping track of apps key settings */
+    DESFIRE_APP_KEY_SETTINGS_BLOCK_ID,
+    /* AppData hash-like unsorted array mapping file indices to their labeled numbers */
+    DESFIRE_APP_FILE_NUMBER_ARRAY_MAP,
+    /* AppData communication settings (crypto transfer protocols) per file */
+    DESFIRE_APP_FILE_COMM_SETTINGS,
+    /* AppData file access rights */
+    DESFIRE_APP_FILE_ACCESS_RIGHTS, 
+    /* AppData keep track of newer EVx revisions key versioning schemes */
+    DESFIRE_APP_KEY_VERSIONS_ARRAY,
+    /* AppData keeping track of apps file index blocks */
+    DESFIRE_APP_FILES_PTR_BLOCK_ID,
+    /* AppData keeping track of apps key locations */
+    DESFIRE_APP_KEYS_PTR_BLOCK_ID,
+} DesfireCardLayout;
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE Num;
@@ -35,11 +64,11 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 
 extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
 extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
+extern SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
 extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
-
 extern SIZET CardCapacityBlocks;
 
-/* Cached data: flush to FRAM if changed */
+/* Cached data: flush to FRAM or relevant EEPROM addresses if changed */
 extern DESFirePICCInfoType Picc;
 extern DESFireAppDirType AppDir;
 
@@ -57,89 +86,46 @@ typedef BYTE (*PcdToPiccTransferFilterFuncType)(BYTE *Buffer, BYTE Count);
 
 /* Stored transfer state for all transfers */
 typedef union DESFIRE_FIRMWARE_PACKING {
-    struct DESFIRE_FIRMWARE_PACKING {
+    struct DESFIRE_FIRMWARE_ALIGNAT {
         BYTE NextIndex;
     } GetApplicationIds;
-    struct DESFIRE_FIRMWARE_PACKING {
+    struct DESFIRE_FIRMWARE_ALIGNAT {
         TransferChecksumUpdateFuncType UpdateFunc;
         TransferChecksumFinalFuncType FinalFunc;
         BYTE AvailablePlaintext;
-        union {
-            struct DESFIRE_FIRMWARE_PACKING {
-                CryptoTDEACBCFuncType MACFunc;
-                BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-            } MAC;
-            struct DESFIRE_FIRMWARE_PACKING {
-                CryptoTDEACBCFuncType MACFunc;
-                BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-            } CipherTextTransferMAC;
-            SIZET CRCA;
-        };
+        struct {
+            BYTE                   BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];
+            TDEACryptoCBCFuncType  TDEAChecksumFunc;
+            AESCryptoCBCFuncType   AESChecksumFunc;
+            SIZET                  CRCA;
+        } MACData;
     } Checksums;
-    struct DESFIRE_FIRMWARE_PACKING {
+    struct DESFIRE_FIRMWARE_ALIGNAT {
         SIZET BytesLeft;
-        struct DESFIRE_FIRMWARE_PACKING {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferSourceFuncType Func;
             SIZET Pointer; /* in FRAM */
         } Source;
-        struct DESFIRE_FIRMWARE_PACKING {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             BOOL FirstPaddingBitSet;
             TransferEncryptFuncType Func;
             BYTE AvailablePlaintext;
-            union {
-                struct DESFIRE_FIRMWARE_PACKING {
-                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-                } TDEA;
-                struct DESFIRE_FIRMWARE_PACKING {
-                    BYTE BlockBuffer[CRYPTO_3KTDEA_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-                } IsoTransferTDEA;
-                struct DESFIRE_FIRMWARE_PACKING {
-                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-                } AESTransferTDEA;
-            };
+            BYTE BlockBuffer[CRYPTO_MAX_KEY_SIZE];
         } Encryption; 
     } ReadData;
-    struct DESFIRE_FIRMWARE_PACKING {
+    struct DESFIRE_FIRMWARE_ALIGNAT {
         SIZET BytesLeft;
-        struct DESFIRE_FIRMWARE_PACKING {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferSinkFuncType Func;
             SIZET Pointer; /* in FRAM */
         } Sink;
-        struct DESFIRE_FIRMWARE_PACKING {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferEncryptFuncType Func;
             BYTE AvailablePlaintext;
-            union {
-                struct DESFIRE_FIRMWARE_PACKING {
-                    BYTE BlockBuffer[CRYPTO_DES_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-                } TDEA;
-                struct DESFIRE_FIRMWARE_PACKING {
-                    BYTE BlockBuffer[CRYPTO_3KTDEA_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-                } CipherTextTransferTDEA;
-            };
+            BYTE BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];          
         } Encryption;
     } WriteData;
 } TransferStateType;
-
-#define ExtractTransferMACData(commMode, tstate) \
-	(commMode == DESFIRE_COMMS_CIPHERTEXT) ? \
-	tstate.Checksums.CipherTextTransferMAC : \
-	tstate.Checksums.MAC
-#define ExtractTransferTDEAData(commMode, tstate) \
-	(commMode == DESFIRE_COMMS_CIPHERTEXT) ? \
-tstate.Encryption.CipherTextTransferTDEA : \
-	tstate.Encryption.TDEA
-
-extern TransferStateType TransferState;
-
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    DESFIRE_IDLE,
-    DESFIRE_GET_VERSION2,
-    DESFIRE_GET_VERSION3,
-    DESFIRE_GET_APPLICATION_IDS2,
-    DESFIRE_AUTHENTICATE2,
-    DESFIRE_READ_DATA_FILE,
-    DESFIRE_WRITE_DATA_FILE,
-} DesfireStateType;
 
 extern DesfireStateType DesfireState;
 extern uint8_t AuthenticatedWithKey;

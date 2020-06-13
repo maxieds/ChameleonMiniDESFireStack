@@ -32,24 +32,37 @@ void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
 }
 
-uint8_t GetApplicationData(uint8_t AppSlot, DesfireApplicationDataType *appData) {
-     if(appData == NULL) {
-          return FALSE;
+BYTE GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS) {
+          return 0x00;
      }
-     else if(AppSlot >= AppDir.FirstFreeSlot || AppSlot >= DESFIRE_MAX_SLOTS) {
-          return FALSE;
+     BYTE propValue = 0;
+     SelectedAppCacheType appCache;
+     ReadBlockBytes(&appCache, AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE, sizeof(SelectedAppCacheType));
+     switch(propId) {
+          case DESFIRE_APP_KEY_COUNT_BLOCK_ID:
+               return appCache.KeyCount;
+          case DESFIRE_APP_FILE_COUNT_BLOCK_ID:
+               return appCache.FileCount;
+          case DESFIRE_APP_KEY_SETTINGS_BLOCK_ID:
+               return appCache.KeySettings;
+          case DESFIRE_APP_FILE_NUMBER_ARRAY_MAP:
+               return appCache.FileNumbersArrayMap;
+          case DESFIRE_APP_FILE_COMM_SETTINGS:
+               return appCache.FileCommSettings;
+          case DESFIRE_APP_FILE_ACCESS_RIGHTS:
+               return appCache.FileAccessRights;
+          case DESFIRE_APP_KEY_VERSIONS_ARRAY:
+               return appCache.KeyVersionsArray;
+          default:
+               return 0x00; // use a different access function to read the 2-byte addresses
      }
-     memset(appData, PICC_EMPTY_BYTE, sizeof(DesfireApplicationDataType));
-     BYTE appIdAtSlotBlockOffset = AppDir.AppIdPiccBlockOffsets[AppSlot];
-     ReadBlockBytes(appData, appIdAtSlotBlockOffset, sizeof(DesfireApplicationDataType));
-     SelectedApp.Slot = AppSlot;
-     return TRUE;
+     return propValue;
 }
 
-void SynchronizeSelectedAppData(void) {
-     uint8_t SelectedAppSlot = SelectedApp.Slot;
-     BYTE appDirBlockAddress = AppDir.AppIdPiccBlockOffsets[SelectedAppSlot];
-     WriteBlockBytes(&SelectedAppData, appDirBlockAddress, sizeof(DesfireApplicationDataType));
+void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, BYTE Value) {
+
+
 }
 
 /*

@@ -62,6 +62,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
             uint8_t MaxRecordCount[3];
         } LinearRecordFile;
     };
+    uint8_t FileType;
 } DESFireFileTypeSettings;
 
 /*

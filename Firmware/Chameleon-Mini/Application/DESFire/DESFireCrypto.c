@@ -10,31 +10,6 @@
 #include "DESFirePICCControl.h"
 #include "DESFireISO14443Support.h"
 
-BYTE ActveCommMode = DESFIRE_COMMS_PLAINTEXT;
-
-const BYTE InitialMasterKeyDataDES[CRYPTO_DES_KEY_SIZE] = { 
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
-};
-const BYTE InitialMasterKeyDataAES[CRYPTO_AES_KEY_SIZE] = { 
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
-};
-const BYTE InitialMasterKeyData3KTDEA[CRYPTO_3KTDEA_KEY_SIZE] = { 
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
-};
-
-BYTE NO_KEY_AUTHENTICATED = 0xff;
-BYTE CHECKSUM_IV[4] = { 
-     0x00, 0x00, 0x00, 0x00 
-};
-
-DesfireAuthType ActiveAuthType = DESFIRE_AUTH_LEGACY;
-
-CryptoSessionKey SessionKey = { 0 };
-CryptoIVBuffer SessionIV = { 0 };
-
 BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
      switch(cryptoType) {
           case CRYPTO_TYPE_2K3DES:
@@ -45,41 +20,6 @@ BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
                return CRYPTO_AES_KEY_SIZE;
           default:
                return 0;
-     }
-}
-
-BYTE * ExtractSessionKeyData(DesfireAuthType authType, CryptoSessionKey *skey) {
-     switch(authType) {
-          case DESFIRE_AUTH_LEGACY:
-               return skey->LegacyTransfer;
-          case DESFIRE_AUTH_AES:
-               return skey->AESTransfer;
-          default:
-               return skey->IsoTransfer;
-     }
-}
-
-BYTE * ExtractIVBufferData(DesfireAuthType authType, CryptoIVBuffer *ivBuf) {
-     switch(authType) {
-          case DESFIRE_AUTH_LEGACY:
-               return ivBuf->LegacyTransferIV;
-          case DESFIRE_AUTH_AES:
-               return ivBuf->AESTransferIV;
-          default:
-               return ivBuf->IsoTransferIV;
-     }
-}
-
-BYTE * GetDefaultKeyBuffer(BYTE keyType) {
-     switch(keyType) {
-          case CRYPTO_TYPE_2K3DES:
-               return (BYTE *) InitialMasterKeyDataAES;
-          case CRYPTO_TYPE_3K3DES:
-               return (BYTE *) InitialMasterKeyData3KTDEA;
-          case CRYPTO_TYPE_AES:
-               return (BYTE *) InitialMasterKeyDataAES;
-          default:
-               return (BYTE *) InitialMasterKeyDataDES;
      }
 }
 

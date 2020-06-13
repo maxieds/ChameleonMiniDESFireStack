@@ -13,29 +13,27 @@
 #include "DESFireMemoryOperations.h"
 #include "DESFireUtils.h"
 
-const BYTE PICC_FORMATTED_MARKER[] = { 
-     0xf0, 0x12, 0x34 
-};
-const BYTE DefaultDESFireATS[] = { 
+static const BYTE DefaultDESFireATS[] = { 
      0x06, 0x75, 0x77, 0x81, 0x02, 0x80 
 };
-const BYTE DefaultJCOPDESFireATS[] = { 
-     0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80 
-};
 
+BYTE  SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = 0;
 SIZET DESFIRE_PICC_INFO_BLOCK_ID = 0;
 SIZET DESFIRE_APP_DIR_BLOCK_ID = 0;
+SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = 0;
 SIZET DESFIRE_FIRST_FREE_BLOCK_ID = 0;
+SIZET CardCapacityBlocks = 0;
 
 static void InitBlockSizes(void) __attribute__((constructor));
 void InitBlockSizes(void) {
-     SIZET DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID + 
+     SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = RoundBlockSize(sizeof(SelectedAppCacheType), DESFIRE_EEPROM_BLOCK_SIZE);
+     DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID + 
                 RoundBlockSize(sizeof(DESFirePICCInfoType), DESFIRE_EEPROM_BLOCK_SIZE);
-     SIZET DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + 
+     DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + 
                 RoundBlockSize(sizeof(DESFireAppDirType), DESFIRE_EEPROM_BLOCK_SIZE);
+     DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID + 
+                                   DESFIRE_MAX_SLOTS * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
 }
-
-SIZET CardCapacityBlocks = 0;
 
 DESFirePICCInfoType Picc = { 0 };
 DESFireAppDirType AppDir = { 0 };
@@ -44,7 +42,7 @@ SelectedFileCacheType SelectedFile = { 0 };
 TransferStateType TransferState = { 0 };
 
 DesfireStateType DesfireState = DESFIRE_IDLE;
-uint8_t AuthenticatedWithKey = 0x00;
+BYTE AuthenticatedWithKey = 0x00;
 
 /* Transfer routines */
 
@@ -93,23 +91,25 @@ uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count)
 
 uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
     memset(&TransferState, PICC_EMPTY_BYTE, sizeof(TransferState));
-    // TODO: Is there an AES mode, especially on recent DESFire tags? 
     switch (CommSettings) {
        case DESFIRE_COMMS_PLAINTEXT:
            break;
        case DESFIRE_COMMS_PLAINTEXT_MAC:
            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-           TransferState.Checksums.MAC.MACFunc = &CryptoEncrypt2KTDEA_CBCSend;
-           memset(SessionIV.LegacyTransferIV, PICC_EMPTY_BYTE, sizeof(SessionIV.LegacyTransferIV));
+           TransferState.Checksums.MAC = &CryptoEncrypt2KTDEA_CBCSend;
+           memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIVByteSize));
            break;
        case DESFIRE_COMMS_CIPHERTEXT_DES:
            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
            TransferState.Checksums.CRCA = ISO14443A_CRCA_INIT;
            TransferState.ReadData.Encryption.Func = &TransferEncryptTDEASend;
-           memset(SessionIV.IsoTransferIV, PICC_EMPTY_BYTE, sizeof(SessionIV.IsoTransferIV));
+           memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIVByteSize));
            break;
+       case DESFIRE_COMMS_CIPHERTEXT_AES128:
+       case DESFIRE_COMMS_CIPHERTEXT_AES192:
+       case DESFIRE_COMMS_CIPHERTEXT_AES256:
        default:
            return STATUS_PARAMETER_ERROR;
     }
@@ -119,7 +119,6 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 uint8_t WriteDataFilterSetup(uint8_t CommSettings)
 {
     memset(&TransferState, PICC_EMPTY_BYTE, sizeof(TransferState));
-    // TODO: AES communication mode? 
     switch (CommSettings) {
        case DESFIRE_COMMS_PLAINTEXT:
            break;
@@ -127,15 +126,18 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
            TransferState.Checksums.MAC.MACFunc = &CryptoEncrypt2KTDEA_CBCReceive;
-           memset(SessionIV.LegacyTransferIV, 0, sizeof(SessionIV.LegacyTransferIV));
+           memset(SessionIV, 0, sizeof(SessionIVByteSize));
            break;
        case DESFIRE_COMMS_CIPHERTEXT_DES:
            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
            TransferState.Checksums.CRCA = ISO14443A_CRCA_INIT;
            TransferState.WriteData.Encryption.Func = &TransferEncryptTDEAReceive;
-           memset(SessionIV.IsoTransferIV, 0, sizeof(SessionIV.IsoTransferIV));
+           memset(SessionIV, 0, sizeof(SessionIVByteSize));
            break;
+       case DESFIRE_COMMS_CIPHERTEXT_AES128:
+       case DESFIRE_COMMS_CIPHERTEXT_AES192:
+       case DESFIRE_COMMS_CIPHERTEXT_AES256:
        default:
            return STATUS_PARAMETER_ERROR;
     }
@@ -177,7 +179,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize) {
 }
 
 void ResetPiccBackend(void) {
-    SelectPiccApp(); // TODO: in ApplicationDirectory.c ... 
+    SelectPiccApp(); 
 }
 
 bool IsEmulatingEV1(void) {
@@ -209,12 +211,15 @@ void GetPiccManufactureInfo(uint8_t* Buffer) {
 }
 
 uint8_t GetPiccKeySettings(void) {
-    return GetAppKeySettings(DESFIRE_PICC_APP_SLOT); // TODO: Need to look at this ... 
+    return GetAppKeySettings(DESFIRE_PICC_APP_SLOT);
 }
 
 void FormatPicc(void) {
     /* Wipe application directory */
     memset(&AppDir, PICC_EMPTY_BYTE, sizeof(DESFireAppDirType));
+    BYTE fileCacheArrayBlocks = DESFIRE_MAX_SLOTS * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE; 
+    CopyBlockBytes(DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID, 0x00, 
+                   fileCacheArrayBlocks * DESFIRE_EEPROM_BLOCK_SIZE);
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 1;
     /* Reset the free block pointer */
@@ -224,19 +229,19 @@ void FormatPicc(void) {
     SynchronizeAppDir();
 }
 
-void CreatePiccApp(void) { // TODO: Check 
-    Desfire2KTDEAKeyType Key;
+void CreatePiccApp(void) { 
+    CryptoKeyBufferType Key; // TODO: Should default to some AES-based protocol
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
     CreateApp(MasterAppAID, DESFIRE_MAX_KEYS - 1, 0x0f);
     SelectPiccApp();
-    memset(Key, 0, sizeof(Key));
-    WriteSelectedAppKey(0, Key);
+    memset(Key, 0, sizeof(Desfire2KTDEAKeyType));
+    WriteSelectedAppKey(0x00, Key);
 }
 
 void FactoryFormatPiccEV0(void) {
     /* Wipe PICC data */
-    memset(&Picc, 0xFF, sizeof(Picc));
-    memset(&Picc.Uid[0], 0x00, DESFIRE_UID_SIZE);
+    memset(&Picc, PICC_FORMAT_BLOCK, sizeof(Picc));
+    memset(&Picc.Uid[0], PICC_EMPTY_BLOCK, DESFIRE_UID_SIZE);
     /* Initialize params to look like EV0 */
     Picc.StorageSize = DESFIRE_STORAGE_SIZE_4K;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV0;

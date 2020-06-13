@@ -74,14 +74,18 @@ extern const BYTE DefaultJCOPDESFireATS[];
 /* Other HW product types for DESFire tags: See page 7 of 
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf 
  */
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-     NATIVEIC_PHYS_CARD                 = 0x01, 
-     LIGHT_NATIVEIC_PHYS_CARD           = 0x08, 
-     MICROCONTROLLER_PHYS_CARDI         = 0x81, 
-     MICROCONTROLLER_PHYS_CARDII        = 0x83, 
-     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91, 
-     HCE_MIFARE_2GO                     = 0xa1, 
-} DESFireHWProductCodes;
+// typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+//     NATIVEIC_PHYS_CARD                 = 0x01, 
+//     LIGHT_NATIVEIC_PHYS_CARD           = 0x08, 
+//     MICROCONTROLLER_PHYS_CARDI         = 0x81, 
+//     MICROCONTROLLER_PHYS_CARDII        = 0x83, 
+//     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91, 
+//     HCE_MIFARE_2GO                     = 0xa1, 
+// } DESFireHWProductCodes;
+//
+// const BYTE DefaultJCOPDESFireATS[] = {
+//     0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80
+// };
 
 #define DESFIRE_STORAGE_SIZE_2K  0x16
 #define DESFIRE_STORAGE_SIZE_4K  0x18

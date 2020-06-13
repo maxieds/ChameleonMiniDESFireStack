@@ -71,4 +71,15 @@ extern CryptoAESCryptoCBCFuncType CryptoDecryptAES_CBCReceive;
  * TODO: DES: 2KTDEA, 3KTDEA methods need to be re-worked with the AVRCrypto library sources ... 
  */
 
+uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
+     return STATUS_OPERATION_OK;
+}
+
+uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
+     // TODO: Setup logging ... 
+     return STATUS_OPERATION_OK;
+}
+
+
+
 #endif

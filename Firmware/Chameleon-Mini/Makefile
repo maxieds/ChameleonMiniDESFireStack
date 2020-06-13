@@ -105,6 +105,13 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DDESFIRE_CUSTOM_MAX_APPS=8
 #SETTINGS	+= -DDESFIRE_USE_FACTORY_SIZES
 
+#Support for some randomization in each custom compiled instantiation of the firmware:
+RANDOMIZED_DATA_SIZE        = 128
+RAW_RANDOMIZED_DATA         = $(shell openssl rand -rand /dev/urandom (($(RANDOMIZED_DATA_SIZE) + 1)) 2> /dev/null)
+RANDOMIZED_DATA_HEXFMTBYTES = $(shell echo $(RAW_RANDOMIZED_DATA) | xxd -p | sed 's/.\{2\}/0x&, /g' | sed 's/, 0x0//g')
+RANDOMIZED_DATA             = $(shell echo $(RANDOMIZED_DATA_HEXFMTBYTES) | sed 's/..$//')
+#SETTINGS	+= -DENABLE_RANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA_SIZE) -DRANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA)
+
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
@@ -152,7 +159,6 @@ CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES = 
-
 
 #AVRDUDE settings
 AVRDUDE_PROGRAMMER = flip2
@@ -222,3 +228,5 @@ desfire-dev: $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
+	#$(CROSS)-nm --size-sort --demangle --radix=d $(TARGET).elf
+	$(CROSS)-size -C -mcu=atmega128 --format=avr $(TARGET).elf
