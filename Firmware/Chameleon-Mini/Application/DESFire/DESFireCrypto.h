@@ -10,8 +10,8 @@
 #include "DESFireFirmwareSettings.h"
 #include "DESFireAPDU.h"
 
-#include "ExternalAVRCryptoLib/aes/aes.h"
-#include "ExternalAVRCryptoLib/des/des.h"
+#include "ExternalCryptoLib/AVRCryptoLib/aes/aes.h"
+#include "ExternalCryptoLib/AVRCryptoLib/des/des.h"
 
 /* Communication modes: 
  * Define the modes of communication over the RFID channel

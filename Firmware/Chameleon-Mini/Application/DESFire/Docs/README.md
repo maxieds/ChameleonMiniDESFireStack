@@ -86,7 +86,7 @@ repositories and code bases:
 
 ## List of (mostly) checked / cleaned new source files: 
 * :large_orange_diamond: ``DESFireAPDU.c``
-* :interrobang: ``DESFireApplicationDirectory.c``
+* :white_check_mark: ``DESFireApplicationDirectory.c``
 * :large_orange_diamond: ``DESFireChameleonTerminal.c``
 * :large_orange_diamond: ``DESFireCrypto.c``
 * :interrobang: ``DESFireFile.c``

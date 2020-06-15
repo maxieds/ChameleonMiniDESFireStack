@@ -146,7 +146,7 @@ SRC         += Application/MifareDESFire.c $(DESFIRE_MAINSRC)/DESFireAPDU.c \
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
 			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/gf256mul/gf256mul.S \
-			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/AVRCryptoLib-SingleSource.c \
+			$(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
 			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S $(DESFIRE_MAINSRC)/DESFireCrypto.c \
 			$(DESFIRE_MAINSRC)/DESFireFile.c $(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
 			$(DESFIRE_MAINSRC)/DESFireInstructions.c $(DESFIRE_MAINSRC)/DESFireLogging.c \
