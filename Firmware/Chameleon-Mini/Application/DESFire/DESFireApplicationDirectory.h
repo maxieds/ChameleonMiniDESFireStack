@@ -19,6 +19,11 @@
      #define DESFIRE_CUSTOM_MAX_APPS                (28)
      #undef  DESFIRE_CUSTOM_MAX_KEYS
      #define DESFIRE_CUSTOM_MAX_KEYS                (14)
+#elif defined(DESFIRE_MAXIMIZE_SIZES_FOR_STORAGE)
+     #undef  DESFIRE_CUSTOM_MAX_APPS
+     #define DESFIRE_CUSTOM_MAX_APPS                (DESFIRE_EEPROM_BLOCK_SIZE - 1)
+     #undef  DESFIRE_CUSTOM_MAX_KEYS
+     #define DESFIRE_CUSTOM_MAX_KEYS                (DESFIRE_EEPROM_BLOCK_SIZE)
 #endif
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
@@ -39,10 +44,10 @@
      #define DESFIRE_MAX_KEYS                       (14)
 #endif
 
-typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
-
 extern const BYTE DEFAULT_DESFIRE_AID[]; 
 extern const BYTE DEFAULT_ISO7816_AID[]; 
+
+typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
 
 /* Mifare DESFire EV1 Application crypto operations */
 #define APPLICATION_CRYPTO_DES    0x00
@@ -61,34 +66,46 @@ extern const BYTE DEFAULT_ISO7816_AID[];
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE FirstFreeSlot;
-    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; /* 84 */
+    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; 
 } DESFireAppDirType;
 
-/** Defines the block ID of each application's file on the card. */
+/* Defines the block ID of each application's file on the card. */
 typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
 
-/* This resolves to 1 */
-#define DESFIRE_FILE_INDEX_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
-
-/* This resolves to 4 */
-#define DESFIRE_APP_DIR_BLOCKS DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
-
-/* Special values for access key IDs */
-#define DESFIRE_ACCESS_FREE     0xE
-#define DESFIRE_ACCESS_DENY     0xF
+#define DESFIRE_FILE_INDEX_BLOCKS   DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
+#define DESFIRE_APP_DIR_BLOCKS      DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
 
 /* Global card structure support routines */
 void SynchronizeAppDir(void);
 void SynchronizePICCInfo(void);
 
+/* Application data management */
+SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot);
+void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value);
+
 /* Application key management */
-BYTE GetAppProperty(DesfireCardLayout propId, BYTE AppSlot);
-void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, BYTE Value);
-BYTE GetSelectedAppKeySettings(void);
-void SetSelectedAppKeySettings(BYTE KeySettings);
-BYTE GetAppKeySettings(uint8_t Slot);
-void ReadSelectedAppKey(uint8_t KeyId, uint8_t* Key);
-void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key);
+BYTE ReadKeyCount(uint8_t AppSlot);
+void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount);
+BYTE ReadKeySettings(uint8_t AppSlot, uint8_t KeyId);
+void WriteKeySettings(uint8_t AppSlot, uint8_t KeyId, BYTE Value);
+BYTE ReadKeyVersion(uint8_t AppSlot, uint8_t KeyId);
+void WriteKeyVersion(uint8_t AppSlot, uint8_t KeyId, BYTE Value);
+SIZET ReadKeyStorageAddress(uint8_t AppSlot);
+void WriteKeyStorageAddress(uint8_t AppSlot, SIZET Value);
+void ReadAppKey(uint8_t AppSlot, uint8_t KeyId, uint8_t *Key, SIZET KeySize);
+void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZET KeySize);
+
+/* Application file management */
+BYTE ReadFileCount(uint8_t AppSlot);
+void WriteFileCount(uint8_t AppSlot, BYTE FileCount);
+BYTE LookupFileNumberIndex(uint8_t AppSlot, BYTE FileNumber);
+void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber);
+BYTE ReadFileCommSettings(uint8_t AppSlot, uint8_t FileIndex);
+void WriteFileCommSettings(uint8_t AppSlot, uint8_t FileIndex, BYTE CommSettings);
+SIZET ReadFileAccessRights(uint8_t AppSlot, uint8_t FileIndex);
+void WriteFileAccessRights(uint8_t AppSlot, uint8_t FileIndex, SIZET AccessRights);
+DESFireFileTypeSettings ReadFileSettings(uint8_t AppSlot, uint8_t FileIndex);
+void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettings *FileSettings);
 
 /* Application selection */
 uint8_t LookupAppSlot(const DESFireAidType Aid);

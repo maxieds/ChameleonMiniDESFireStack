@@ -32,11 +32,10 @@ void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
 }
 
-BYTE GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
+SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
      if(AppSlot >= DESFIRE_MAX_SLOTS) {
           return 0x00;
      }
-     BYTE propValue = 0;
      SelectedAppCacheType appCache;
      ReadBlockBytes(&appCache, AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE, sizeof(SelectedAppCacheType));
      switch(propId) {
@@ -44,71 +43,266 @@ BYTE GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
                return appCache.KeyCount;
           case DESFIRE_APP_FILE_COUNT_BLOCK_ID:
                return appCache.FileCount;
+          case DESFIRE_APP_CRYPTO_COMM_STANDARD:
+               return appCache.CryptoCommStandard;
           case DESFIRE_APP_KEY_SETTINGS_BLOCK_ID:
                return appCache.KeySettings;
-          case DESFIRE_APP_FILE_NUMBER_ARRAY_MAP:
+          case DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID:
                return appCache.FileNumbersArrayMap;
-          case DESFIRE_APP_FILE_COMM_SETTINGS:
+          case DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID:
                return appCache.FileCommSettings;
-          case DESFIRE_APP_FILE_ACCESS_RIGHTS:
+          case DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID:
                return appCache.FileAccessRights;
-          case DESFIRE_APP_KEY_VERSIONS_ARRAY:
+          case DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID:
                return appCache.KeyVersionsArray;
+          case DESFIRE_APP_FILES_PTR_BLOCK_ID:
+               return appCache.FilesAddress;
+          case DESFIRE_APP_KEYS_PTR_BLOCK_ID:
+               return appCache.KeyAddress;
           default:
-               return 0x00; // use a different access function to read the 2-byte addresses
+               return 0x00; 
      }
-     return propValue;
 }
 
-void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, BYTE Value) {
-
-
+void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS) {
+          return;
+     }
+     SelectedAppCacheType appCache;
+     ReadBlockBytes(&appCache, AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE, sizeof(SelectedAppCacheType));
+     switch(propId) {
+          case DESFIRE_APP_KEY_COUNT:
+               appCache.KeyCount = ExtractLSBBE(Value);
+               break;
+          case DESFIRE_APP_FILE_COUNT:
+               appCache.FileCount = ExtractLSBBE(Value);
+               break;
+          case DESFIRE_APP_CRYPTO_COMM_STANDARD: 
+               appCache.CryptoCommStandard = ExtractLSBBE(Value);
+               break;
+          case DESFIRE_APP_KEY_SETTINGS_BLOCK_ID:
+               appCache.KeySettings = Value;
+               break;
+          case DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID:
+               appCache.FileNumbersArrayMap = Value;
+               break;
+          case DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID:
+               appCache.FileCommSettings = Value;
+               break;
+          case DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID:
+               appCache.FileAccessRights = Value;
+               break;
+          case DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID:
+               appCache.KeyVersionsArray = Value;
+               break;
+          case DESFIRE_APP_FILES_PTR_BLOCK_ID:
+               appCache.FilesAddress = Value;
+               break;
+          case DESFIRE_APP_KEYS_PTR_BLOCK_ID:
+               appCache.KeyAddress = Value;
+               break;
+          default:
+               return; 
+     }
+     WriteBlockBytes(&appCache, AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE, sizeof(SelectedAppCacheType));
 }
 
 /*
  * Application key management
  */
 
-BYTE GetSelectedAppKeySettings(void) {
-     uint8_t SelectedAppSlot = SelectedApp.Slot;
-     return AppDir.AppKeySettings[SelectedAppSlot];
+BYTE ReadKeyCount(uint8_t AppSlot) {
+     return (BYTE) GetAppProperty(DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot);
 }
 
-void SetSelectedAppKeySettings(BYTE KeySettings) {
-     uint8_t SelectedAppSlot = SelectedApp.Slot;
-     AppDir.AppKeySettings[SelectedAppSlot] = KeySettings;
-     SynchronizeAppDir();
+void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount) {
+     SetAppProperty(DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot, (SIZET) KeyCount);
 }
 
-BYTE GetAppKeySettings(uint8_t Slot) {
-     if(Slot >= DESFIRE_MAX_SLOTS) {
+BYTE ReadKeySettings(uint8_t AppSlot, uint8_t KeyId) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
           return 0x00;
      }
-     return AppDir.AppKeySettings[Slot];
+     SIZET keySettingsBlockId = GetAppProperty(DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
+     BYTE keySettingsArray[DESFIRE_MAX_KEYS];
+     ReadBlockBytes(keySettingsArray, keySettingsBlockId, DESFIRE_MAX_KEYS);
+     return keySettingsArray[KeyId];
 }
 
-void ReadSelectedAppKey(uint8_t KeyId, uint8_t *Key) {
-    if(KeyId == 0x00 || KeyId >= DESFIRE_MAX_KEYS) {
-         return;
-    }
-    BYTE keySize = GetCryptoMethodKeySize(SelectedAppData.KeyCryptoMethodTypes[KeyId - 1]);
-    memcpy(Key, SelectedAppData.KeyData[KeyId - 1], keySize);
-    //MemoryReadBlock(Key, SelectedApp.KeyAddress + KeyId * sizeof(Desfire2KTDEAKeyType), 
-    //                sizeof(Desfire2KTDEAKeyType));
+void WriteKeySettings(uint8_t AppSlot, uint8_t KeyId, BYTE Value) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
+          return;
+     }
+     SIZET keySettingsBlockId = GetAppProperty(DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
+     BYTE keySettingsArray[DESFIRE_MAX_KEYS];
+     ReadBlockBytes(keySettingsArray, keySettingsBlockId, DESFIRE_MAX_KEYS);
+     keySettingsArray[KeyId] = Value;
+     WriteBlockBytes(keySettingsArray, keySettingsBlockId, DESFIRE_MAX_KEYS);
 }
 
-void WriteSelectedAppKey(uint8_t KeyId, const uint8_t *Key) {
-    if(KeyId == 0x00 || KeyId >= DESFIRE_MAX_KEYS) {
-         return;
-    }
-    BYTE keySize = GetCryptoMethodKeySize(SelectedAppData.KeyCryptoMethodTypes[KeyId - 1]);
-    memcpy(SelectedAppData.KeyData[KeyId - 1], Key, keySize);
-    //MemoryWriteBlock(Key, SelectedApp.KeyAddress + KeyId * sizeof(Desfire2KTDEAKeyType), 
-    //                 sizeof(Desfire2KTDEAKeyType));
+BYTE ReadKeyVersion(uint8_t AppSlot, uint8_t KeyId) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
+          return 0x00;
+     }
+     SIZET keyVersionsBlockId = GetAppProperty(DESFIRE_APP_KEY_VERSIONS_ARRAY, AppSlot);
+     BYTE keyVersionsArray[DESFIRE_MAX_KEYS];
+     ReadBlockBytes(keyVersionsArray, keyVersionsBlockId, DESFIRE_MAX_KEYS);
+     return keyVersionsArray[KeyId];
+}
+
+void WriteKeyVersion(uint8_t AppSlot, uint8_t KeyId, BYTE Value) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
+          return;
+     }
+     SIZET keyVersionsBlockId = GetAppProperty(DESFIRE_APP_KEY_VERSIONS_ARRAY, AppSlot);
+     BYTE keyVersionsArray[DESFIRE_MAX_KEYS];
+     ReadBlockBytes(keyVersionsArray, keyVersionsBlockId, DESFIRE_MAX_KEYS);
+     keyVersionsArray[KeyId] = Value;
+     WriteBlockBytes(keyVersionsArray, keyVersionsBlockId, DESFIRE_MAX_KEYS);
+}
+
+SIZET ReadKeyStorageAddress(uint8_t AppSlot) {
+     return GetAppProperty(DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot);
+}
+
+void WriteKeyStorageAddress(uint8_t AppSlot, SIZET Value) {
+     SetAppProperty(DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot, Value);
+}
+
+void ReadAppKey(uint8_t AppSlot, uint8_t KeyId, uint8_t *Key, SIZET KeySize) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
+          return;
+     }
+     else if(KeySize > APP_CACHE_MAX_KEY_SIZE) {
+          return;
+     }
+     SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
+     SIZET keyStorageArray[DESFIRE_MAX_KEYS];
+     ReadBlockBytes(keyStorageArray, keyStorageArrayBlockId, 2 * DESFIRE_MAX_KEYS);
+     ReadBlockBytes(Key, keyStorageArray[KeyId], KeySize);
+}
+
+void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZE KeySize) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
+          return;
+     }
+     else if(KeySize > APP_CACHE_MAX_KEY_SIZE) {
+          return;
+     }
+     SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
+     SIZET keyStorageArray[DESFIRE_MAX_KEYS];
+     ReadBlockBytes(keyStorageArray, keyStorageArrayBlockId, 2 * DESFIRE_MAX_KEYS);
+     WriteBlockBytes(Key, keyStorageArray[KeyId], KeySize);
 }
 
 /*
- * Application selection
+ * Application file management
+ */
+
+BYTE ReadFileCount(uint8_t AppSlot) {
+     return (BYTE) GetAppProperty(DESFIRE_APP_FILE_COUNT, AppSlot);
+}
+
+void WriteFileCount(uint8_t AppSlot, BYTE FileCount) {
+     SetAppProperty(DESFIRE_APP_FILE_COUNT, AppSlot, (SIZET) FileCount);
+}
+
+BYTE LookupFileNumberIndex(uint8_t AppSlot, BYTE FileNumber) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS) {
+          return DESFIRE_MAX_FILES;
+     }
+     SIZET fileNumbersHashmapBlockId = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, AppSlot);
+     BYTE fileNumbersHashmap[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
+     BYTE fileIndex;
+     for(fileIndex = 0; fileIndex < DESFIRE_MAX_FILES; fileIndex++) {
+          if(fileNumbersHashmap[fileIndex] == FileNumber) {
+               break;
+          }
+     }
+     return fileIndex;
+}
+
+void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return;
+     }
+     SIZET fileNumbersHashmapBlockId = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, AppSlot);
+     BYTE fileNumbersHashmap[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
+     fileNumbersHashmap[FileIndex] = FileNumber;
+     WriteBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
+}
+
+BYTE ReadFileCommSettings(uint8_t AppSlot, uint8_t FileIndex) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return;
+     }
+     SIZET fileCommSettingsBlockId = GetAppProperty(DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID, AppSlot);
+     BYTE fileCommSettingsArray[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileCommSettingsArray, fileCommSettingsBlockId, DESFIRE_MAX_FILES);
+     return fileCommSettingsArray[FileIndex];
+}
+
+void WriteFileCommSettings(uint8_t AppSlot, uint8_t FileIndex, BYTE CommSettings) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return;
+     }
+     SIZET fileCommSettingsBlockId = GetAppProperty(DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID, AppSlot);
+     BYTE fileCommSettingsArray[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileCommSettingsArray, fileCommSettingsBlockId, DESFIRE_MAX_FILES);
+     fileCommSettingsArray[FileIndex] = CommSettings;
+     WriteBlockBytes(fileCommSettingsArray, fileCommSettingsBlockId, DESFIRE_MAX_FILES);
+}
+
+SIZET ReadFileAccessRights(uint8_t AppSlot, uint8_t FileIndex) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return 0x0000;
+     }
+     SIZET fileAccessRightsBlockId = GetAppProperty(DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID, AppSlot);
+     SIZET fileAccessRightsArray[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileAccessRightsArray, fileAccessRightsBlockId, 2 * DESFIRE_MAX_FILES);
+     return fileAccessRightsArray[FileIndex];
+}
+
+void WriteFileAccessRights(uint8_t AppSlot, uint8_t FileIndex, SIZET AccessRights) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return;
+     }
+     SIZET fileAccessRightsBlockId = GetAppProperty(DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID, AppSlot);
+     SIZET fileAccessRightsArray[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileAccessRightsArray, fileAccessRightsBlockId, 2 * DESFIRE_MAX_FILES);
+     fileAccessRightsArray[FileIndex] = AccessRights;
+     WriteBlockBytes(fileAccessRightsArray, fileAccessRightsBlockId, 2 * DESFIRE_MAX_FILES);
+}
+
+DESFireFileTypeSettings ReadFileSettings(uint8_t AppSlot, uint8_t FileIndex) {
+     DESFireFileTypeSettings fileTypeSettings = { 0 };
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return fileTypeSettings;
+     }
+     SIZET fileTypeSettingsBlockId = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot);
+     SIZET fileTypeSettingsAddresses[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileTypeSettingsAddresses, fileTypeSettingsBlockId, 2 * DESFIRE_MAX_FILES);
+     ReadBlockBytes(&fileTypeSettings, fileTypeSettingsAddresses[FileIndex], sizeof(DESFireFileTypeSettings));
+     return fileTypeSettings;
+}
+
+void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettings *FileSettings) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+          return;
+     }
+     else if(FileSettings == NULL) {
+          return;
+     }
+     SIZET fileTypeSettingsBlockId = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot);
+     SIZET fileTypeSettingsAddresses[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileTypeSettingsAddresses, fileTypeSettingsBlockId, 2 * DESFIRE_MAX_FILES);
+     WriteBlockBytes(FileSettings, fileTypeSettingsAddresses[FileIndex], sizeof(DESFireFileTypeSettings));
+}
+
+/*
+ * Application selection (TODO: Start here ... )
  */
 
 uint8_t LookupAppSlot(const DESFireAidType Aid) {

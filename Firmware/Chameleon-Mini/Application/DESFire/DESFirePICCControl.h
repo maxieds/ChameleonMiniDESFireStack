@@ -24,33 +24,43 @@ typedef struct {
     BYTE  KeyCount;
     BYTE  FileCount;
     BYTE  CryptoCommStandard;
-    BYTE  KeySettings;            /* Block offset in EEPROM */
-    BYTE  FileNumbersArrayMap;    /* Block offset in EEPROM */ 
-    BYTE  FileCommSettings;       /* Block offset in EEPROM */
-    BYTE  FileAccessRights;       /* Block offset in EEPROM */
-    BYTE  KeyVersionsArray;       /* Block offset in EEPROM */
-    SIZET FilesAddress;           /* in FRAM */
-    SIZET KeyAddress;             /* in FRAM */
+    SIZET KeySettings;            /* Block offset in EEPROM */
+    SIZET FileNumbersArrayMap;    /* Block offset in EEPROM */ 
+    SIZET FileCommSettings;       /* Block offset in EEPROM */
+    SIZET FileAccessRights;       /* Block offset in EEPROM */
+    SIZET KeyVersionsArray;       /* Block offset in EEPROM */
+    SIZET FilesAddress;           /* Block offset in EEPROM */
+    SIZET KeyAddress;             /* Block offset in EEPROM */
     UINT  DirtyFlags;
 } SelectedAppCacheType;
 
 extern BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
+extern BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE;
+extern BYTE APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_MAX_KEY_SIZE;
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* AppData keeping track how many keys each app has */
-    DESFIRE_APP_KEY_COUNT_BLOCK_ID,
+    DESFIRE_APP_KEY_COUNT,
     /* AppData active file count */
-    DESFIRE_APP_FILE_COUNT_BLOCK_ID,
+    DESFIRE_APP_FILE_COUNT,
+    /* AppData keep track of default crypto comm standard */
+    DESFIRE_APP_CRYPTO_COMM_STANDARD, 
     /* AppData keeping track of apps key settings */
     DESFIRE_APP_KEY_SETTINGS_BLOCK_ID,
     /* AppData hash-like unsorted array mapping file indices to their labeled numbers */
-    DESFIRE_APP_FILE_NUMBER_ARRAY_MAP,
+    DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID,
     /* AppData communication settings (crypto transfer protocols) per file */
-    DESFIRE_APP_FILE_COMM_SETTINGS,
+    DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID,
     /* AppData file access rights */
-    DESFIRE_APP_FILE_ACCESS_RIGHTS, 
+    DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID, 
     /* AppData keep track of newer EVx revisions key versioning schemes */
-    DESFIRE_APP_KEY_VERSIONS_ARRAY,
+    DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID,
     /* AppData keeping track of apps file index blocks */
     DESFIRE_APP_FILES_PTR_BLOCK_ID,
     /* AppData keeping track of apps key locations */
@@ -65,6 +75,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
 extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
 extern SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
+extern SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID;
 extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
 extern SIZET CardCapacityBlocks;
 

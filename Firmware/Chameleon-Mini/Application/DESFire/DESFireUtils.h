@@ -46,7 +46,11 @@ void DebugPrintP(const char *fmt, ...);
 
 SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize);
 
+#define UnsignedTypeToUINT(typeValue) \
+    ((UINT) typeValue)
 #define ExtractLSBLE(ui) \
-    (((ui & 0xff000000) >> 24) & 0x000000ff)
+    ((BYTE) (((UnsignedTypeToUINT(ui) & 0xff000000) >> 24) & 0x000000ff))
+#define ExtractLSBBE(ui) \
+    ((BYTE) (UnsignedTypeToUINT(ui) & 0x000000ff))
 
 #endif

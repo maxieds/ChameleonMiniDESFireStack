@@ -38,15 +38,15 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t Type;
     uint8_t CommSettings;
     uint16_t AccessRights;
-    union {
-        struct {
+    union DESFIRE_FIRMWARE_ALIGNAT {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             uint16_t FileSize;
         } StandardFile;
-        struct {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             uint16_t FileSize;
             uint8_t BlockCount;
         } BackupFile;
-        struct {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             int32_t CleanValue;
             int32_t DirtyValue;
             int32_t LowerLimit;
@@ -54,7 +54,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
             uint8_t LimitedCreditEnabled;
             int32_t PreviousDebit;
         } ValueFile;
-        struct {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             uint8_t BlockCount;
             uint8_t ClearPending;
             uint8_t RecordSize[3];
@@ -63,15 +63,16 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
         } LinearRecordFile;
     };
     uint8_t FileType;
+    uint8_t DataBlockAddress;
 } DESFireFileTypeSettings;
 
 /*
  * File management: creation, deletion, and misc routines
  */
 uint8_t LookupActiveFileSlotByFileNumber(uint8_t fileNumber);
-uint8_t GetAppFileIndexBlockId(uint8_t FileNum);
-uint8_t AddFileToAppDataTypeStorage(uint8_t FileNum, uint8_t BlockId, uint8_t BlockCount);
-uint8_t UpdateAppDirDataFileInfo(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
+uint8_t GetAppFileIndexBlockId(uint8_t FileNum); // ???
+uint8_t AddFileToAppDataTypeStorage(uint8_t FileNum, uint8_t BlockId, uint8_t BlockCount); // ???
+uint8_t UpdateAppDirDataFileInfo(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights); // ???
 
 uint8_t GetFileControlBlockId(uint8_t FileNum);
 uint8_t GetFileDataAreaBlockId(uint8_t FileNum);
@@ -110,6 +111,10 @@ uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
 uint8_t ReadValueFileSetup(uint8_t CommSettings);
+
+/* Special values for access key IDs */
+#define DESFIRE_ACCESS_FREE     0xE
+#define DESFIRE_ACCESS_DENY     0xF
 
 /* Validation routines */
 #define VALIDATE_ACCESS_READWRITE          (0x000f << 0)

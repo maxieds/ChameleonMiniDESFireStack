@@ -39,6 +39,16 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
      }
 }
 
+uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
+     // TODO: Implement ... 
+     return STATUS_OPERATION_OK;
+}
+
+uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
+     // TODO: Setup logging ... 
+     return STATUS_OPERATION_OK;
+}
+
 /* Checksum routines */
 
 void TransferChecksumUpdateCRCA(const uint8_t* Buffer, uint8_t Count) {
