@@ -54,8 +54,10 @@ typedef BYTE Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
 typedef BYTE CryptoIVBufferType[CRYPTO_MAX_BLOCK_SIZE];
 
+extern CryptoKeyBufferType SessionKey;
 extern CryptoIVBufferType SessionIV;
 extern BYTE SessionIVByteSize;
+extern uint8_t AuthenticatedWithKey;
 
 BYTE GetCryptoMethodKeySize(uint8_t cryptoType);
 
@@ -76,7 +78,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_AUTH_AES,
 } DesfireAuthType;
 
-BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod, SIZET KeyBufferSize);
+BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 
 /*********************************************************
  * AES (128/192/256) crypto routines: 
@@ -132,12 +134,12 @@ extern DesfireAESAuthState AESAuthState;
 uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
 
-typedef void (*CryptoAESCryptoCBCFuncType)(uint16_t Count, const void *PlainText, void *Ciphertext, void *IV);
+typedef void (*CryptoAESCBCFuncType)(uint16_t Count, const void *PlainText, void *Ciphertext, void *IV);
 
-extern CryptoAESCryptoCBCFuncType CryptoEncryptAES_CBCSend;
-extern CryptoAESCryptoCBCFuncType CryptoDecryptAES_CBCSend;
-extern CryptoAESCryptoCBCFuncType CryptoEncryptAES_CBCReceive;
-extern CryptoAESCryptoCBCFuncType CryptoDecryptAES_CBCReceive;
+extern CryptoAESCBCFuncType CryptoEncryptAES_CBCSend;
+extern CryptoAESCBCFuncType CryptoDecryptAES_CBCSend;
+extern CryptoAESCBCFuncType CryptoEncryptAES_CBCReceive;
+extern CryptoAESCBCFuncType CryptoDecryptAES_CBCReceive;
 
 /*********************************************************
  * TripleDES crypto routines: 

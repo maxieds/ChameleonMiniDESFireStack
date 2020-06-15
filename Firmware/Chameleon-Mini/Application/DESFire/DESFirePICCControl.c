@@ -35,6 +35,8 @@ SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = 0;
 SIZET DESFIRE_FIRST_FREE_BLOCK_ID = 0;
 SIZET CardCapacityBlocks = 0;
 
+TransferStateType TransferState = { 0 };
+
 static void InitBlockSizes(void) __attribute__((constructor));
 void InitBlockSizes(void) {
      SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = RoundBlockSize(sizeof(SelectedAppCacheType), DESFIRE_EEPROM_BLOCK_SIZE);
@@ -60,9 +62,6 @@ DESFireAppDirType AppDir = { 0 };
 SelectedAppCacheType SelectedApp = { 0 };
 SelectedFileCacheType SelectedFile = { 0 };
 TransferStateType TransferState = { 0 };
-
-DesfireStateType DesfireState = DESFIRE_IDLE;
-BYTE AuthenticatedWithKey = 0x00;
 
 /* Transfer routines */
 

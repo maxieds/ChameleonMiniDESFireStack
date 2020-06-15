@@ -88,11 +88,6 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 
 #define DESFIRE_APP_DIR_BLOCKS      DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
 
-/* Defines the block ID of each application's file on the card. */
-// TODO: Eventually remove this ... 
-//typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
-//#define DESFIRE_FILE_INDEX_BLOCKS   DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
-
 /* Global card structure support routines */
 void SynchronizeAppDir(void);
 void SynchronizePICCInfo(void);

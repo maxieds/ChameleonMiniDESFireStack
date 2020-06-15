@@ -16,6 +16,8 @@
 #include "DESFire/DESFireISO14443Support.h"
 #include "DESFire/DESFireStatusCodes.h"
 
+DesfireStateType DesfireState = DESFIRE_IDLE;
+
 /* Dispatching routines */
 
 uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount) {
@@ -165,6 +167,7 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount) {
 
 void MifareDesfireReset(void) {
     ResetPiccBackend();
+    ResetLocalStructureData();
     DesfireState = DESFIRE_IDLE;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
 }

@@ -9,6 +9,18 @@
 #include "DESFireInstructions.h"
 #include "DESFirePICCControl.h"
 #include "DESFireISO14443Support.h"
+#include "DESFireStatusCodes.h"
+
+CryptoKeyBufferType SessionKey = { 0 };
+CryptoIVBufferType SessionIV = { 0 };
+BYTE SessionIVByteSize = { 0 };
+
+uint8_t AuthenticatedWithKey = 0x00;
+
+DesfireAESCryptoKey AESCryptoKey = { 0 };
+DesfireAESCryptoKey AESCryptoRndB = { 0 };
+DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
+DesfireAESAuthState AESAuthState = AESAUTH_STATE_IDLE;
 
 BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
      switch(cryptoType) {
@@ -52,12 +64,12 @@ uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
 /* Checksum routines */
 
 void TransferChecksumUpdateCRCA(const uint8_t* Buffer, uint8_t Count) {
-    TransferState.Checksums.CRCA = ISO14443AUpdateCRCA(Buffer, Count, TransferState.Checksums.CRCA);
+    TransferState.Checksums.MACData.CRCA = ISO14443AUpdateCRCA(Buffer, Count, TransferState.Checksums.MACData.CRCA);
 }
 
 uint8_t TransferChecksumFinalCRCA(uint8_t* Buffer) {
     /* Copy the checksum to destination */
-    memcpy(Buffer, &TransferState.Checksums.CRCA, 2);
+    memcpy(Buffer, &TransferState.Checksums.MACData.CRCA, 2);
     /* Return the checksum size */
     return 2;
 }
@@ -72,27 +84,25 @@ void TransferChecksumUpdateMACTDEA(const uint8_t* Buffer, uint8_t Count) {
         TempBytes = CRYPTO_DES_BLOCK_SIZE - AvailablePlaintext;
         if (TempBytes > Count)
             TempBytes = Count;
-        memcpy(&TransferState.Checksums.MAC.BlockBuffer[AvailablePlaintext], &Buffer[0], TempBytes);
+        memcpy(&TransferState.Checksums.MACData.BlockBuffer[AvailablePlaintext], &Buffer[0], TempBytes);
         Count -= TempBytes;
         Buffer += TempBytes;
         /* MAC the partial block */
-        TransferState.Checksums.MAC.MACFunc(1, &TransferState.Checksums.MAC.BlockBuffer[0], 
-                                            &TempBuffer[0], SessionIV.LegacyTransferIV, 
-                                            SessionKey.LegacyTransfer);
+        TransferState.Checksums.MACData.CryptoTDEAChecksumFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
+                                                               &TempBuffer[0], SessionIV, SessionKey);
     }
     /* MAC complete blocks in the buffer */
     while (Count >= CRYPTO_DES_BLOCK_SIZE) {
         /* NOTE: This is block-by-block, hence slow. 
          *       See if it's better to just allocate a temp buffer large enough (64 bytes). */
-        TransferState.Checksums.MAC.MACFunc(1, &Buffer[0], &TempBuffer[0], 
-                                            SessionIV.LegacyTransferIV, 
-                                            SessionKey.LegacyTransfer);
+        TransferState.Checksums.MACData.CryptoTDEAChecksumFunc(1, &Buffer[0], &TempBuffer[0], 
+                                                               SessionIV, SessionKey);
         Count -= CRYPTO_DES_BLOCK_SIZE;
         Buffer += CRYPTO_DES_BLOCK_SIZE;
     }
     /* Copy the new partial block */
     if (Count) {
-        memcpy(&TransferState.Checksums.MAC.BlockBuffer[0], &Buffer[0], Count);
+        memcpy(&TransferState.Checksums.MACData.BlockBuffer[0], &Buffer[0], Count);
     }
     TransferState.Checksums.AvailablePlaintext = Count;
 }
@@ -103,15 +113,14 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t* Buffer) {
 
     if (AvailablePlaintext) {
         /* Apply padding */
-        CryptoPaddingTDEA(&TransferState.Checksums.MAC.BlockBuffer[0], AvailablePlaintext, false);
+        CryptoPaddingTDEA(&TransferState.Checksums.MACData.BlockBuffer[0], AvailablePlaintext, false);
         /* MAC the partial block */
-        TransferState.Checksums.MAC.MACFunc(1, &TransferState.Checksums.MAC.BlockBuffer[0], 
-                                            &TempBuffer[0], SessionIV.LegacyTransferIV, 
-                                            SessionKey.LegacyTransfer);
+        TransferState.Checksums.MACData.CryptoTDEAChecksumFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
+                                                               &TempBuffer[0], SessionIV, SessionKey);
         TransferState.Checksums.AvailablePlaintext = 0;
     }
     /* Copy the checksum to destination */
-    memcpy(Buffer, SessionIV.LegacyTransferIV, 4);
+    memcpy(Buffer, SessionIV, 4);
     /* Return the checksum size */
     return 4;
 }
@@ -125,7 +134,7 @@ uint8_t TransferEncryptTDEASend(uint8_t* Buffer, uint8_t Count) {
 
     if (AvailablePlaintext) {
         /* Fill the partial block */
-        memcpy(&TempBuffer[0], &TransferState.ReadData.Encryption.TDEA.BlockBuffer[0], AvailablePlaintext);
+        memcpy(&TempBuffer[0], &TransferState.ReadData.Encryption.BlockBuffer[0], AvailablePlaintext);
     }
     /* Copy fresh plaintext to the temp buffer */
     memcpy(&TempBuffer[AvailablePlaintext], Buffer, Count);
@@ -134,13 +143,13 @@ uint8_t TransferEncryptTDEASend(uint8_t* Buffer, uint8_t Count) {
     /* Stash extra plaintext for later */
     AvailablePlaintext = Count - BlockCount * CRYPTO_DES_BLOCK_SIZE;
     if (AvailablePlaintext) {
-        memcpy(&TransferState.ReadData.Encryption.TDEA.BlockBuffer[0], &Buffer[BlockCount * CRYPTO_DES_BLOCK_SIZE], AvailablePlaintext);
+        memcpy(&TransferState.ReadData.Encryption.BlockBuffer[0], 
+               &Buffer[BlockCount * CRYPTO_DES_BLOCK_SIZE], AvailablePlaintext);
     }
     TransferState.ReadData.Encryption.AvailablePlaintext = AvailablePlaintext;
     /* Encrypt complete blocks in the buffer */
     CryptoEncrypt2KTDEA_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], 
-                                SessionIV.LegacyTransferIV, 
-                                SessionKey.LegacyTransfer);
+                                SessionIV, SessionKey);
     /* Return byte count to transfer */
     return BlockCount * CRYPTO_DES_BLOCK_SIZE;
 }

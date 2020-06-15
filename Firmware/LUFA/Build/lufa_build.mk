@@ -160,7 +160,7 @@ ifneq ($(UNKNOWN_SOURCE),)
 endif
 
 # Convert input source filenames into a list of required output object files
-OBJECT_FILES += $(addsuffix .o, $(basename $(SRC)))
+#OBJECT_FILES += $(addsuffix .o, $(basename $(SRC)))
 
 # Check if an output object file directory was specified instead of the input file location
 ifneq ($(OBJDIR),.)

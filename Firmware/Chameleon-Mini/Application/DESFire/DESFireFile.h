@@ -62,13 +62,19 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t DataBlockAddress;
 } DESFireFileTypeSettings;
 
+typedef struct DESFIRE_FIRMWARE_PACKING {
+    BYTE Num;
+    DESFireFileTypeSettings File;
+} SelectedFileCacheType;
+
+/* Defines the block ID of each application's file on the card. */
+// TODO: Eventually remove this ... 
+//typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
+//#define DESFIRE_FILE_INDEX_BLOCKS   DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
+
 /*
  * File management: creation, deletion, and misc routines
  */
-uint8_t LookupActiveFileSlotByFileNumber(uint8_t fileNumber);
-uint8_t GetAppFileIndexBlockId(uint8_t FileNum); // ???
-uint8_t AddFileToAppDataTypeStorage(uint8_t FileNum, uint8_t BlockId, uint8_t BlockCount); // ???
-uint8_t UpdateAppDirDataFileInfo(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights); // ???
 
 uint8_t GetFileControlBlockId(uint8_t FileNum);
 uint8_t GetFileDataAreaBlockId(uint8_t FileNum);

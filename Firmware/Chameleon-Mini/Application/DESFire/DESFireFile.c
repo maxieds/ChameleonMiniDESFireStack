@@ -9,48 +9,11 @@
 #include "DESFireMemoryOperations.h"
 #include "DESFireInstructions.h"
 #include "DESFireApplicationDirectory.h"
+#include "../MifareDESFire.h"
 
 /*
  * File management: creation, deletion, and misc routines
  */
-
-uint8_t LookupActiveFileSlotByFileNumber(uint8_t fileNumber) {
-     uint8_t FileSlot;
-     for(FileSlot = 0; FileSlot < DESFIRE_MAX_FILES; ++FileSlot) {
-          if(SelectedAppData.FileNumbersArrayMap[FileSlot] == fileNumber)
-               break;
-     }
-     return FileSlot;
-}
-
-uint8_t GetAppFileIndexBlockId(uint8_t FileNum) {
-    uint8_t fileSlotNumber = LookupActiveFileSlotByFileNumber(FileNum);
-    if(fileSlotNumber >= DESFIRE_MAX_FILES) {
-         return 0x00;
-    }
-    return SelectedAppData.FilePiccBlockOffsets[fileSlotNumber];
-}
-
-uint8_t AddFileToAppDataTypeStorage(uint8_t FileNum, uint8_t BlockId, uint8_t BlockCount) {
-     uint8_t NextFreeSlot = SelectedAppData.FirstFreeFileSlot;
-     if(NextFreeSlot >= DESFIRE_MAX_SLOTS) {
-          return STATUS_FILE_NOT_FOUND;
-     }
-     SelectedAppData.FileNumbersArrayMap[NextFreeSlot] = FileNum;
-     SelectedAppData.FilePiccBlockOffsets[NextFreeSlot] = BlockId;
-     SelectedAppData.FileBlockCounts[NextFreeSlot] = BlockCount;
-     SelectedAppData.FirstFreeFileSlot += 1;
-     SynchronizeSelectedAppData();
-     return STATUS_OPERATION_OK;
-}
-
-uint8_t UpdateAppDirDataFileInfo(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights) {
-     uint8_t FileSlotIndex = LookupActiveFileSlotByFileNumber(FileNum);
-     SelectedAppData.FileCommSettings[FileSlotIndex] = CommSettings;
-     SelectedAppData.FileAccessRights[FileSlotIndex] = AccessRights;
-     SynchronizeSelectedAppData();
-     return STATUS_OPERATION_OK;
-}
 
 uint8_t GetFileControlBlockId(uint8_t FileNum) {
     uint8_t FileIndexBlock;
@@ -442,8 +405,6 @@ uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16
 }
 
 uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask) {
-    uint8_t RequiredKeyId;
-    bool HaveFreeAccess = false;
     uint8_t SplitPerms[] = {
          GetReadPermissions(CheckMask & AccessRights), 
          GetWritePermissions(CheckMask & AccessRights), 

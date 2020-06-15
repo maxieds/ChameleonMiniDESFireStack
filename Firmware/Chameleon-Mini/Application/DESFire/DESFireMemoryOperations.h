@@ -18,7 +18,7 @@ extern BYTE DESFireInternalDataBuffer[MAX_DATA_BUFFER_SIZE];
  * EEPROM memory management routines:
  */
 void ReadBlockBytes(void *Buffer, BYTE StartBlock, SIZET Count);
-void WriteBlockBytes(void *Buffer, BYTE StartBlock, SIZET Count);
+void WriteBlockBytes(const void *Buffer, BYTE StartBlock, SIZET Count);
 void CopyBlockBytes(BYTE DestBlock, BYTE SrcBlock, SIZET Count);
 BYTE AllocateBlocks(BYTE BlockCount);
 BYTE GetCardCapacityBlocks(void);

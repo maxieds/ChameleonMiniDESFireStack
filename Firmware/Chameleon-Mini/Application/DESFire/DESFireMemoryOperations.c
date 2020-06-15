@@ -12,7 +12,7 @@ void ReadBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count) {
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 
-void WriteBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count) {
+void WriteBlockBytes(const void* Buffer, uint8_t StartBlock, uint16_t Count) {
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 

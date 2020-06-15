@@ -3,6 +3,7 @@
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#include "../MifareDESFire.h"
 #include "DESFireApplicationDirectory.h"
 #include "DESFirePICCControl.h"
 #include "DESFireCrypto.h"
@@ -17,8 +18,6 @@ const BYTE DEFAULT_SELECT_DESFIRE_AID[] = {
 const BYTE DEFAULT_SELECT_ISO7816_AID[] = { 
      0xa0, 0x00, 0x00, 0x00, 0x03, 0x96 
 };
-
-DesfireApplicationDataType SelectedAppData = { 0 };
 
 /*
  * Global card structure support routines
@@ -35,9 +34,9 @@ SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
      SelectedAppCacheType appCache;
      ReadBlockBytes(&appCache, AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE, sizeof(SelectedAppCacheType));
      switch(propId) {
-          case DESFIRE_APP_KEY_COUNT_BLOCK_ID:
+          case DESFIRE_APP_KEY_COUNT:
                return appCache.KeyCount;
-          case DESFIRE_APP_FILE_COUNT_BLOCK_ID:
+          case DESFIRE_APP_FILE_COUNT:
                return appCache.FileCount;
           case DESFIRE_APP_CRYPTO_COMM_STANDARD:
                return appCache.CryptoCommStandard;
@@ -108,11 +107,11 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
  */
 
 BYTE ReadKeyCount(uint8_t AppSlot) {
-     return (BYTE) GetAppProperty(DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot);
+     return (BYTE) GetAppProperty(DESFIRE_APP_KEY_COUNT, AppSlot);
 }
 
 void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount) {
-     SetAppProperty(DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot, (SIZET) KeyCount);
+     SetAppProperty(DESFIRE_APP_KEY_COUNT, AppSlot, (SIZET) KeyCount);
 }
 
 BYTE ReadKeySettings(uint8_t AppSlot, uint8_t KeyId) {
@@ -140,7 +139,7 @@ BYTE ReadKeyVersion(uint8_t AppSlot, uint8_t KeyId) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
           return 0x00;
      }
-     SIZET keyVersionsBlockId = GetAppProperty(DESFIRE_APP_KEY_VERSIONS_ARRAY, AppSlot);
+     SIZET keyVersionsBlockId = GetAppProperty(DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID, AppSlot);
      BYTE keyVersionsArray[DESFIRE_MAX_KEYS];
      ReadBlockBytes(keyVersionsArray, keyVersionsBlockId, DESFIRE_MAX_KEYS);
      return keyVersionsArray[KeyId];
@@ -150,7 +149,7 @@ void WriteKeyVersion(uint8_t AppSlot, uint8_t KeyId, BYTE Value) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
           return;
      }
-     SIZET keyVersionsBlockId = GetAppProperty(DESFIRE_APP_KEY_VERSIONS_ARRAY, AppSlot);
+     SIZET keyVersionsBlockId = GetAppProperty(DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID, AppSlot);
      BYTE keyVersionsArray[DESFIRE_MAX_KEYS];
      ReadBlockBytes(keyVersionsArray, keyVersionsBlockId, DESFIRE_MAX_KEYS);
      keyVersionsArray[KeyId] = Value;
@@ -169,7 +168,7 @@ void ReadAppKey(uint8_t AppSlot, uint8_t KeyId, uint8_t *Key, SIZET KeySize) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
           return;
      }
-     else if(KeySize > APP_CACHE_MAX_KEY_SIZE) {
+     else if(KeySize > CRYPTO_MAX_KEY_SIZE) {
           return;
      }
      SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
@@ -178,11 +177,11 @@ void ReadAppKey(uint8_t AppSlot, uint8_t KeyId, uint8_t *Key, SIZET KeySize) {
      ReadBlockBytes(Key, keyStorageArray[KeyId], KeySize);
 }
 
-void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZE KeySize) {
+void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZET KeySize) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
           return;
      }
-     else if(KeySize > APP_CACHE_MAX_KEY_SIZE) {
+     else if(KeySize > CRYPTO_MAX_KEY_SIZE) {
           return;
      }
      SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
@@ -232,7 +231,7 @@ void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber)
 
 BYTE ReadFileCommSettings(uint8_t AppSlot, uint8_t FileIndex) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
-          return;
+          return 0x00;
      }
      SIZET fileCommSettingsBlockId = GetAppProperty(DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID, AppSlot);
      BYTE fileCommSettingsArray[DESFIRE_MAX_FILES];
@@ -344,7 +343,6 @@ bool IsPiccAppSelected(void) {
 uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings) {
     uint8_t Slot;
     uint8_t FreeSlot;
-    uint8_t KeysBlockId, FilesBlockId;
 
     /* Verify this AID has not been allocated yet */
     if(LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) {
@@ -377,9 +375,9 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     else {
          BYTE keySettings[DESFIRE_MAX_KEYS];
-         memcpy(keySettings, 0x00, DESFIRE_MAX_KEYS);
+         memset(keySettings, 0x00, DESFIRE_MAX_KEYS);
          if(KeyCount > 0) {
-              memcpy(keySettings, KeySettings, KeyCount);
+              memset(keySettings, KeySettings, KeyCount);
          }
          WriteBlockBytes(keySettings, appCacheData.KeySettings, DESFIRE_MAX_KEYS);
     }
@@ -424,14 +422,14 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     else {
          SIZET keyAddresses[DESFIRE_MAX_KEYS];
-         memcpy(keyAddresses, 0x00, 2 * DESFIRE_MAX_KEYS);
+         memset(keyAddresses, 0x00, 2 * DESFIRE_MAX_KEYS);
          if(KeyCount > 0) {
               for(int keyId = 0; keyId < KeyCount; keyId++) {
                    keyAddresses[keyId] = AllocateBlocks(APP_CACHE_MAX_KEY_BLOCK_SIZE);
                    if(keyAddresses[keyId] == 0) {
                         return STATUS_OUT_OF_EEPROM_ERROR;
                    }
-                   CopyBlockBytes(keyAddresses[keyId], 0x00, CRYPTO_MAX_KEYSIZE);
+                   CopyBlockBytes(keyAddresses[keyId], 0x00, CRYPTO_MAX_KEY_SIZE);
               }
          }
          WriteBlockBytes(keyAddresses, appCacheData.KeyAddress, 2 * DESFIRE_MAX_KEYS);

@@ -19,66 +19,6 @@
  * Internal state variables: 
  */
 
-typedef struct {
-    BYTE  Slot;
-    BYTE  KeyCount;
-    BYTE  FileCount;
-    BYTE  CryptoCommStandard;
-    SIZET KeySettings;            /* Block offset in EEPROM */
-    SIZET FileNumbersArrayMap;    /* Block offset in EEPROM */ 
-    SIZET FileCommSettings;       /* Block offset in EEPROM */
-    SIZET FileAccessRights;       /* Block offset in EEPROM */
-    SIZET KeyVersionsArray;       /* Block offset in EEPROM */
-    SIZET FilesAddress;           /* Block offset in EEPROM */
-    SIZET KeyAddress;             /* Block offset in EEPROM */
-    UINT  DirtyFlags;
-} SelectedAppCacheType;
-
-extern BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
-extern BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE;
-extern BYTE APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE;
-extern BYTE APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE;
-extern BYTE APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE;
-extern BYTE APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE;
-extern BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE;
-extern BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE;
-extern BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE;
-
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    /* AppData keeping track how many keys each app has */
-    DESFIRE_APP_KEY_COUNT,
-    /* AppData active file count */
-    DESFIRE_APP_FILE_COUNT,
-    /* AppData keep track of default crypto comm standard */
-    DESFIRE_APP_CRYPTO_COMM_STANDARD, 
-    /* AppData keeping track of apps key settings */
-    DESFIRE_APP_KEY_SETTINGS_BLOCK_ID,
-    /* AppData hash-like unsorted array mapping file indices to their labeled numbers */
-    DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID,
-    /* AppData communication settings (crypto transfer protocols) per file */
-    DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID,
-    /* AppData file access rights */
-    DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID, 
-    /* AppData keep track of newer EVx revisions key versioning schemes */
-    DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID,
-    /* AppData keeping track of apps file index blocks */
-    DESFIRE_APP_FILES_PTR_BLOCK_ID,
-    /* AppData keeping track of apps key locations */
-    DESFIRE_APP_KEYS_PTR_BLOCK_ID,
-} DesfireCardLayout;
-
-typedef struct DESFIRE_FIRMWARE_PACKING {
-    BYTE Num;
-    DESFireFileTypeSettings File;
-} SelectedFileCacheType;
-
-extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
-extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
-extern SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
-extern SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID;
-extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
-extern SIZET CardCapacityBlocks;
-
 /* Cached data: flush to FRAM or relevant EEPROM addresses if changed */
 extern DESFirePICCInfoType Picc;
 extern DESFireAppDirType AppDir;
@@ -104,11 +44,14 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         TransferChecksumUpdateFuncType UpdateFunc;
         TransferChecksumFinalFuncType FinalFunc;
         BYTE AvailablePlaintext;
-        struct {
+        struct DESFIRE_FIRMWARE_ALIGNAT {
             BYTE                   BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];
-            TDEACryptoCBCFuncType  TDEAChecksumFunc;
-            AESCryptoCBCFuncType   AESChecksumFunc;
-            SIZET                  CRCA;
+            CryptoTDEACBCFuncType  CryptoTDEAChecksumFunc;
+            CryptoAESCBCFuncType   CryptoAESChecksumFunc;
+            union {
+                 SIZET CRCA;
+                 UINT  CRC32;
+            };
         } MACData;
     } Checksums;
     struct DESFIRE_FIRMWARE_ALIGNAT {
@@ -137,9 +80,7 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         } Encryption;
     } WriteData;
 } TransferStateType;
-
-extern DesfireStateType DesfireState;
-extern uint8_t AuthenticatedWithKey;
+extern TransferStateType TransferState;
 
 /* Transfer routines */
 void SyncronizePICCInfo(void);

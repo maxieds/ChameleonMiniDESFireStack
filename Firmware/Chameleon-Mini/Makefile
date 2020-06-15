@@ -136,38 +136,68 @@ F_USB        = 48000000
 TARGET       = Chameleon-Mini
 OPTIMIZATION = s
 DESFIRE_MAINSRC = Application/DESFire
-SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c \
-			Common.c Memory.c MemoryAsm.S \
-			Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
-SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
-SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
-SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c \
-			Application/Reader14443A.c Application/Sniff14443A.c
-SRC         += Application/MifareDESFire.c $(DESFIRE_MAINSRC)/DESFireAPDU.c \
+SRC         += $(TARGET).c \
+			LUFADescriptors.c \
+			System.c \
+			Configuration.c \
+			Random.c \
+			Common.c \
+			Memory.c \
+			Button.c \
+			Log.c \
+			Settings.c \
+			LED.c \
+			Map.c \
+			AntennaLevel.c
+SRC         += Terminal/Terminal.c \
+			Terminal/Commands.c \
+			Terminal/XModem.c \
+			Terminal/CommandLine.c
+SRC         += Codec/Codec.c \
+			Codec/ISO14443-2A.c \
+			Codec/Reader14443-2A.c \
+			Codec/SniffISO14443-2A.c 
+SRC         += Application/MifareUltralight.c \
+			Application/MifareClassic.c \
+			Application/ISO14443-3A.c \
+			Application/Crypto1.c \
+			Application/Reader14443A.c \
+			Application/Sniff14443A.c
+SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
+			Application/MifareDESFire.c \
+			$(DESFIRE_MAINSRC)/DESFireAPDU.c \
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
-			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/gf256mul/gf256mul.S \
-			$(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
-			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S $(DESFIRE_MAINSRC)/DESFireCrypto.c \
-			$(DESFIRE_MAINSRC)/DESFireFile.c $(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
-			$(DESFIRE_MAINSRC)/DESFireInstructions.c $(DESFIRE_MAINSRC)/DESFireLogging.c \
-			$(DESFIRE_MAINSRC)/DESFireMemoryOperations.c $(DESFIRE_MAINSRC)/DESFirePICCControl.c \
-			$(DESFIRE_MAINSRC)/DESFireStatusCodes.c $(DESFIRE_MAINSRC)/DESFireUtils.c 
+			$(DESFIRE_MAINSRC)/DESFireCrypto.c \
+			$(DESFIRE_MAINSRC)/DESFireFile.c \
+			$(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
+			$(DESFIRE_MAINSRC)/DESFireInstructions.c \
+			$(DESFIRE_MAINSRC)/DESFireLogging.c \
+			$(DESFIRE_MAINSRC)/DESFireMemoryOperations.c \
+			$(DESFIRE_MAINSRC)/DESFirePICCControl.c \
+			$(DESFIRE_MAINSRC)/DESFireStatusCodes.c \
+			$(DESFIRE_MAINSRC)/DESFireUtils.c 
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
+ASRC         = MemoryAsm.S \
+			Codec/Reader14443-ISR.S \
+			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S \
+			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S
+SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 			-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-OBJECT_FILES = 
+OBJECT_FILES = $(addprefix $(OBJDIR)/, $(foreach objFile,$(SRC:.c=.o),$(shell basename $(objFile)))) \
+			$(addprefix $(OBJDIR)/, $(foreach objFile,$(SRC:.S=.o),$(shell basename $(objFile))))
 
 #AVRDUDE settings
 AVRDUDE_PROGRAMMER = flip2
 AVRDUDE_MCU = atxmega128a4u
 AVRDUDE_PORT = usb
-AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
-AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
+AVRDUDE_WRITE_APP = -U application:w:$(TARGET)-DESFire.hex
+AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET)-DESFire.eep
 AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
 #AVRDUDE settings to program the precompiled firmware
@@ -176,6 +206,7 @@ AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
 # Default target
 all: desfire-dev
+	@echo $(OBJECT_FILES) 
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
@@ -234,3 +265,7 @@ desfire-dev: $(TARGET).hex $(TARGET).eep
 
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
+
+clean:
+	@rm -f Bin/*.o Application/DESFire/*.code
+	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{elf,hex,eep,bin}
