@@ -12,10 +12,6 @@
 #define EFFILE_DATA_CHUNK_SIZE            (4)
 #define EFFILE_DATA_CHUNK_ALIGNAT         __attribute__((align(EFFILE_DATA_CHUNK_SIZE)))
 
-#define DESFIRE_MAX_FILES_EV0             16
-#define DESFIRE_MAX_FILES_EV1             32
-#define DESFIRE_MAX_FILES                 DESFIRE_MAX_FILES_EV1
-
 // TODO: See type 4 tags on CC and NTAG AIDs and FIDs 
 
 #define ISO7816_4_CURRENT_EF_FILE_ID      0x0000

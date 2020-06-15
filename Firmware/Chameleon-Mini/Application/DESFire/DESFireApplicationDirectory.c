@@ -338,7 +338,7 @@ bool IsPiccAppSelected(void) {
 }
 
 /*
- * Application management (TODO: Start here ... )
+ * Application management
  */
 
 uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings) {
@@ -347,41 +347,106 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     uint8_t KeysBlockId, FilesBlockId;
 
     /* Verify this AID has not been allocated yet */
-    if (LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) {
+    if(LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) {
         return STATUS_DUPLICATE_ERROR;
     }
     /* Verify there is space */
     Slot = AppDir.FirstFreeSlot;
-    if (Slot == DESFIRE_MAX_SLOTS) {
+    if(Slot == DESFIRE_MAX_SLOTS) {
         return STATUS_APP_COUNT_ERROR;
     }
-    /* Verify ar not requesting more keys than the static capacity */
+    /* Verify are not requesting more keys than the static capacity */
     if(KeyCount >= DESFIRE_MAX_KEYS) {
          return STATUS_NO_SUCH_KEY;
     }
-
     /* Update the next free slot */
     for (FreeSlot = Slot + 1; FreeSlot < DESFIRE_MAX_SLOTS; ++FreeSlot) {
         if ((AppDir.AppIds[FreeSlot][0] | AppDir.AppIds[FreeSlot][1] | AppDir.AppIds[FreeSlot][2]) == 0)
             break;
     }
-
+    
     /* Allocate storage for the application */
-    BYTE appStorageBlockSize = RoundBlockSize(sizeof(DesfireApplicationDataType), 
-                                              DESFIRE_EEPROM_BLOCK_SIZE);
-    uint8_t appDirStorageBlock = AllocateBlocks(appStorageBlockSize);
-    if(appDirStorageBlock == 0) {
-        return STATUS_OUT_OF_EEPROM_ERROR;
+    SelectedAppCacheType appCacheData = { 0 };
+    appCacheData.Slot = Slot;
+    appCacheData.KeyCount = KeyCount;
+    appCacheData.FileCount = 0;
+    appCacheData.CryptoCommStandard = DESFIRE_DEFAULT_COMMS_STANDARD;
+    appCacheData.KeySettings = AllocateBlocks(APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE);
+    if(appCacheData.KeySettings == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
     }
-    // Note: Creating the block does not mean we have selected it. 
-    AppDir.AppIdPiccBlockOffsets[Slot] = appDirStorageBlock;
-    AppDir.AppKeySettings[Slot] = KeySettings;
+    else {
+         BYTE keySettings[DESFIRE_MAX_KEYS];
+         memcpy(keySettings, 0x00, DESFIRE_MAX_KEYS);
+         if(KeyCount > 0) {
+              memcpy(keySettings, KeySettings, KeyCount);
+         }
+         WriteBlockBytes(keySettings, appCacheData.KeySettings, DESFIRE_MAX_KEYS);
+    }
+    appCacheData.FileNumbersArrayMap = AllocateBlocks(APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE);
+    if(appCacheData.FileNumbersArrayMap == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
+    }
+    else {
+         CopyBlockBytes(appCacheData.FileNumbersArrayMap, 0x00, DESFIRE_MAX_FILES);
+    }
+    appCacheData.FileCommSettings = AllocateBlocks(APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE);
+    if(appCacheData.FileCommSettings == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
+    }
+    else {
+         CopyBlockBytes(appCacheData.FileCommSettings, DESFIRE_DEFAULT_COMMS_STANDARD, DESFIRE_MAX_FILES);
+    }
+    appCacheData.FileAccessRights = AllocateBlocks(APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE);
+    if(appCacheData.FileAccessRights == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
+    }
+    else {
+         CopyBlockBytes(appCacheData.FileAccessRights, 0xee, 2 * DESFIRE_MAX_FILES);
+    }
+    appCacheData.KeyVersionsArray = AllocateBlocks(APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE);
+    if(appCacheData.KeyVersionsArray == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
+    }
+    else {
+         CopyBlockBytes(appCacheData.KeyVersionsArray, 0x00, DESFIRE_MAX_KEYS);
+    }
+    appCacheData.FilesAddress = AllocateBlocks(APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE);
+    if(appCacheData.FilesAddress == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
+    }
+    else {
+         CopyBlockBytes(appCacheData.FilesAddress, 0x00, 2 * DESFIRE_MAX_FILES);
+    }
+    appCacheData.KeyAddress = AllocateBlocks(APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE);
+    if(appCacheData.KeyAddress == 0) {
+         return STATUS_OUT_OF_EEPROM_ERROR;
+    }
+    else {
+         SIZET keyAddresses[DESFIRE_MAX_KEYS];
+         memcpy(keyAddresses, 0x00, 2 * DESFIRE_MAX_KEYS);
+         if(KeyCount > 0) {
+              for(int keyId = 0; keyId < KeyCount; keyId++) {
+                   keyAddresses[keyId] = AllocateBlocks(APP_CACHE_MAX_KEY_BLOCK_SIZE);
+                   if(keyAddresses[keyId] == 0) {
+                        return STATUS_OUT_OF_EEPROM_ERROR;
+                   }
+                   CopyBlockBytes(keyAddresses[keyId], 0x00, CRYPTO_MAX_KEYSIZE);
+              }
+         }
+         WriteBlockBytes(keyAddresses, appCacheData.KeyAddress, 2 * DESFIRE_MAX_KEYS);
+    }
+    // Note: Creating the block means we have selected it: 
+    SIZET appCacheDataBlockId = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID + 
+                                Slot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
+    WriteBlockBytes(&appCacheData, appCacheDataBlockId, sizeof(SelectedAppCacheType));
+    SelectAppBySlot(Slot);
 
     /* Update the directory */
+    for(int aidx = 0; aidx < DESFIRE_AID_SIZE; aidx++) {
+         AppDir.AppIds[Slot][aidx] = Aid[aidx];
+    }
     AppDir.FirstFreeSlot = FreeSlot;
-    AppDir.AppIds[Slot][0] = Aid[0];
-    AppDir.AppIds[Slot][1] = Aid[1];
-    AppDir.AppIds[Slot][2] = Aid[2];
     SynchronizeAppDir();
 
     return STATUS_OPERATION_OK;
@@ -389,22 +454,20 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
 
 uint16_t DeleteApp(const DESFireAidType Aid) {
     uint8_t Slot;
-
     /* Search for the app slot */
     Slot = LookupAppSlot(Aid);
-    if (Slot == DESFIRE_MAX_SLOTS) {
+    if(Slot == DESFIRE_MAX_SLOTS) {
         return STATUS_APP_NOT_FOUND;
     }
     /* Deactivate the app */
-    AppDir.AppIds[Slot][0] = 0;
-    AppDir.AppIds[Slot][1] = 0;
-    AppDir.AppIds[Slot][2] = 0;
-    if (Slot < AppDir.FirstFreeSlot) {
+    for(int aidx = 0; aidx < DESFIRE_AID_SIZE; aidx++) {
+         AppDir.AppIds[Slot][aidx] = Aid[aidx];
+    }
+    if(Slot < AppDir.FirstFreeSlot) {
         AppDir.FirstFreeSlot = Slot;
     }
     SynchronizeAppDir();
-
-    if (Slot == SelectedApp.Slot) {
+    if(Slot == SelectedApp.Slot) {
         SelectAppBySlot(DESFIRE_PICC_APP_SLOT);
     }
     return STATUS_OPERATION_OK;
