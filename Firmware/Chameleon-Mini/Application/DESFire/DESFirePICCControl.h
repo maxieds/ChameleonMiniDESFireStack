@@ -141,9 +141,8 @@ typedef union DESFIRE_FIRMWARE_PACKING {
 extern DesfireStateType DesfireState;
 extern uint8_t AuthenticatedWithKey;
 
-void SyncronizePICCInfo(void);
-
 /* Transfer routines */
+void SyncronizePICCInfo(void);
 TransferStatus PiccToPcdTransfer(uint8_t *Buffer);
 uint8_t PcdToPiccTransfer(uint8_t *Buffer, uint8_t Count);
 

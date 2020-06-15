@@ -136,27 +136,27 @@ TARGET       = Chameleon-Mini
 OPTIMIZATION = s
 DESFIRE_MAINSRC = Application/DESFire
 SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c \
-		Common.c Memory.c MemoryAsm.S \
-		Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
+			Common.c Memory.c MemoryAsm.S \
+			Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c \
-		Application/Reader14443A.c Application/Sniff14443A.c
+			Application/Reader14443A.c Application/Sniff14443A.c
 SRC         += Application/MifareDESFire.c $(DESFIRE_MAINSRC)/DESFireAPDU.c \
-		$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
-		$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
-		$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/gf256mul/gf256mul.S \
-		$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/AVRCryptoLib-SingleSource.c \
-		$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S $(DESFIRE_MAINSRC)/DESFireCrypto.c \
-		$(DESFIRE_MAINSRC)/DESFireFile.c $(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
-		$(DESFIRE_MAINSRC)/DESFireInstructions.c $(DESFIRE_MAINSRC)/DESFireLogging.c \
-		$(DESFIRE_MAINSRC)/DESFireMemoryOperations.c $(DESFIRE_MAINSRC)/DESFirePICCControl.c \
-		$(DESFIRE_MAINSRC)/DESFireStatusCodes.c $(DESFIRE_MAINSRC)/DESFireUtils.c 
+			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
+			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
+			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/gf256mul/gf256mul.S \
+			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/AVRCryptoLib-SingleSource.c \
+			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S $(DESFIRE_MAINSRC)/DESFireCrypto.c \
+			$(DESFIRE_MAINSRC)/DESFireFile.c $(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
+			$(DESFIRE_MAINSRC)/DESFireInstructions.c $(DESFIRE_MAINSRC)/DESFireLogging.c \
+			$(DESFIRE_MAINSRC)/DESFireMemoryOperations.c $(DESFIRE_MAINSRC)/DESFirePICCControl.c \
+			$(DESFIRE_MAINSRC)/DESFireStatusCodes.c $(DESFIRE_MAINSRC)/DESFireUtils.c 
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
-		-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
-		-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+			-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
+			-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES = 
@@ -170,9 +170,8 @@ AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
 #AVRDUDE settings to program the precompiled firmware
-AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
-AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
-
+AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
+AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
 # Default target
 all: desfire-dev
@@ -215,7 +214,8 @@ program-latest:
 # Note that the device has to be in bootloader mode already
 dfu-flip: $(TARGET).hex $(TARGET).eep
 	cp $(TARGET).eep EEPROM.hex
-	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
+	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex \
+		program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
 	rm EEPROM.hex
 
 # Program the device using dfu-programmer
@@ -228,6 +228,8 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 desfire-dev: $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
-	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
 	#$(CROSS)-nm --size-sort --demangle --radix=d $(TARGET).elf
 	$(CROSS)-size -C -mcu=atmega128 --format=avr $(TARGET).elf
+
+desfire-dev-copy-lastest: desfire-dev
+	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/

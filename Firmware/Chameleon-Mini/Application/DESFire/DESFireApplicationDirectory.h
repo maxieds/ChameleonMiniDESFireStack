@@ -11,9 +11,6 @@
 #include "DESFireInstructions.h"
 #include "DESFireFile.h"
 
-#define MAX_AID_SIZE                                (12)
-#define DESFIRE_AID_SIZE                            (3)
-
 #ifdef DESFIRE_USE_FACTORY_SIZES
      #undef  DESFIRE_CUSTOM_MAX_APPS
      #define DESFIRE_CUSTOM_MAX_APPS                (28)
@@ -27,7 +24,7 @@
 #endif
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
-     #define DESFIRE_MAX_APPS                       (6)
+     #define DESFIRE_MAX_APPS                      (6)
 #elif defined(DESFIRE_CUSTOM_MAX_APPS)
      #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
 #else
@@ -44,15 +41,19 @@
      #define DESFIRE_MAX_KEYS                       (14)
 #endif
 
-extern const BYTE DEFAULT_DESFIRE_AID[]; 
-extern const BYTE DEFAULT_ISO7816_AID[]; 
-
-typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
-
 /* Mifare DESFire EV1 Application crypto operations */
 #define APPLICATION_CRYPTO_DES    0x00
 #define APPLICATION_CRYPTO_3K3DES 0x40
 #define APPLICATION_CRYPTO_AES    0x80
+
+/* Define application directory identifiers: */
+#define MAX_AID_SIZE                                (12)
+#define DESFIRE_AID_SIZE                            (3)
+
+typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
+
+extern const BYTE DEFAULT_SELECT_DESFIRE_AID[]; 
+extern const BYTE DEFAULT_SELECT_ISO7816_AID[]; 
 
 /* 
  * Defines the application directory contents.
@@ -69,11 +70,12 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; 
 } DESFireAppDirType;
 
-/* Defines the block ID of each application's file on the card. */
-typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
-
-#define DESFIRE_FILE_INDEX_BLOCKS   DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
 #define DESFIRE_APP_DIR_BLOCKS      DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))
+
+/* Defines the block ID of each application's file on the card. */
+// TODO: Eventually remove this ... 
+//typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
+//#define DESFIRE_FILE_INDEX_BLOCKS   DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
 
 /* Global card structure support routines */
 void SynchronizeAppDir(void);
@@ -118,7 +120,7 @@ bool IsPiccAppSelected(void);
 uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings);
 uint16_t DeleteApp(const DESFireAidType Aid);
 void GetApplicationIdsSetup(void);
-TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer);
+TransferStatus GetApplicationIdsTransfer(uint8_t *Buffer);
 uint16_t GetApplicationIdsIterator(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif

@@ -66,6 +66,10 @@ BYTE AuthenticatedWithKey = 0x00;
 
 /* Transfer routines */
 
+void SynchronizePICCInfo(void) {
+    WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
+}
+
 TransferStatus PiccToPcdTransfer(uint8_t* Buffer) { // TODO: Check 
     TransferStatus Status;
     uint8_t XferBytes;

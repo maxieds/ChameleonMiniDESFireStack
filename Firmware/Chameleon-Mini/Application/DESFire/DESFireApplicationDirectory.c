@@ -11,10 +11,10 @@
 #include "DESFireMemoryOperations.h"
 #include "DESFireUtils.h"
 
-const BYTE DEFAULT_DESFIRE_AID[] = { 
+const BYTE DEFAULT_SELECT_DESFIRE_AID[] = { 
      0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 
 };
-const BYTE DEFAULT_ISO7816_AID[] = { 
+const BYTE DEFAULT_SELECT_ISO7816_AID[] = { 
      0xa0, 0x00, 0x00, 0x00, 0x03, 0x96 
 };
 
@@ -26,10 +26,6 @@ DesfireApplicationDataType SelectedAppData = { 0 };
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
-}
-
-void SynchronizePICCInfo(void) {
-    WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
 }
 
 SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
@@ -302,7 +298,7 @@ void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettin
 }
 
 /*
- * Application selection (TODO: Start here ... )
+ * Application selection
  */
 
 uint8_t LookupAppSlot(const DESFireAidType Aid) {
@@ -315,16 +311,11 @@ uint8_t LookupAppSlot(const DESFireAidType Aid) {
 }
 
 void SelectAppBySlot(uint8_t AppSlot) {
-    /* TODO: verify this behaviour */
-    AbortTransaction();
+    AbortTransaction(); /* TODO: verify this behaviour */
+    SIZET appCacheSelectedBlockId = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID + 
+                                    AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
+    ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;
-    GetApplicationData(AppSlot, &SelectedAppData);
-    //SelectedApp.KeySettings = GetAppProperty(DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
-    //SelectedApp.KeyCount = GetAppProperty(DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot);
-    //SelectedApp.KeyAddress = GetAppProperty(DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot) * 
-    //                         DESFIRE_EEPROM_BLOCK_SIZE;
-    //SelectedApp.FilesAddress = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot) * 
-    //                           DESFIRE_EEPROM_BLOCK_SIZE;
 }
 
 uint16_t SelectApp(const DESFireAidType Aid) {
@@ -347,10 +338,9 @@ bool IsPiccAppSelected(void) {
 }
 
 /*
- * Application management
+ * Application management (TODO: Start here ... )
  */
 
-// TODO: Notably changed this part of the implementation from devzzo's code: 
 uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings) {
     uint8_t Slot;
     uint8_t FreeSlot;
