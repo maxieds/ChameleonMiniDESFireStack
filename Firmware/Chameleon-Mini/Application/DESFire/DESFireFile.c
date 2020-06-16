@@ -116,7 +116,7 @@ uint8_t CreateFileHeaderData(uint8_t FileNum, DESFireFileTypeSettings *File) {
           return STATUS_OUT_OF_EEPROM_ERROR;
      }
      else {
-          CopyBlockBytes(fileSettingsBlockId, 0x00, sizeof(DESFireFileTypeSettings));
+          SetBlockBytes(fileSettingsBlockId, 0x00, sizeof(DESFireFileTypeSettings));
           SIZET fileAddressArrayBlockId = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, SelectedApp.Slot);
           SIZET fileAddressArray[DESFIRE_MAX_FILES];
           ReadBlockBytes(fileAddressArray, fileAddressArrayBlockId, 2 * DESFIRE_MAX_FILES);

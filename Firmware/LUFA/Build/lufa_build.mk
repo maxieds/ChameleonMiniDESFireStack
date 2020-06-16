@@ -185,7 +185,7 @@ DEST_OBJECT_FILES = $(foreach objFile,$(OBJECT_FILES),$(OBJDIR)$(OBJDIRSEP)$(she
 #endif
 
 # Create a list of dependency files from the list of object files
-DEPENDENCY_FILES := $(OBJECT_FILES:%.o=%.d)
+DEPENDENCY_FILES := $(DEST_OBJECT_FILES:%.co=%.d) $(DEST_OBJECT_FILES:%.cxxo=%.d) $(DEST_OBJECT_FILES:%.So=%.d)
 
 # Create a list of common flags to pass to the compiler/linker/assembler
 BASE_CC_FLAGS    := -pipe -g$(DEBUG_FORMAT) -g$(DEBUG_LEVEL)
@@ -297,25 +297,28 @@ $(SRC):
 	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) $< -o $@
 
 # Compiles an input C source file and generates a linkable object file for it
-%.co: %.c $(MAKEFILE_LIST)
+%.co: %.c $(MAKEFILE_LIST) 
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) -MMD -MP -MF $(@:%.co=%.d) \
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) \
+		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(shell basename $(@:%.co=%.d)) \
 		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
-	@mv $(@:%.co=%.d) $(OBJDIR)$(OBJDIRSEP)
+	$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
+	@echo $(OBJECT_FILES)
 
 # Compiles an input C++ source file and generates a linkable object file for it
 %.cxxo: %.cpp $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) -MMD -MP -MF $(@:%.cxxo=%.d) \
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) \
+		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(shell basename $(@:%.cxxo=%.d)) \
 		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
-	@mv $(@:%.cppo=%.d) $(OBJDIR)$(OBJDIRSEP)
 
 # Assembles an input ASM source file and generates a linkable object file for it
 %.So: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) -MMD -MP -MF $(@:%.So=%.d) \
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) \
+		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(shell basename $(@:%.So=%.d)) \
 		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
-	@mv $(@:%.So=%.d) $(OBJDIR)$(OBJDIRSEP)
+	$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
 
 # Generates a library archive file from the user application, which can be linked into other applications
 .PRECIOUS  : $(OBJECT_FILES)
@@ -324,9 +327,11 @@ $(SRC):
 	@echo $(MSG_ARCHIVE_CMD) Archiving object files into \"$@\"
 	$(CROSS)-ar rcs $@ $(OBJECT_FILES)
 
+
+
 # Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
 # files, or used for programming and debugging directly
-.PRECIOUS  : $(OBJECT_FILES)
+.PRECIOUS  : $(DEST_OBJECT_FILES)
 .SECONDARY : %.elf
 %.elf: $(OBJECT_FILES)
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"

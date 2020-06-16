@@ -12,14 +12,17 @@
    storage of strings and data we need to write so we do not have to rely 
    on a bothersome heap-based scheme for passing pointers to functions: */
 #define MAX_DATA_BUFFER_SIZE                (256)
+#define DATA_BUFFER_SIZE_SMALL              (64)
 extern BYTE DESFireInternalDataBuffer[MAX_DATA_BUFFER_SIZE];
-
+extern BYTE DESFireInternalDataBufferSmall[DATA_BUFFER_SIZE_SMALL];
 /*
  * EEPROM memory management routines:
  */
-void ReadBlockBytes(void *Buffer, BYTE StartBlock, SIZET Count);
-void WriteBlockBytes(const void *Buffer, BYTE StartBlock, SIZET Count);
-void CopyBlockBytes(BYTE DestBlock, BYTE SrcBlock, SIZET Count);
+void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count);
+void WriteBlockBytes(const void *Buffer, SIZET StartBlock, SIZET Count);
+void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
+void SetBlockBytes(SIZET DestBlock, BYTE InitByteValue, SIZET Count);
+
 BYTE AllocateBlocks(BYTE BlockCount);
 BYTE GetCardCapacityBlocks(void);
 

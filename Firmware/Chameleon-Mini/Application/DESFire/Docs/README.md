@@ -89,12 +89,12 @@ repositories and code bases:
 * :large_orange_diamond: ``DESFireAPDU.c``
 * :white_check_mark: ``DESFireApplicationDirectory.c``
 * :large_orange_diamond: ``DESFireChameleonTerminal.c``
-* :interrobang: :large_orange_diamond: ``DESFireCrypto.c``
+* :large_orange_diamond: ``DESFireCrypto.c``
 * :white_check_mark: ``DESFireFile.c``
 * :interrobang: ``DESFireISO14443Support.c``
 * :interrobang: ``DESFireInstructions.c``
 * :large_orange_diamond: ``DESFireLogging.c``
-* :interrobang: ``DESFireMemoryOperations.c``
+* :white_check_mark: ``DESFireMemoryOperations.c``
 * :white_check_mark: ``DESFirePICCControl.c`` 
 * :interrobang: ``DESFireStatusCodes.c``
 * :large_orange_diamond: ``DESFireUtils.c``

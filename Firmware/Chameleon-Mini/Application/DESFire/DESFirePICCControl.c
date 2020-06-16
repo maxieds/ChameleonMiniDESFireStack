@@ -245,8 +245,8 @@ void FormatPicc(void) {
     /* Wipe application directory */
     memset(&AppDir, PICC_EMPTY_BYTE, sizeof(DESFireAppDirType));
     BYTE fileCacheArrayBlocks = DESFIRE_MAX_SLOTS * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE; 
-    CopyBlockBytes(DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID, 0x00, 
-                   fileCacheArrayBlocks * DESFIRE_EEPROM_BLOCK_SIZE);
+    SetBlockBytes(DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID, 0x00, 
+                  fileCacheArrayBlocks * DESFIRE_EEPROM_BLOCK_SIZE);
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 1;
     /* Reset the free block pointer */

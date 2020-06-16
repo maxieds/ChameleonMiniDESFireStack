@@ -387,35 +387,35 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
          return STATUS_OUT_OF_EEPROM_ERROR;
     }
     else {
-         CopyBlockBytes(appCacheData.FileNumbersArrayMap, 0x00, DESFIRE_MAX_FILES);
+         SetBlockBytes(appCacheData.FileNumbersArrayMap, 0x00, DESFIRE_MAX_FILES);
     }
     appCacheData.FileCommSettings = AllocateBlocks(APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE);
     if(appCacheData.FileCommSettings == 0) {
          return STATUS_OUT_OF_EEPROM_ERROR;
     }
     else {
-         CopyBlockBytes(appCacheData.FileCommSettings, DESFIRE_DEFAULT_COMMS_STANDARD, DESFIRE_MAX_FILES);
+         SetBlockBytes(appCacheData.FileCommSettings, DESFIRE_DEFAULT_COMMS_STANDARD, DESFIRE_MAX_FILES);
     }
     appCacheData.FileAccessRights = AllocateBlocks(APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE);
     if(appCacheData.FileAccessRights == 0) {
          return STATUS_OUT_OF_EEPROM_ERROR;
     }
     else {
-         CopyBlockBytes(appCacheData.FileAccessRights, 0xee, 2 * DESFIRE_MAX_FILES);
+         SetBlockBytes(appCacheData.FileAccessRights, 0xee, 2 * DESFIRE_MAX_FILES);
     }
     appCacheData.KeyVersionsArray = AllocateBlocks(APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE);
     if(appCacheData.KeyVersionsArray == 0) {
          return STATUS_OUT_OF_EEPROM_ERROR;
     }
     else {
-         CopyBlockBytes(appCacheData.KeyVersionsArray, 0x00, DESFIRE_MAX_KEYS);
+         SetBlockBytes(appCacheData.KeyVersionsArray, 0x00, DESFIRE_MAX_KEYS);
     }
     appCacheData.FilesAddress = AllocateBlocks(APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE);
     if(appCacheData.FilesAddress == 0) {
          return STATUS_OUT_OF_EEPROM_ERROR;
     }
     else {
-         CopyBlockBytes(appCacheData.FilesAddress, 0x00, 2 * DESFIRE_MAX_FILES);
+         SetBlockBytes(appCacheData.FilesAddress, 0x00, 2 * DESFIRE_MAX_FILES);
     }
     appCacheData.KeyAddress = AllocateBlocks(APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE);
     if(appCacheData.KeyAddress == 0) {
@@ -430,7 +430,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
                    if(keyAddresses[keyId] == 0) {
                         return STATUS_OUT_OF_EEPROM_ERROR;
                    }
-                   CopyBlockBytes(keyAddresses[keyId], 0x00, CRYPTO_MAX_KEY_SIZE);
+                   SetBlockBytes(keyAddresses[keyId], 0x00, CRYPTO_MAX_KEY_SIZE);
               }
          }
          WriteBlockBytes(keyAddresses, appCacheData.KeyAddress, 2 * DESFIRE_MAX_KEYS);

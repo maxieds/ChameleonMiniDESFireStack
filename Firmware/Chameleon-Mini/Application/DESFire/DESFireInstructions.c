@@ -263,7 +263,7 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     memset(&Key, 0, sizeof(Key));
 
     /* Done */
-    DesfireState = DESFIRE_AUTHENTICATE2;
+    DesfireState = DESFIRE_LEGACY_AUTHENTICATE2;
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
     return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_2KTDEA_NONCE_SIZE;
 }

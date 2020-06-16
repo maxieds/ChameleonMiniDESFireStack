@@ -204,7 +204,7 @@ AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
 # Default target
-default: $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin desfire-dev
+default: clean desfire-dev
 
 all:
 
@@ -267,5 +267,5 @@ desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
 
 clean: lufa-clean
-	@rm -f Bin/*.o Application/DESFire/*.code
+	@rm -f $(OBJDIR)/*.{d,co,cxxo,So,o} Application/DESFire/*.code
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{elf,hex,eep,bin}
