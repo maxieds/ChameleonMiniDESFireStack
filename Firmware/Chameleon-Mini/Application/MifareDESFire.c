@@ -60,9 +60,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     case DESFIRE_LEGACY_AUTHENTICATE2:
         return EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
     case DESFIRE_ISO_AUTHENTICATE2:
-        return CmdNotImplemented(Buffer, ByteCount);
+        return DesfireCmdAuthenticate3KTDEA2(Buffer, ByteCount);
     case DESFIRE_AES_AUTHENTICATE2:
-        return CmdNotImplemented(Buffer, ByteCount);
+        return DesfireCmdAuthenticateAES2(Buffer, ByteCount);
     case DESFIRE_READ_DATA_FILE:
         return ReadDataFileIterator(Buffer, ByteCount);
     default:

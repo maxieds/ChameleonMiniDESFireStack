@@ -24,6 +24,7 @@ DesfireAESAuthState AESAuthState = AESAUTH_STATE_IDLE;
 uint8_t Authenticated = 0x00;
 uint8_t AuthenticatedWithKey = 0x00;
 uint8_t AuthenticatedWithPICCMasterKey = 0x00;
+uint8_t CryptoAuthMethod = CRYPTO_TYPE_ANY;
 uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 
 void InvalidateAuthState(BYTE keepPICCAuthData) {
@@ -32,6 +33,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
      }
      Authenticated = 0x00;
      AuthenticatedWithKey = 0x00;
+     CryptoAuthMethod = CRYPTO_TYPE_ANY;
      ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
 
@@ -57,7 +59,7 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
           case CMD_AUTHENTICATE_AES:
           case CMD_AUTHENTICATE_EV2_FIRST:
           case CMD_AUTHENTICATE_EV2_NONFIRST:
-               return CRYPTO_TYPE_AES;
+               return CRYPTO_TYPE_AES128;
           case CMD_AUTHENTICATE_ISO:
                return CRYPTO_TYPE_3K3DES;
           case CMD_AUTHENTICATE:
@@ -81,7 +83,8 @@ uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
 /* Checksum routines */
 
 void TransferChecksumUpdateCRCA(const uint8_t* Buffer, uint8_t Count) {
-    TransferState.Checksums.MACData.CRCA = ISO14443AUpdateCRCA(Buffer, Count, TransferState.Checksums.MACData.CRCA);
+    TransferState.Checksums.MACData.CRCA = 
+                  ISO14443AUpdateCRCA(Buffer, Count, TransferState.Checksums.MACData.CRCA);
 }
 
 uint8_t TransferChecksumFinalCRCA(uint8_t* Buffer) {

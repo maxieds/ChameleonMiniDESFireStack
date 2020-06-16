@@ -14,6 +14,6 @@
 #ifdef DESFIRE_DEFAULT_TESTING_MODE
      BYTE LocalTestingMode = DESFIRE_DEFAULT_TESTING_MODE;
 #else
-     BYTE LocalTestingMode = 0x01;
+     BYTE LocalTestingMode = 0x00;
 #endif
 

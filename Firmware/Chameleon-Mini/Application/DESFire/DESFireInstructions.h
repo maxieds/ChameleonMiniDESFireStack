@@ -110,7 +110,7 @@ extern DesfireSavedCommandStateType DesfireCommandState;
  * DESFire EV0 / D40 specific commands
  */
 
-uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount); // TODO
+uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount);
 
@@ -164,6 +164,12 @@ uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
 
 /* EV1/EV2 supported commands */
+uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount);
+
+uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount);
 
 /* ISO7816 command handling */
 

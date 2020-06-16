@@ -119,7 +119,9 @@ uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount) {
               case CMD_GET_KEY_VERSION:
               case CMD_FREE_MEMORY:
               case CMD_GET_DF_NAMES:
+                  break;
               case CMD_GET_CARD_UID: /* TODO: Possible randomization if #if defined(DESFIRE_RANDOMIZE_UIDS_PREAUTH) */
+                   return DesfireCmdGetCardUID(Buffer, ByteCount);
               case CMD_GET_ISO_FILE_IDS:
               default:
                    break;
@@ -205,6 +207,7 @@ uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
  * DESFire key management commands
  */
 
+// TODO: Invalidate auth state and reset accordingly ... 
 uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check ... 
     uint8_t KeyId;
     Crypto2KTDEAKeyType Key;
@@ -254,6 +257,7 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) { // TOD
     return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_2KTDEA_NONCE_SIZE;
 }
 
+// TODO: Invalidate auth state and reset accordingly ... 
 uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check ... 
     Crypto2KTDEAKeyType Key;
     DesfireState = DESFIRE_IDLE;
@@ -910,4 +914,10 @@ uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount) {
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
+/* 
+ * EV1/EV2 supported commands 
+ */
 
+uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount) {
+     return CmdNotImplemented(Buffer, ByteCount);
+}

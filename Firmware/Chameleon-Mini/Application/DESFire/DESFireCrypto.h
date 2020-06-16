@@ -21,7 +21,6 @@
  * (Section 7.2) of 
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
-
 #define DESFIRE_COMMS_PLAINTEXT            (0x00)
 #define DESFIRE_COMMS_PLAINTEXT_MAC        (0x01)
 #define DESFIRE_COMMS_CIPHERTEXT_DES       (0x03)
@@ -42,18 +41,19 @@
     ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_AES192) || (ct == CRYPTO_TYPE_AES256))
 
 /* Key sizes, block sizes (in bytes): */
-#define CRYPTO_DES_KEY_SIZE         (8)
-#define CRYPTO_2KTDEA_KEY_SIZE      (2 * CRYPTO_DES_KEY_SIZE)
-#define CRYPTO_3KTDEA_KEY_SIZE      (3 * CRYPTO_DES_KEY_SIZE)
-#define CRYPTO_AES_KEY_SIZE         (16)
-#define CRYPTO_MAX_KEY_SIZE         (32)
-#define CRYPTO_DES_BLOCK_SIZE       (8) 
-#define CRYPTO_3KTDEA_BLOCK_SIZE    (CRYPTO_DES_BLOCK_SIZE)
-#define CRYPTO_AES_BLOCK_SIZE       (16)
-#define CRYPTO_MAX_BLOCK_SIZE       (16)
-#define DESFIRE_DES_IV_SIZE         (CRYPTO_DES_BLOCK_SIZE)
-#define DESFIRE_AES_IV_SIZE         (CRYPTO_AES_BLOCK_SIZE)
-#define DESFIRE_SESSION_KEY_SIZE    (CRYPTO_3KTDEA_KEY_SIZE)
+#define CRYPTO_DES_KEY_SIZE                  (8)
+#define CRYPTO_2KTDEA_KEY_SIZE               (2 * CRYPTO_DES_KEY_SIZE)
+#define CRYPTO_3KTDEA_KEY_SIZE               (3 * CRYPTO_DES_KEY_SIZE)
+#define CRYPTO_AES_KEY_SIZE                  (16)
+#define CRYPTO_MAX_KEY_SIZE                  (32)
+#define CRYPTO_DES_BLOCK_SIZE                (8) 
+#define CRYPTO_3KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
+#define CRYPTO_AES_BLOCK_SIZE                (16)
+#define CRYPTO_MAX_BLOCK_SIZE                (16)
+#define DESFIRE_DES_IV_SIZE                  (CRYPTO_DES_BLOCK_SIZE)
+#define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
+#define DESFIRE_SESSION_KEY_SIZE             (CRYPTO_3KTDEA_KEY_SIZE)
+#define CRYPTO_CHALLENGE_RESPONSE_BYTES      (8)
 
 typedef BYTE Crypto2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 typedef BYTE Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
@@ -67,6 +67,7 @@ extern BYTE SessionIVByteSize;
 extern uint8_t Authenticated;
 extern uint8_t AuthenticatedWithKey;
 extern uint8_t AuthenticatedWithPICCMasterKey;
+extern uint8_t CryptoAuthMethod;
 extern uint8_t ActiveCommMode;
 
 /* TODO: 
@@ -156,27 +157,31 @@ uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
 
 /* Prototype the CBC function pointer in case anyone needs it */
-typedef void (*CryptoCBCFuncType)(uint16_t Count, const void *PlainText, void *Ciphertext, void *IV, const uint8_t *Keys);
+typedef void (*CryptoCBCFuncType)(uint16_t Count, const void *PlainText, 
+                                  void *Ciphertext, void *IV, const uint8_t *Keys);
 
 extern CryptoCBCFuncType CryptoEncryptAES_CBCSend;
 extern CryptoCBCFuncType CryptoDecryptAES_CBCSend;
 extern CryptoCBCFuncType CryptoEncryptAES_CBCReceive;
 extern CryptoCBCFuncType CryptoDecryptAES_CBCReceive;
 
+/* Checksum routines: */
+void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);
+uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer);
+
 /*********************************************************
  * TripleDES crypto routines: 
  *********************************************************/
 
 /* Checksum routines: */
-// TODO: Need AES equivalents ... 
 void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalCRCA(uint8_t *Buffer);
 void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
 
-/* Encryption routines */
 #define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
 
+/* Encryption routines */
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count);
 
@@ -203,6 +208,7 @@ PCD's side.
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
 void CryptoEncrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoDecrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
  *
@@ -212,8 +218,10 @@ void CryptoEncrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t*
  * \param IV            Initialization vector buffer, will be updated
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
-void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                 void *IV, const uint8_t* Keys);
+void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                 void *IV, const uint8_t* Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "receive" mode (crypt-then-xor)
  *
@@ -223,8 +231,13 @@ void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ci
  * \param IV            Initialization vector buffer, will be updated
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
-void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                    void *IV, const uint8_t* Keys);
+void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                    void *IV, const uint8_t* Keys);
+
+void CryptoEncrypt3KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoDecrypt3KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 
 /** Performs the 3-key Triple DES en/deciphering in the CBC "send" or "receive" mode
  *
@@ -234,8 +247,15 @@ void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void*
  * \param IV            Initialization vector buffer, will be updated
  * \param Keys          Key block pointer (CRYPTO_3KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                 void *IV, const uint8_t* Keys);
+void CryptoDecrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                 void *IV, const uint8_t* Keys);
+
+void CryptoEncrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                    void *IV, const uint8_t* Keys);
+void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                    void *IV, const uint8_t* Keys);
 
 /** Applies padding to the data within the buffer
  *

@@ -245,7 +245,7 @@ void WriteKeyVersion(uint8_t AppSlot, uint8_t KeyId, BYTE Value) {
 }
 
 BYTE ReadKeyCryptoType(uint8_t AppSlot, uint8_t KeyId) {
-     if(AppSlot >= DESFIRE_MAX_SLOTS || !KeyIdValid(AppSlot)) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || !KeyIdValid(AppSlot, KeyId)) {
           return 0x00;
      }
      SIZET keyTypesBlockId = GetAppProperty(DESFIRE_APP_KEY_TYPES_ARRAY_BLOCK_ID, AppSlot);
@@ -255,7 +255,7 @@ BYTE ReadKeyCryptoType(uint8_t AppSlot, uint8_t KeyId) {
 }
 
 void WriteKeyCryptoType(uint8_t AppSlot, uint8_t KeyId, BYTE Value) {
-     if(AppSlot >= DESFIRE_MAX_SLOTS || !KeyIdValid(AppSlot)) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || !KeyIdValid(AppSlot, KeyId)) {
           return 0x00;
      }
      SIZET keyTypesBlockId = GetAppProperty(DESFIRE_APP_KEY_TYPES_ARRAY_BLOCK_ID, AppSlot);
