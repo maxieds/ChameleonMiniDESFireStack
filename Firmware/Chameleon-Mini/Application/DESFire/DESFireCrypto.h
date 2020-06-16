@@ -30,10 +30,16 @@
 #define DESFIRE_COMMS_CIPHERTEXT_AES256    (0x24)
 #define DESFIRE_DEFAULT_COMMS_STANDARD     (DESFIRE_COMMS_PLAINTEXT)
 
-#define CRYPTO_TYPE_DES         (0x00)
+#define CRYPTO_TYPE_ANY         (0x00)
+#define CRYPTO_TYPE_DES         (0x01)
 #define CRYPTO_TYPE_2K3DES      (0x0A)
 #define CRYPTO_TYPE_3K3DES      (0x1A)
-#define CRYPTO_TYPE_AES         ((BYTE) 0xAA) /* Key size determined by the initial auth buffer */
+#define CRYPTO_TYPE_AES128      (0x4A) /* AES key size determined by the initial auth buffer size */
+#define CRYPTO_TYPE_AES192      (0x5A)
+#define CRYPTO_TYPE_AES256      (0x6A)
+
+#define CryptoTypeAES(ct) \
+    ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_AES192) || (ct == CRYPTO_TYPE_AES256))
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_DES_KEY_SIZE         (8)

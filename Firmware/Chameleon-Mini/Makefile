@@ -206,7 +206,6 @@ AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 default: desfire-dev
 
 local-clean:
-	@echo "Cleaning up past build data ... "
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{hex,eep}
 	@rm -rf $(OBJDIR)
 	@mkdir $(OBJDIR)

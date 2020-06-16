@@ -159,6 +159,7 @@ typedef struct {
     SIZET FileCommSettings;       /* Block offset in EEPROM */
     SIZET FileAccessRights;       /* Block offset in EEPROM */
     SIZET KeyVersionsArray;       /* Block offset in EEPROM */
+    SIZET KeyTypesArray;          /* Block offset in EEPROM */
     SIZET FilesAddress;           /* Block offset in EEPROM */
     SIZET KeyAddress;             /* Block offset in EEPROM */
     UINT  DirtyFlags;
@@ -170,6 +171,7 @@ extern BYTE APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE;
 extern BYTE APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE;
 extern BYTE APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE;
 extern BYTE APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE;
+extern BYTE APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE;
 extern BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE;
 extern BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE;
 extern BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE;
@@ -198,6 +200,8 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID, 
     /* AppData keep track of newer EVx revisions key versioning schemes */
     DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID,
+    /* AppData keep track of the key types (and hence, byte sizes) by crypto method */
+    DESFIRE_APP_KEY_TYPES_ARRAY_BLOCK_ID,
     /* AppData keeping track of apps file index blocks */
     DESFIRE_APP_FILES_PTR_BLOCK_ID,
     /* AppData keeping track of apps key locations */

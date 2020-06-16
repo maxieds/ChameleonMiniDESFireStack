@@ -41,8 +41,12 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
                return CRYPTO_2KTDEA_KEY_SIZE;
           case CRYPTO_TYPE_3K3DES:
                return CRYPTO_3KTDEA_KEY_SIZE;
-          case CRYPTO_TYPE_AES:
-               return CRYPTO_AES_KEY_SIZE;
+          case CRYPTO_TYPE_AES128:
+               return 16;
+          case CRYPTO_TYPE_AES192:
+               return 24;
+          case CRYPTO_TYPE_AES256:
+               return 32;
           default:
                return 0;
      }

@@ -302,21 +302,22 @@ $(SRC):
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
 	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) \
 		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
-	$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
+	#$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
 
 # Compiles an input C++ source file and generates a linkable object file for it
-%.cxxo: %.cpp $(MAKEFILE_LIST)
-	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) \
-		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(basename $@).d \
-		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+#%.cxxo: %.cpp $(MAKEFILE_LIST)
+#	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
+#	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) \
+#		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(basename $@).d \
+#		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
 
 # Assembles an input ASM source file and generates a linkable object file for it
 %.So: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
 	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) \
 		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
-	$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
+	
+	#$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
 
 # Generates a library archive file from the user application, which can be linked into other applications
 .PRECIOUS  : $(OBJECT_FILES)
@@ -327,9 +328,9 @@ $(SRC):
 
 # Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
 # files, or used for programming and debugging directly
-.PRECIOUS  : $(OBJECT_FILES)
+.PRECIOUS  : $(DEST_OBJECT_FILES) %.So %.co
 .SECONDARY : %.elf
-%.elf: local-clean $(OBJECT_FILES)
+%.elf: $(OBJECT_FILES) 
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"
 	$(CROSS)-gcc $(DEST_OBJECT_FILES) -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
 
