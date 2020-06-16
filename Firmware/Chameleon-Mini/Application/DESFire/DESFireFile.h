@@ -146,7 +146,4 @@ uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
 uint8_t ValidateAuthentication(uint16_t AccessRights, uint16_t CheckMask);
 
-// TODO: Page 57: Read file functions ... 
-// TODO: Create and write file functions ... 
-
 #endif

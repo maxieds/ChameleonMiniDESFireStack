@@ -15,6 +15,7 @@ extern BYTE INIT[];
 
 #define DESFIRE_STATUS_RESPONSE_SIZE 1
 
+// TODO: See p. 72 of the datasheet for descriptions of these response codes ...
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     STATUS_OPERATION_OK = 0x00,
     STATUS_NO_CHANGES = 0x0C,
@@ -64,13 +65,5 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 #define SW_WARNING_STATE_UNCHANGED                     ((uint16_t) 0x6200)
 #define SW_REFERENCE_DATA_NOT_FOUND                    ((uint16_t) 0x6a88)	
 #define SW_INTERNAL_ERROR                              ((uint16_t) 0x6d66)
-
-// TODO: See p. 72 of the datasheet for descriptions of these response codes ...
-
-SIZET GetResponseTrailerFromError(BYTE ins, SIZET errorCode);
-SIZET GetResponseTrialerFromOK(BYTE ins, SIZET respCode);
-
-BOOL ResolveErrorAsString(BYTE ins, SIZET swResp, BYTE *destBuf, SIZET maxSize);
-BOOL ResolveResponseAsString(BYTE ins, SIZET swResp, BYTE *destBuf, SIZET maxSize);
 
 #endif

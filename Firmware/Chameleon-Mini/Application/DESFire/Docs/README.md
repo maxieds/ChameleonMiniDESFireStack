@@ -98,5 +98,5 @@ repositories and code bases:
 * :white_check_mark: ``DESFirePICCControl.c`` 
 * :interrobang: ``DESFireStatusCodes.c``
 * :large_orange_diamond: ``DESFireUtils.c``
-* :interrobang: ``../MifareDESFire.c``
+* :white_check_mark: ``../MifareDESFire.c``
 

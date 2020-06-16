@@ -33,6 +33,132 @@ static uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t Def
      return DefaultReturnValue;
 }
 
+uint16_t CmdNotImplemented(uint8_t* Buffer, uint16_t ByteCount) {
+    // TODO: Logging TODO ... (__FILE__, __LINE__, __FUNC__) 
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount) {
+
+
+    /* Handle EV0 commands */
+    switch (Buffer[0]) {
+    case CMD_GET_VERSION:
+        return EV0CmdGetVersion1(Buffer, ByteCount);
+    case CMD_FORMAT_PICC:
+        return EV0CmdFormatPicc(Buffer, ByteCount);
+
+    case CMD_AUTHENTICATE:
+        return EV0CmdAuthenticate2KTDEA1(Buffer, ByteCount);
+    case CMD_CHANGE_KEY:
+        return EV0CmdChangeKey(Buffer, ByteCount);
+    case CMD_GET_KEY_SETTINGS:
+        return EV0CmdGetKeySettings(Buffer, ByteCount);
+    case CMD_CHANGE_KEY_SETTINGS:
+        return EV0CmdChangeKeySettings(Buffer, ByteCount);
+
+    case CMD_GET_APPLICATION_IDS:
+        return EV0CmdGetApplicationIds1(Buffer, ByteCount);
+    case CMD_CREATE_APPLICATION:
+        return EV0CmdCreateApplication(Buffer, ByteCount);
+    case CMD_DELETE_APPLICATION:
+        return EV0CmdDeleteApplication(Buffer, ByteCount);
+    case CMD_SELECT_APPLICATION:
+        return EV0CmdSelectApplication(Buffer, ByteCount);
+
+    case CMD_CREATE_STDDATAFILE:
+        return EV0CmdCreateStandardDataFile(Buffer, ByteCount);
+    case CMD_CREATE_BACKUPDATAFILE:
+        return EV0CmdCreateBackupDataFile(Buffer, ByteCount);
+    case CMD_CREATE_VALUE_FILE:
+        return EV0CmdCreateValueFile(Buffer, ByteCount);
+    case CMD_CREATE_LINEAR_RECORD_FILE:
+        return EV0CmdCreateLinearRecordFile(Buffer, ByteCount);
+    case CMD_CREATE_CYCLIC_RECORD_FILE:
+        return EV0CmdCreateCyclicRecordFile(Buffer, ByteCount);
+    case CMD_DELETE_FILE:
+        return EV0CmdDeleteFile(Buffer, ByteCount);
+    case CMD_GET_FILE_IDS:
+        return EV0CmdGetFileIds(Buffer, ByteCount);
+    case CMD_GET_FILE_SETTINGS:
+        return EV0CmdGetFileSettings(Buffer, ByteCount);
+    case CMD_CHANGE_FILE_SETTINGS:
+        return EV0CmdChangeFileSettings(Buffer, ByteCount);
+
+    case CMD_READ_DATA:
+        return EV0CmdReadData(Buffer, ByteCount);
+    case CMD_WRITE_DATA:
+        return EV0CmdWriteData(Buffer, ByteCount);
+
+    case CMD_GET_VALUE:
+        return EV0CmdGetValue(Buffer, ByteCount);
+    case CMD_CREDIT:
+        return EV0CmdCredit(Buffer, ByteCount);
+    case CMD_DEBIT:
+        return EV0CmdDebit(Buffer, ByteCount);
+    case CMD_LIMITED_CREDIT:
+        return EV0CmdLimitedCredit(Buffer, ByteCount);
+
+    case CMD_READ_RECORDS:
+        return EV0CmdReadRecords(Buffer, ByteCount);
+    case CMD_WRITE_RECORD:
+        return EV0CmdWriteRecord(Buffer, ByteCount);
+    case CMD_CLEAR_RECORD_FILE:
+        return EV0CmdClearRecords(Buffer, ByteCount);
+
+    case CMD_COMMIT_TRANSACTION:
+        return EV0CmdCommitTransaction(Buffer, ByteCount);
+    case CMD_ABORT_TRANSACTION:
+        return EV0CmdAbortTransaction(Buffer, ByteCount);
+
+    case CMD_CONTINUE:
+        Buffer[0] = STATUS_OPERATION_OK;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    
+    default:
+        break;
+    }
+
+    /* Handle EV1 commands, if enabled */
+    /* Handle EV2 commands -- in future */
+    if (IsEmulatingEV1()) {
+         switch(Buffer[0]) {
+              case CMD_AUTHENTICATE_ISO:
+              case CMD_AUTHENTICATE_AES:
+              case CMD_AUTHENTICATE_EV2_FIRST:
+              case CMD_AUTHENTICATE_EV2_NONFIRST:
+              case CMD_SET_CONFIGURATION:
+              case CMD_GET_KEY_VERSION:
+              case CMD_FREE_MEMORY:
+              case CMD_GET_DF_NAMES:
+              case CMD_GET_CARD_UID: /* TODO: Possible randomization if #if defined(DESFIRE_RANDOMIZE_UIDS_PREAUTH) */
+              case CMD_GET_ISO_FILE_IDS:
+              default:
+                   break;
+         }
+    }
+
+    return CmdNotImplemented(Buffer, ByteCount);
+
+}
+
+uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount) {
+     switch(Buffer[0]) { 
+          case CMD_ISO7816_SELECT:
+          case CMD_ISO7816_GET_CHALLENGE:
+          case CMD_ISO7816_EXTERNAL_AUTHENTICATE:
+          case CMD_ISO7816_INTERNAL_AUTHENTICATE:
+          case CMD_ISO7816_READ_BINARY:
+          case CMD_ISO7816_UPDATE_BINARY:
+          case CMD_ISO7816_READ_RECORDS:
+          case CMD_ISO7816_APPEND_RECORD:
+          default:
+               break;
+     }
+     return CmdNotImplemented(Buffer, ByteCount);
+}
+
 /*
  * DESFire general commands
  */

@@ -10,6 +10,17 @@
 
 #define DESFIRE_MAX_PAYLOAD_SIZE            64 // 59 /* Bytes */
 
+#define CLA_PROTECTED_APDU           (0x0c)
+#define CLA_ISO7816                  (0x00)
+#define P1_DF                        (0x04)
+#define P2_SELECT                    (0x0C)
+#define LE_MAX                       ((uint16_t) 256)
+
+#define DO87_START                   ((uint8_t) 0x87)
+#define DO87_TYPE                    ((uint32_t) 0x00000080)
+#define DO87_BYTENO                  ((uint8_t) 0x7F)
+#define DO87_END                     ((uint8_t) 0x01)
+
 typedef struct DESFIRE_FIRMWARE_PACKING {
      BYTE  cla;
      BYTE  ins;

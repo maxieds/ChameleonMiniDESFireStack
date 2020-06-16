@@ -266,6 +266,6 @@ desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
 
-local-clean:
+clean: lufa-clean
 	@rm -f Bin/*.o Application/DESFire/*.code
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{elf,hex,eep,bin}

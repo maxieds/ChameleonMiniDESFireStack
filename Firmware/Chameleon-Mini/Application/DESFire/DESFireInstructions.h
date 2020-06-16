@@ -40,7 +40,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_SELECT_APPLICATION =  0x5A,
     CMD_FORMAT_PICC =  0xFC,
     CMD_GET_VERSION = 0x60,
-    // TODO: Possible randomization if #if defined(DESFIRE_RANDOMIZE_UIDS_PREAUTH)
     CMD_GET_CARD_UID = 0x51,
     CMD_GET_FILE_IDS =  0x6F,
     CMD_GET_FILE_SETTINGS = 0xF5,
@@ -82,17 +81,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 } DESFireCommandType;
 
-#define CLA_PROTECTED_APDU           (0x0c)
-#define CLA_ISO7816                  (0x00)
-#define P1_DF                        (0x04)
-#define P2_SELECT                    (0x0C)
-#define LE_MAX                       ((uint16_t) 256)
-
-#define DO87_START                   ((uint8_t) 0x87)
-#define DO87_TYPE                    ((uint32_t) 0x00000080)
-#define DO87_BYTENO                  ((uint8_t) 0x7F)
-#define DO87_END                     ((uint8_t) 0x01)
-
 #define VERSION1_BYTES_PROCESSED     (8) 
 #define VERSION2_BYTES_PROCESSED     (8)
 #define VERSION3_BYTES_PROCESSED     (15)
@@ -128,6 +116,8 @@ extern DesfireSavedCommandStateType DesfireCommandState;
  */
 
 uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount); // TODO
+uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount);
 
 /* General commands */
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);
@@ -160,6 +150,10 @@ uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Data manipulation commands */
+
+// TODO: Page 57: Read file functions ... 
+// TODO: Create and write file functions ...
+
 uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetValue(uint8_t *Buffer, uint16_t ByteCount);
@@ -173,5 +167,9 @@ uint16_t EV0CmdClearRecords(uint8_t *Buffer, uint16_t ByteCount);
 /* Transaction handling commands */
 uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
+
+/* EV1/EV2 supported commands */
+
+/* ISO7816 command handling */
 
 #endif 
