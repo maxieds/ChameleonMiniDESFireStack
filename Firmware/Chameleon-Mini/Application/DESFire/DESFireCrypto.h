@@ -131,15 +131,19 @@ extern DesfireAESAuthState AESAuthState;
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 
+typedef uint8_t (*CryptoTransferSendFunc)(uint8_t *Buffer, uint8_t Count);
+typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *Buffer, uint8_t Count);
+
 uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
 
-typedef void (*CryptoAESCBCFuncType)(uint16_t Count, const void *PlainText, void *Ciphertext, void *IV);
+/* Prototype the CBC function pointer in case anyone needs it */
+typedef void (*CryptoCBCFuncType)(uint16_t Count, const void *PlainText, void *Ciphertext, void *IV, const uint8_t *Keys);
 
-extern CryptoAESCBCFuncType CryptoEncryptAES_CBCSend;
-extern CryptoAESCBCFuncType CryptoDecryptAES_CBCSend;
-extern CryptoAESCBCFuncType CryptoEncryptAES_CBCReceive;
-extern CryptoAESCBCFuncType CryptoDecryptAES_CBCReceive;
+extern CryptoCBCFuncType CryptoEncryptAES_CBCSend;
+extern CryptoCBCFuncType CryptoDecryptAES_CBCSend;
+extern CryptoCBCFuncType CryptoEncryptAES_CBCReceive;
+extern CryptoCBCFuncType CryptoDecryptAES_CBCReceive;
 
 /*********************************************************
  * TripleDES crypto routines: 
@@ -173,9 +177,6 @@ Both operations employ TDEA encryption on the PICC's side and decryption on
 PCD's side.
 
 */
-
-/* Prototype the CBC function pointer in case anyone needs it */
-typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
 
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *

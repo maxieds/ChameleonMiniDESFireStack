@@ -5,4 +5,6 @@
 
 #include "DESFireAPDU.h"
 
+APDUCommand  DESFireInternalAPDUCommand = { 0 };
+APDUResponse DESFireInternalAPDUResponse = { 0 };
 

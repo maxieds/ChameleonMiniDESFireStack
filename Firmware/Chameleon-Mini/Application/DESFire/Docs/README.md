@@ -73,6 +73,7 @@ repositories and code bases:
   applications in a somewhat state-of-art pushing standard that is the ever spec-wise unknown DESFire stack. 
 * See what data segment space can be saved by setting ``__attribute__((...))`` packed on big union 
   structures like ``TransferStateType`` versus aligned at one for the component structs?
+* May need to allocate the ``SelectedAppCacheType`` structures on an as-needed basis.
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 
@@ -89,7 +90,7 @@ repositories and code bases:
 * :white_check_mark: ``DESFireApplicationDirectory.c``
 * :large_orange_diamond: ``DESFireChameleonTerminal.c``
 * :interrobang: :large_orange_diamond: ``DESFireCrypto.c``
-* :interrobang: ``DESFireFile.c``
+* :white_check_mark: ``DESFireFile.c``
 * :interrobang: ``DESFireISO14443Support.c``
 * :interrobang: ``DESFireInstructions.c``
 * :large_orange_diamond: ``DESFireLogging.c``

@@ -3,14 +3,16 @@
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
-#include "DESFireInstructions.h"
-#include "DESFirePICCControl.h"
-#include "DESFireStatusCodes.h"
-#include "DESFireLogging.h"
-
 #include "../../Configuration.h"
 #include "../../Memory.h"
 #include "../../Random.h"
+
+#include "DESFireInstructions.h"
+#include "DESFirePICCControl.h"
+#include "DESFireCrypto.h"
+#include "DESFireStatusCodes.h"
+#include "DESFireLogging.h"
+#include "../MifareDESFire.h"
 
 const BYTE VERSION1[] = { 
      0x04, 0x01, 0x01, 0x01, 0x00, 0x1a, 0x05 
@@ -92,7 +94,7 @@ uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t KeyId;
-    Desfire2KTDEAKeyType Key;
+    Crypto2KTDEAKeyType Key;
 
     /* Validate command length */
     if (ByteCount != 1 + 1) {
@@ -110,8 +112,8 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     /* Fetch the key */
     DesfireCommandState.Authenticate.KeyId = KeyId;
-    ReadSelectedAppKey(KeyId, Key);
-    LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, CRYPTO_2KTDEA_KEY_SIZE);
+    LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, sizeof(Key));
     /* Generate the nonce B */
     
     if(LocalTestingMode != 0) {
@@ -141,9 +143,8 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
-    Desfire2KTDEAKeyType Key;
+    Crypto2KTDEAKeyType Key;
     DesfireState = DESFIRE_IDLE;
-    ActiveAuthType = DESFIRE_AUTH_LEGACY;
 
     /* Validate command length */
     if (ByteCount != 1 + 2 * CRYPTO_DES_BLOCK_SIZE) {
@@ -152,22 +153,22 @@ uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Fetch the key */
-    ReadSelectedAppKey(DesfireCommandState.Authenticate.KeyId, Key);
-    LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
+    ReadAppKey(SelectedApp.Slot, DesfireCommandState.Authenticate.KeyId, Key, CRYPTO_2KTDEA_KEY_SIZE);
+    LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, sizeof(Key));
     /* Encipher to obtain plain text; zero IV = no CBC */
-    memset(ExtractIVBufferData(ActiveAuthType, &SessionIV), 0, sizeof(ExtractIVBufferData(ActiveAuthType, &SessionIV)));
-    CryptoEncrypt2KTDEA_CBCReceive(2, &Buffer[1], &Buffer[1], ExtractIVBufferData(ActiveAuthType, &SessionIV), Key);
+    memset(&SessionIV, 0x00, sizeof(SessionIV));
+    CryptoEncrypt2KTDEA_CBCReceive(2, &Buffer[1], &Buffer[1], SessionIV, Key);
     LogEntry(LOG_APP_NONCE_AB, &Buffer[1], 2 * DESFIRE_2KTDEA_NONCE_SIZE);
     /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
     if (memcmp(&Buffer[9], &DesfireCommandState.Authenticate.RndB[1], DESFIRE_2KTDEA_NONCE_SIZE - 1) || 
         (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
         /* Scrub the key */
-        memset(&Key, 0, sizeof(Key));
+        memset(&Key, 0x00, sizeof(Key));
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Compose the session key */
-    BYTE *SessionKeyData = ExtractSessionKeyData(ActiveAuthType, &SessionKey);
+    BYTE *SessionKeyData = SessionKey;
     SessionKeyData[0] = Buffer[1];
     SessionKeyData[1] = Buffer[2];
     SessionKeyData[2] = Buffer[3];
@@ -190,7 +191,7 @@ uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
     /* Encipher the nonce A; <= 8 bytes = no CBC */
     CryptoEncrypt2KTDEA(&Buffer[2], &Buffer[1], Key);
     /* Scrub the key */
-    memset(&Key, 0, sizeof(Key)); // TODO: Check legacy auth? 
+    memset(&Key, 0x00, sizeof(Key)); 
     /* NOTE: EV0: The session IV is reset on each transfer for legacy authentication */
 
     /* Done */
@@ -215,7 +216,7 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Validate the state against change key settings */
-    KeySettings = GetSelectedAppKeySettings();
+    KeySettings = ReadKeySettings(SelectedApp.Slot, KeyId);
     ChangeKeyId = KeySettings >> 4;
     switch (ChangeKeyId) {
     case DESFIRE_ALL_KEYS_FROZEN:
@@ -242,22 +243,20 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Encipher to obtain plaintext */
-    memset(ExtractIVBufferData(ActiveAuthType, &SessionIV), 0, sizeof(ExtractIVBufferData(ActiveAuthType, &SessionIV)));
-    CryptoEncrypt2KTDEA_CBCReceive(3, &Buffer[2], &Buffer[2], 
-         ExtractIVBufferData(ActiveAuthType, &SessionIV), ExtractSessionKeyData(ActiveAuthType, &SessionKey));
+    memset(SessionIV, 0x00, sizeof(SessionIV));
+    CryptoEncrypt2KTDEA_CBCReceive(3, &Buffer[2], &Buffer[2], SessionIV, SessionKey);
     /* Verify the checksum first */
-    if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Desfire2KTDEAKeyType))) {
+    if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Crypto2KTDEAKeyType))) {
         Buffer[0] = STATUS_INTEGRITY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* The PCD generates data differently based on whether AuthKeyId == ChangeKeyId */
     if (KeyId != AuthenticatedWithKey) {
-        Desfire2KTDEAKeyType OldKey;
+        Crypto2KTDEAKeyType OldKey;
         uint8_t i;
-
         /* NewKey^OldKey | CRC(NewKey^OldKey) | CRC(NewKey) | Padding */
-        ReadSelectedAppKey(KeyId, OldKey);
+        ReadAppKey(SelectedApp.Slot, KeyId, OldKey, CRYPTO_2KTDEA_KEY_SIZE);
         for (i = 0; i < sizeof(OldKey); ++i) {
             Buffer[2 + i] ^= OldKey[i];
             OldKey[i] = 0;
@@ -266,7 +265,7 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
         Buffer[2 + 16] = Buffer[2 + 18];
         Buffer[2 + 17] = Buffer[2 + 19];
         /* Verify the checksum again */
-        if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Desfire2KTDEAKeyType))) {
+        if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Crypto2KTDEAKeyType))) {
             Buffer[0] = STATUS_INTEGRITY_ERROR;
             return DESFIRE_STATUS_RESPONSE_SIZE;
         }
@@ -278,8 +277,8 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
     /* NOTE: Padding checks are skipped, because meh (TODO). */
 
     /* Write the key and scrub */
-    WriteSelectedAppKey(KeyId, &Buffer[2]);
-    memset(&Buffer[2], 0, sizeof(Desfire2KTDEAKeyType));
+    WriteAppKey(SelectedApp.Slot, KeyId, &Buffer[2], CRYPTO_2KTDEA_KEY_SIZE);
+    memset(&Buffer[2], 0, sizeof(Crypto2KTDEAKeyType));
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -293,7 +292,7 @@ uint16_t EV0CmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    Buffer[1] = GetSelectedAppKeySettings();
+    Buffer[1] = ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey);
     Buffer[2] = DESFIRE_MAX_KEYS - 1;
 
     /* Done */
@@ -310,7 +309,7 @@ uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify whether settings are changeable */
-    if (!(GetSelectedAppKeySettings() & DESFIRE_ALLOW_CONFIG_CHANGE)) {
+    if (!(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_ALLOW_CONFIG_CHANGE)) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -321,9 +320,9 @@ uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Encipher to obtain plaintext */
-    CryptoEncrypt2KTDEA(&Buffer[2], &Buffer[2], ExtractSessionKeyData(ActiveAuthType, &SessionKey));
+    CryptoEncrypt2KTDEA(&Buffer[2], &Buffer[2], SessionKey);
     /* Verify the checksum first */
-    if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Desfire2KTDEAKeyType))) {
+    if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(Crypto2KTDEAKeyType))) {
         Buffer[0] = STATUS_INTEGRITY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -332,7 +331,7 @@ uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
     if (IsPiccAppSelected()) {
         NewSettings &= 0x0F;
     }
-    SetSelectedAppKeySettings(NewSettings);
+    WriteKeySettings(SelectedApp.Slot, AuthenticatedWithKey, NewSettings);
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -355,7 +354,7 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify authentication settings */
-    if (!(GetSelectedAppKeySettings() & DESFIRE_FREE_DIRECTORY_LIST) && 
+    if (!(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_DIRECTORY_LIST) && 
         AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* PICC master key authentication is required */
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
@@ -384,7 +383,7 @@ uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Verify authentication settings */
-    if (!(GetSelectedAppKeySettings() & DESFIRE_FREE_CREATE_DELETE) && 
+    if (!(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_CREATE_DELETE) && 
         AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* PICC master key authentication is required */
         Status = STATUS_AUTHENTICATION_ERROR;
@@ -545,7 +544,8 @@ uint16_t EV0CmdDeleteFile(uint8_t* Buffer, uint16_t ByteCount) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate access settings */
-    if (!(GetSelectedAppKeySettings() & DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+    if (!(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_CREATE_DELETE) && 
+        (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
         Status = STATUS_AUTHENTICATION_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -723,7 +723,7 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     CommSettings = GetSelectedFileCommSettings();
     /* Verify authentication: read or read&write required */
     switch (ValidateAuthentication(GetSelectedFileAccessRights(), 
-            VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_READ|VALIDATE_ACCESS_WRITE)) {
+            VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ | VALIDATE_ACCESS_WRITE)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -742,7 +742,7 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Setup and start the transfer */
-    Status = ReadValueFileSetup(CommSettings);
+    Status = ReadDataFileSetup(CommSettings, 0, 4);
     if (Status) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }

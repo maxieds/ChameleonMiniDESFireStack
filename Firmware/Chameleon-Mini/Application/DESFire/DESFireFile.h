@@ -13,14 +13,13 @@
 #define EFFILE_DATA_CHUNK_ALIGNAT         __attribute__((align(EFFILE_DATA_CHUNK_SIZE)))
 
 // TODO: See type 4 tags on CC and NTAG AIDs and FIDs 
-
 #define ISO7816_4_CURRENT_EF_FILE_ID      0x0000
 #define ISO7816_4_CURRENT_DF_FILE_ID      0x3FFF
 #define ISO7816_4_MASTER_FILE_ID          0x3F00
 
 /* File types */
 
-// See pages 48-49 of the datasheet for more details ... 
+// TODO: See pages 48-49 of the datasheet for more details ... 
 #define DESFIRE_FILE_STANDARD_DATA      0
 #define DESFIRE_FILE_BACKUP_DATA        1
 #define DESFIRE_FILE_VALUE_DATA         2
@@ -57,42 +56,43 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
             uint8_t CurrentNumRecords[3];
             uint8_t MaxRecordCount[3];
         } LinearRecordFile;
+        // TODO: CyclicRecordFile type 
     };
     uint8_t FileType;
-    uint8_t DataBlockAddress;
+    uint16_t FileDataBlockId;
 } DESFireFileTypeSettings;
+
+uint16_t GetFileSize(DESFireFileTypeSettings *File);
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE Num;
     DESFireFileTypeSettings File;
 } SelectedFileCacheType;
 
-/* Defines the block ID of each application's file on the card. */
-// TODO: Eventually remove this ... 
-//typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
-//#define DESFIRE_FILE_INDEX_BLOCKS   DESFIRE_BYTES_TO_BLOCKS(sizeof(DesfireFileIndexType))
-
 /*
  * File management: creation, deletion, and misc routines
  */
 
-uint8_t GetFileControlBlockId(uint8_t FileNum);
-uint8_t GetFileDataAreaBlockId(uint8_t FileNum);
+uint16_t GetFileDataAreaBlockId(uint8_t FileNum);
+void WriteFileDataAreaBlockId(uint8_t FileNum, uint16_t DataBlockId);
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
-uint8_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount, uint8_t *BlockIdPtr);
+uint16_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount);
 
+/* Creation and deletion */
+uint8_t CreateFileHeaderData(uint8_t FileNum, DESFireFileTypeSettings *File);
 uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
-                               int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled);
+                        int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled);
+// TODO: CreateLinearRecordFile(...); 
+// TODO: CreateCyclicRecordFile(...);
 uint8_t DeleteFile(uint8_t FileNum);
 
 /* Transactions */
 void StartTransaction(void);
 void MarkFileDirty(uint8_t FileNum);
 void StopTransaction(void);
-void SyncronizeFileCopies(uint8_t FileNum, bool RollBack);
 void FinaliseTransaction(bool RollBack);
 void CommitTransaction(void);
 void AbortTransaction(void);
@@ -111,17 +111,15 @@ uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Lengt
 uint16_t ReadDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
-TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
-uint8_t ReadValueFileSetup(uint8_t CommSettings);
 
 /* Special values for access key IDs */
 #define DESFIRE_ACCESS_FREE     0xE
 #define DESFIRE_ACCESS_DENY     0xF
 
 /* Validation routines */
-#define VALIDATE_ACCESS_READWRITE          (0x000f << 0)
-#define VALIDATE_ACCESS_WRITE              (0x000f << 4)
-#define VALIDATE_ACCESS_READ               (0x000f << 8)
+#define VALIDATE_ACCESS_READWRITE          ((uint16_t) (0x000f))
+#define VALIDATE_ACCESS_WRITE              ((uint16_t) (0x000f << 4))
+#define VALIDATE_ACCESS_READ               ((uint16_t) (0x000f << 8))
 #define VALIDATED_ACCESS_DENIED            0
 #define VALIDATED_ACCESS_GRANTED           1
 #define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
@@ -131,13 +129,13 @@ uint8_t ReadValueFileSetup(uint8_t CommSettings);
  * Stored in little endian format from memory:
  */
 #define GetReadPermissions(AccessRights) \
-	(BYTE) (AccessRights & 0x000f)
+     (BYTE) (AccessRights & 0x000f)
 #define GetWritePermissions(AccessRights) \
-        (BYTE) (((0x00f0 & AccessRights) >> 4) & 0x000f)
+     (BYTE) (((0x00f0 & AccessRights) >> 4) & 0x000f)
 #define GetReadWritePermissions(AccessRights) \
-        (BYTE) (((0x0f00 & AccessRights) >> 8) & 0x000f)
+     (BYTE) (((0x0f00 & AccessRights) >> 8) & 0x000f)
 #define GetChangePermissions(AccessRights) \
-	(BYTE) (((0xf000 & AccessRights) >> 12) & 0x000f)
+     (BYTE) (((0xf000 & AccessRights) >> 12) & 0x000f)
 
 /*
  * There are also command/instruction-wise
@@ -146,7 +144,7 @@ uint8_t ReadValueFileSetup(uint8_t CommSettings);
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
 uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
-uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask);
+uint8_t ValidateAuthentication(uint16_t AccessRights, uint16_t CheckMask);
 
 // TODO: Page 57: Read file functions ... 
 // TODO: Create and write file functions ... 

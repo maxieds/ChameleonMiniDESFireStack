@@ -294,6 +294,7 @@ void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettin
      SIZET fileTypeSettingsAddresses[DESFIRE_MAX_FILES];
      ReadBlockBytes(fileTypeSettingsAddresses, fileTypeSettingsBlockId, 2 * DESFIRE_MAX_FILES);
      WriteBlockBytes(FileSettings, fileTypeSettingsAddresses[FileIndex], sizeof(DESFireFileTypeSettings));
+     memcpy(&(SelectedFile.File), FileSettings, sizeof(DESFireFileTypeSettings));
 }
 
 /*

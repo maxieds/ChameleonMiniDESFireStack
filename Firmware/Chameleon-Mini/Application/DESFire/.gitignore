@@ -1,7 +1,13 @@
 unfinished-code
 unfinished-code/*
 *.swp*
+*.*.
 *.code
 .gitignore
-ExternalCryptoLib/
-ExternalCryptoLib/*
+#ExternalAVRCryptoLib/
+#ExternalAVRCryptoLib/*
+*.So
+*.co
+*.cppo
+*.o
+*.d

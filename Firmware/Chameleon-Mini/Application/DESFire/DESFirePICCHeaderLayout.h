@@ -11,7 +11,6 @@
 
 extern const BYTE PICC_FORMATTED_MARKER[]; 
 extern const BYTE DefaultDESFireATS[]; 
-extern const BYTE DefaultJCOPDESFireATS[]; 
 
 #define DESFIRE_PICC_APP_SLOT 0
 
@@ -43,7 +42,7 @@ extern const BYTE DefaultJCOPDESFireATS[];
 #define GET_LE24(p)     (*(__uint24*)&(p)[0])
 
 /* Defines for GetVersion */
-#define ID_PHILIPS_NXP           0x04
+#define ID_PHILIPS_NXP                  0x04
 #define DESFIRE_MANUFACTURER_ID         ID_PHILIPS_NXP
 
 /* These do not change */

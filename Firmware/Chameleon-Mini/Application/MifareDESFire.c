@@ -15,6 +15,7 @@
 #include "DESFire/DESFireCrypto.h"
 #include "DESFire/DESFireISO14443Support.h"
 #include "DESFire/DESFireStatusCodes.h"
+#include "DESFire/DESFireAPDU.h"
 
 DesfireStateType DesfireState = DESFIRE_IDLE;
 
@@ -166,10 +167,8 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 void MifareDesfireReset(void) {
-    ResetPiccBackend();
     ResetLocalStructureData();
-    DesfireState = DESFIRE_IDLE;
-    AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
+    ResetPiccBackend();
 }
 
 void MifareDesfireEV0AppInit(void)
@@ -212,6 +211,31 @@ void MifareDesfireAppReset(void)
 void MifareDesfireAppTask(void)
 {
     /* Empty */
+}
+
+void ResetLocalStructureData(void) {
+     memset(&DESFireInternalAPDUCommand, 0x00, sizeof(DESFireInternalAPDUCommand));
+     memset(&DESFireInternalAPDUResponse, 0x00, sizeof(DESFireInternalAPDUResponse));
+     memset(&SelectedApp, 0x00, sizeof(SelectedApp));
+     memset(&SelectedFile, 0x00, sizeof(SelectedFile));
+     memset(&TransferState, 0x00, sizeof(TransferState));
+     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
+     Iso144434BlockNumber = 0x00;
+     Iso144434CardID = 0x00;
+     Iso144434LastBlockLength = 0x00;
+     memset(Iso144434LastBlock, 0x00, CODEC_BUFFER_SIZE);
+     Iso144433AState = ISO14443_3A_STATE_IDLE;
+     Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
+     memset(&SessionKey, 0x00, sizeof(CryptoKeyBufferType));
+     memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
+     SessionIVByteSize = 0x00;
+     memset(&AESCryptoContext, 0x00, sizeof(DesfireAESCryptoContext));
+     memset(&AESCryptoKey, 0x00, sizeof(DesfireAESCryptoKey));
+     memset(&AESCryptoRndB, 0x00, sizeof(DesfireAESCryptoKey));
+     memset(&AESCryptoIVBuffer, 0x00, sizeof(DesfireAESCryptoKey));
+     AESAuthState = AESAUTH_STATE_IDLE;
+     DesfireState = DESFIRE_IDLE;
+     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)

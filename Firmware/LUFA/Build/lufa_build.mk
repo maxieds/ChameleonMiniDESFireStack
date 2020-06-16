@@ -7,7 +7,7 @@
 #
 
 LUFA_BUILD_MODULES         += BUILD
-LUFA_BUILD_TARGETS         += size symbol-sizes all lib elf bin hex lss clean mostlyclean
+LUFA_BUILD_TARGETS         += size sysizes all lib elf bin hex lss lufa-clean mostlyclean
 LUFA_BUILD_MANDATORY_VARS  += TARGET ARCH MCU SRC F_USB LUFA_PATH
 LUFA_BUILD_OPTIONAL_VARS   += BOARD OPTIMIZATION C_STANDARD CPP_STANDARD F_CPU C_FLAGS CPP_FLAGS ASM_FLAGS CC_FLAGS LD_FLAGS OBJDIR OBJECT_FILES DEBUG_TYPE DEBUG_LEVEL LINKER_RELAXATIONS COMPILER_PATH
 LUFA_BUILD_PROVIDED_VARS   +=
@@ -31,7 +31,7 @@ LUFA_BUILD_PROVIDED_MACROS +=
 #    bin                       - Build application BIN binary object file
 #    hex                       - Build application HEX object file
 #    lss                       - Build application LSS assembly listing file
-#    clean                     - Remove all project intermediary and binary
+#    lufa-clean                - Remove all project intermediary and binary
 #                                output files
 #    mostlyclean               - Remove intermediary output files, but
 #                                preserve binaries
@@ -160,22 +160,29 @@ ifneq ($(UNKNOWN_SOURCE),)
 endif
 
 # Convert input source filenames into a list of required output object files
-#OBJECT_FILES += $(addsuffix .o, $(basename $(SRC)))
-
-# Check if an output object file directory was specified instead of the input file location
-ifneq ($(OBJDIR),.)
-   # Prefix all the object filenames with the output object file directory path
-   OBJECT_FILES    := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
-
-   # Check if any object file (without path) appears more than once in the object file list
-   ifneq ($(words $(sort $(OBJECT_FILES))), $(words $(OBJECT_FILES)))
-       $(error Cannot build with OBJDIR parameter set - one or more object file name is not unique)
-   endif
-
-   # Create the output object file directory if it does not exist and add it to the virtual path list
-   $(shell mkdir $(OBJDIR) 2> /dev/null)
-   VPATH           += $(dir $(SRC))
+OBJECT_FILES += $(addsuffix .co, $(basename $(C_SOURCE))) \
+			 $(addsuffix .cxxo, $(basename $(CPP_SOURCE))) \
+			 $(addsuffix .So, $(basename $(ASM_SOURCE)))
+OBJDIRSEP =
+ifneq "$(shell echo $(OBJDIR) | awk '{print substr($$0,length,1)}')" "/"
+	OBJDIRSEP = /
 endif
+DEST_OBJECT_FILES = $(foreach objFile,$(OBJECT_FILES),$(OBJDIR)$(OBJDIRSEP)$(shell basename $(objFile)))
+
+## Check if an output object file directory was specified instead of the input file location
+#ifneq ($(OBJDIR),.)
+#   # Prefix all the object filenames with the output object file directory path
+#   OBJECT_FILES    := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
+#
+#   # Check if any object file (without path) appears more than once in the object file list
+#   ifneq ($(words $(sort $(OBJECT_FILES))), $(words $(OBJECT_FILES)))
+#       $(error Cannot build with OBJDIR parameter set - one or more object file name is not unique)
+#   endif
+#
+#   # Create the output object file directory if it does not exist and add it to the virtual path list
+#   $(shell mkdir $(OBJDIR) 2> /dev/null)
+#   VPATH           += $(dir $(SRC))
+#endif
 
 # Create a list of dependency files from the list of object files
 DEPENDENCY_FILES := $(OBJECT_FILES:%.o=%.d)
@@ -259,7 +266,7 @@ mostlyclean:
 	rm -f $(DEPENDENCY_FILES)
 
 # Cleans all build files, leaving only the original source code
-clean: mostlyclean
+lufa-clean: mostlyclean
 	@echo $(MSG_REMOVE_CMD) Removing output files of \"$(TARGET)\"
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).eep $(TARGET).map $(TARGET).lss $(TARGET).sym lib$(TARGET).a
 
@@ -290,19 +297,25 @@ $(SRC):
 	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) $< -o $@
 
 # Compiles an input C source file and generates a linkable object file for it
-$(OBJDIR)/%.o: %.c $(MAKEFILE_LIST)
+%.co: %.c $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) -MMD -MP -MF $(@:%.co=%.d) \
+		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+	@mv $(@:%.co=%.d) $(OBJDIR)$(OBJDIRSEP)
 
 # Compiles an input C++ source file and generates a linkable object file for it
-$(OBJDIR)/%.o: %.cpp $(MAKEFILE_LIST)
+%.cxxo: %.cpp $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) -MMD -MP -MF $(@:%.cxxo=%.d) \
+		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+	@mv $(@:%.cppo=%.d) $(OBJDIR)$(OBJDIRSEP)
 
 # Assembles an input ASM source file and generates a linkable object file for it
-$(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
+%.So: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) -MMD -MP -MF $(@:%.So=%.d) \
+		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+	@mv $(@:%.So=%.d) $(OBJDIR)$(OBJDIRSEP)
 
 # Generates a library archive file from the user application, which can be linked into other applications
 .PRECIOUS  : $(OBJECT_FILES)
@@ -317,7 +330,7 @@ $(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
 .SECONDARY : %.elf
 %.elf: $(OBJECT_FILES)
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"
-	$(CROSS)-gcc $^ -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
+	$(CROSS)-gcc $(DEST_OBJECT_FILES) -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
 
 # Extracts out the loadable FLASH memory data from the project ELF file, and creates an Intel HEX format file of it
 %.hex: %.elf
@@ -348,4 +361,4 @@ $(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
 -include $(DEPENDENCY_FILES)
 
 # Phony build targets for this module
-.PHONY: build_begin build_end size symbol-sizes lib elf hex lss clean mostlyclean
+.PHONY: build_begin build_end size symbol-sizes lib elf hex lss lufa-clean mostlyclean

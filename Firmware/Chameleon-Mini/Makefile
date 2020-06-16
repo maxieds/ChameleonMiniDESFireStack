@@ -108,10 +108,10 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
 #Support for some randomization in each custom compiled instantiation of the firmware:
-RANDOMIZED_DATA_SIZE        = 128
-RAW_RANDOMIZED_DATA         = $(shell openssl rand -rand /dev/urandom (($(RANDOMIZED_DATA_SIZE) + 1)) 2> /dev/null)
-RANDOMIZED_DATA_HEXFMTBYTES = $(shell echo $(RAW_RANDOMIZED_DATA) | xxd -p | sed 's/.\{2\}/0x&, /g' | sed 's/, 0x0//g')
-RANDOMIZED_DATA             = $(shell echo $(RANDOMIZED_DATA_HEXFMTBYTES) | sed 's/..$//')
+RANDOMIZED_DATA_SIZE         = 128
+RAW_RANDOMIZED_DATA         := $(shell openssl rand -rand /dev/urandom $(RANDOMIZED_DATA_SIZE) 2> /dev/null)
+RANDOMIZED_DATA_HEXFMTBYTES := $(shell echo $(RAW_RANDOMIZED_DATA) | xxd -p | sed 's/.\{2\}/0x&, /g' | sed 's/, 0x0//g')
+RANDOMIZED_DATA             := $(shell echo $(RANDOMIZED_DATA_HEXFMTBYTES) | sed 's/..$$//')
 #SETTINGS	+= -DENABLE_RANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA_SIZE) -DRANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA)
 
 #Memory definitions and objcopy flags to include sections in binaries
@@ -180,7 +180,7 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S \
-			$(DESFIRE_MAINSRC)/ExternalAVRCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S \
+			$(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S \
 			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
@@ -189,8 +189,7 @@ CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-OBJECT_FILES = $(addprefix $(OBJDIR)/, $(foreach objFile,$(SRC:.c=.o),$(shell basename $(objFile)))) \
-			$(addprefix $(OBJDIR)/, $(foreach objFile,$(SRC:.S=.o),$(shell basename $(objFile))))
+OBJECT_FILES = 
 
 #AVRDUDE settings
 AVRDUDE_PROGRAMMER = flip2
@@ -205,8 +204,9 @@ AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
 # Default target
-all: desfire-dev
-	@echo $(OBJECT_FILES) 
+default: $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin desfire-dev
+
+all:
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
@@ -257,15 +257,15 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
 
-desfire-dev: $(TARGET).hex $(TARGET).eep
+desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	#$(CROSS)-nm --size-sort --demangle --radix=d $(TARGET).elf
-	$(CROSS)-size -C -mcu=atmega128 --format=avr $(TARGET).elf
+	$(CROSS)-size --mcu=atxmega128a1u -C $(TARGET).elf
 
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
 
-clean:
+local-clean:
 	@rm -f Bin/*.o Application/DESFire/*.code
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{elf,hex,eep,bin}

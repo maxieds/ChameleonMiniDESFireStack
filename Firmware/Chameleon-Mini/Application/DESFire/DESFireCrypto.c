@@ -17,6 +17,7 @@ BYTE SessionIVByteSize = { 0 };
 
 uint8_t AuthenticatedWithKey = 0x00;
 
+DesfireAESCryptoContext AESCryptoContext = { 0 };
 DesfireAESCryptoKey AESCryptoKey = { 0 };
 DesfireAESCryptoKey AESCryptoRndB = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
@@ -88,15 +89,15 @@ void TransferChecksumUpdateMACTDEA(const uint8_t* Buffer, uint8_t Count) {
         Count -= TempBytes;
         Buffer += TempBytes;
         /* MAC the partial block */
-        TransferState.Checksums.MACData.CryptoTDEAChecksumFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
-                                                               &TempBuffer[0], SessionIV, SessionKey);
+        TransferState.Checksums.MACData.CryptoChecksumFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
+                                                           &TempBuffer[0], SessionIV, SessionKey);
     }
     /* MAC complete blocks in the buffer */
     while (Count >= CRYPTO_DES_BLOCK_SIZE) {
         /* NOTE: This is block-by-block, hence slow. 
          *       See if it's better to just allocate a temp buffer large enough (64 bytes). */
-        TransferState.Checksums.MACData.CryptoTDEAChecksumFunc(1, &Buffer[0], &TempBuffer[0], 
-                                                               SessionIV, SessionKey);
+        TransferState.Checksums.MACData.CryptoChecksumFunc(1, &Buffer[0], &TempBuffer[0], 
+                                                           SessionIV, SessionKey);
         Count -= CRYPTO_DES_BLOCK_SIZE;
         Buffer += CRYPTO_DES_BLOCK_SIZE;
     }
@@ -115,8 +116,8 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t* Buffer) {
         /* Apply padding */
         CryptoPaddingTDEA(&TransferState.Checksums.MACData.BlockBuffer[0], AvailablePlaintext, false);
         /* MAC the partial block */
-        TransferState.Checksums.MACData.CryptoTDEAChecksumFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
-                                                               &TempBuffer[0], SessionIV, SessionKey);
+        TransferState.Checksums.MACData.CryptoChecksumFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
+                                                           &TempBuffer[0], SessionIV, SessionKey);
         TransferState.Checksums.AvailablePlaintext = 0;
     }
     /* Copy the checksum to destination */
