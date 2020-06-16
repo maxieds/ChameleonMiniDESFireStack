@@ -1,18 +1,5 @@
 # Source for Mifare DESFire tag support in the Chameleon Mini firmware
 
-This source code has been written, adapted, and modified by [Maxie D. Schmidt](https://github.com/maxieds) to 
-finally add the holy grail -- complete DESFire NFC tag support for the Chameleon Mini RevG based devices! 
-The code that is not already under direct license (see below) is released according to the normal 
-[license for the firmware](https://github.com/emsec/ChameleonMini/blob/master/LICENSE.txt). 
-
-Any grateful users that benefit from this new DESFire tag 
-implementation for the Chameleon hardware should consider donating to the author / re-compiler (MDS)
-of this C code through sponsored freelance software work, or possibly donate hardware to support my 
-NFC and Chameleon related [other projects](https://github.com/maxieds/ChameleonMiniLiveDebugger)  
-by visiting [this site](https://patreon.com/maxieds). 
-Much credit should also be attributed to the difficult implementations adapted from Java / Android 
-cited below. 
-
 # Resources and references 
 
 The following detailed PDF resources are available to help with parsing the more subtle details 
@@ -37,24 +24,12 @@ Additionally, the following weblinks and posts clarify some common reference poi
 * [Overview of command structure](https://www.informit.com/articles/article.aspx?p=29265&seqNum=6)
 * [Detailed Docs](https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/)
 
-# External credits
-
-The source code for much of this implementation has been directly adapted, or modified, from mostly Java 
-language open source code for Android using several primary sources. Where possible, the license and credits 
-for the original sources for this ``avr-gcc``-compatible C language code are as specified in the next 
-repositories and code bases:
-* [https://github.com/dev-zzo/ChameleonMini](https://github.com/dev-zzo/ChameleonMini) 
-* [https://github.com/jekkos/android-hce-desfire](https://github.com/jekkos/android-hce-desfire)
-* [https://github.com/kevinvalk/android-hce-framework](https://github.com/kevinvalk/android-hce-framework)
-* [A solid crypto library for AVR in C](https://github.com/cantora/avr-crypto-lib) 
-
 # TODO
 
 ## Short list 
 
-* Add in logging and debugging print statements everywhere 
+* Add in logging and debugging print statements **everywhere** 
 * grep through the "TODO" marked parts in the source files 
-* Make sure **ALL** the commands we have definitions for are implemented (esp. different types of authenticate) 
 * Read though the old DESFire EV0 datasheet to make sure are correctly handling all of the SW response code cases 
 * If ``LocalTestingMode != 0``, then need to implement a solution so can test with predictable 
   (non-randomized) crypto vectors. In particular, ``RndA`` (random number associated with the authenticate 
@@ -74,6 +49,10 @@ repositories and code bases:
 * See what data segment space can be saved by setting ``__attribute__((...))`` packed on big union 
   structures like ``TransferStateType`` versus aligned at one for the component structs?
 * May need to allocate the ``SelectedAppCacheType`` structures on an as-needed basis.
+* Where does the default ``CommMode`` get invoked? For all transfers, or just 
+  for sensitive file and key data transfers? 
+* Need to store info about key type and byte size? 
+* Need a general function for transferring data based on the ``ActiveCommMode``.
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 
@@ -83,7 +62,6 @@ repositories and code bases:
   small enough segment within the EEPROM for reference (sort of like a secret UID data, or even 
   unique serial number that should get reprogrammed everytime the firmware is re-compiled ... 
   1. ``#define EEPROM_ATTR __attribute__ ((section (".eeprom")))``
-
 
 ## List of (mostly) checked / cleaned new source files: 
 * :large_orange_diamond: ``DESFireAPDU.c``
@@ -96,7 +74,7 @@ repositories and code bases:
 * :large_orange_diamond: ``DESFireLogging.c``
 * :white_check_mark: ``DESFireMemoryOperations.c``
 * :white_check_mark: ``DESFirePICCControl.c`` 
-* :interrobang: ``DESFireStatusCodes.c``
+* :white_check_mark: ``DESFireStatusCodes.c``
 * :large_orange_diamond: ``DESFireUtils.c``
 * :white_check_mark: ``../MifareDESFire.c``
 

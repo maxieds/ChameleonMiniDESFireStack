@@ -27,6 +27,82 @@ void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
 }
 
+BYTE PMKConfigurationChangeable(void) {
+     BYTE pmkSettings = ReadKeySettings(DESFIRE_PICC_APP_SLOT, DESFIRE_MASTER_KEY_ID);
+     BYTE pmkPropMask = (0x01 << 3);
+     return pmkSettings & pmkPropMask;
+}
+
+BYTE PMKRequiredForAppCreateDelete(void) {
+     BYTE pmkSettings = ReadKeySettings(DESFIRE_PICC_APP_SLOT, DESFIRE_MASTER_KEY_ID);
+     BYTE pmkPropMask = (0x01 << 2);
+     return pmkSettings & pmkPropMask;
+}
+
+BYTE PMKFreeDirectoryListing(void) {
+     BYTE pmkSettings = ReadKeySettings(DESFIRE_PICC_APP_SLOT, DESFIRE_MASTER_KEY_ID);
+     BYTE pmkPropMask = (0x01 << 1);
+     return pmkSettings & pmkPropMask;
+}
+
+BYTE PMKAllowChangingKey(void) {
+     BYTE pmkSettings = ReadKeySettings(DESFIRE_PICC_APP_SLOT, DESFIRE_MASTER_KEY_ID);
+     BYTE pmkPropMask = 0x01;
+     return pmkSettings & pmkPropMask;
+}
+
+BYTE AMKConfigurationChangeable(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = (0x01 << 3);
+     return amkSettings & amkPropMask;
+}
+
+BYTE AMKRequiredForFileCreateDelete(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = (0x01 << 2);
+     return amkSettings & amkPropMask;
+}
+
+BYTE AMKFreeDirectoryListing(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = (0x01 << 1);
+     return amkSettings & amkPropMask;
+}
+
+BYTE AMKAllowChangingKey(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = 0x01;
+     return amkSettings & amkPropMask;
+}
+
+BYTE AMKRequiredToChangeKeys(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = 0xf0;
+     return (amkSettings & amkPropMask) == 0x00;
+}
+
+BYTE AMKGetRequiredKeyToChangeKeys(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = 0xf0;
+     BYTE authKeyId = (amkSettings & amkPropMask);
+     if(0x10 <= authKeyId && authKeyId <= 0xd0) {
+          return authKeyId;
+     }
+     return 0x00;
+}
+
+BYTE AMKRequireCurrentKeyToChangeKey(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = 0xf0;
+     return (amkSettings & amkPropMask) == 0xe0;
+}
+
+BYTE AMKAllKeysFrozen(void) {
+     BYTE amkSettings = ReadKeySettings(SelectedApp.Slot, DESFIRE_MASTER_KEY_ID);
+     BYTE amkPropMask = 0xf0;
+     return (amkSettings & amkPropMask) == 0xf0;
+}
+
 SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
      if(AppSlot >= DESFIRE_MAX_SLOTS) {
           return 0x00;

@@ -22,13 +22,13 @@
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
 
-#define DESFIRE_COMMS_PLAINTEXT            0
-#define DESFIRE_COMMS_PLAINTEXT_MAC        1
-#define DESFIRE_COMMS_CIPHERTEXT_DES       3
-#define DESFIRE_COMMS_CIPHERTEXT_AES128    4
-#define DESFIRE_COMMS_CIPHERTEXT_AES192    5
-#define DESFIRE_COMMS_CIPHERTEXT_AES256    6
-#define DESFIRE_DEFAULT_COMMS_STANDARD     (DESFIRE_COMMS_CIPHERTEXT_DES)
+#define DESFIRE_COMMS_PLAINTEXT            (0x00)
+#define DESFIRE_COMMS_PLAINTEXT_MAC        (0x01)
+#define DESFIRE_COMMS_CIPHERTEXT_DES       (0x03)
+#define DESFIRE_COMMS_CIPHERTEXT_AES128    (0x04)
+#define DESFIRE_COMMS_CIPHERTEXT_AES192    (0x14)
+#define DESFIRE_COMMS_CIPHERTEXT_AES256    (0x24)
+#define DESFIRE_DEFAULT_COMMS_STANDARD     (DESFIRE_COMMS_PLAINTEXT)
 
 #define CRYPTO_TYPE_DES         (0x00)
 #define CRYPTO_TYPE_2K3DES      (0x0A)
@@ -57,9 +57,21 @@ typedef BYTE CryptoIVBufferType[CRYPTO_MAX_BLOCK_SIZE];
 extern CryptoKeyBufferType SessionKey;
 extern CryptoIVBufferType SessionIV;
 extern BYTE SessionIVByteSize;
-extern uint8_t AuthenticatedWithKey;
 
-BYTE GetCryptoMethodKeySize(uint8_t cryptoType);
+extern uint8_t Authenticated;
+extern uint8_t AuthenticatedWithKey;
+extern uint8_t AuthenticatedWithPICCMasterKey;
+extern uint8_t ActiveCommMode;
+
+/* TODO: 
+ * Need to invalidate the authentication state after:
+ * 1) Selecting a new application; 
+ * 2) Changing the active key used in the authentication;
+ * 3) A failed authentication;
+ */
+void InvalidateAuthState(BYTE keepPICCAuthData);
+
+BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 
 #define MAC_LENGTH          4
 #define CMAC_LENGTH         8

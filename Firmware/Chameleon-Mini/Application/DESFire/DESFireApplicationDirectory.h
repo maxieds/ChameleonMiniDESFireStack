@@ -92,6 +92,26 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 void SynchronizeAppDir(void);
 void SynchronizePICCInfo(void);
 
+/* PICC master key (PMK) settings for application creation / deletion 
+ * (see page 34 of the datasheet)
+ */
+BYTE PMKConfigurationChangeable(void);
+BYTE PMKRequiredForAppCreateDelete(void);
+BYTE PMKFreeDirectoryListing(void);
+BYTE PMKAllowChangingKey(void);
+
+/* Application master key (AMK) 
+ * (see page 35 of the datasheet)
+ */
+BYTE AMKConfigurationChangeable(void);
+BYTE AMKRequiredForFileCreateDelete(void);
+BYTE AMKFreeDirectoryListing(void);
+BYTE AMKAllowChangingKey(void);
+BYTE AMKRequiredToChangeKeys(void);
+BYTE AMKGetRequiredKeyToChangeKeys(void);
+BYTE AMKRequireCurrentKeyToChangeKey(void);
+BYTE AMKAllKeysFrozen(void);
+
 /* Application data management */
 SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot);
 void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value);

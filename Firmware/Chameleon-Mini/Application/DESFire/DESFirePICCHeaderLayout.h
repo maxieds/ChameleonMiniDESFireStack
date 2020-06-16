@@ -12,10 +12,11 @@
 extern const BYTE PICC_FORMATTED_MARKER[]; 
 extern const BYTE DefaultDESFireATS[]; 
 
-#define DESFIRE_PICC_APP_SLOT 0
+#define DESFIRE_PICC_APP_SLOT          0x00
+#define DESFIRE_MASTER_KEY_ID          0x00
 
 /* Storage allocation constants */
-#define DESFIRE_EEPROM_BLOCK_SIZE 32 /* Bytes */
+#define DESFIRE_EEPROM_BLOCK_SIZE      32 /* Bytes */
 #define DESFIRE_BYTES_TO_BLOCKS(x) \
     ( ((x) + DESFIRE_EEPROM_BLOCK_SIZE - 1) / DESFIRE_EEPROM_BLOCK_SIZE )
 
@@ -84,6 +85,18 @@ extern const BYTE DefaultDESFireATS[];
 //
 // const BYTE DefaultJCOPDESFireATS[] = {
 //     0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80
+// };
+// 
+// const BYTE VERSION1[] = {
+//     0x04, 0x01, 0x01, 0x01, 0x00, 0x1a, 0x05
+// };
+// const BYTE VERSION2[] = {
+//     0x04, 0x01, 0x01, 0x01, 0x03, 0x1a, 0x05
+// };
+// const BYTE VERSION3[] = {
+//    // Expected Response: 00  04  91  3a  29  93  26  80  00  00  00  00  00  39  08  91  00
+//    0x04, (BYTE) 0x91, 0x3a, 0x29, (BYTE) 0x93,
+//    0x26, (BYTE) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x39, 0x08
 // };
 
 #define DESFIRE_STORAGE_SIZE_2K  0x16

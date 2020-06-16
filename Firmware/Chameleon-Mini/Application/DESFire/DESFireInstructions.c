@@ -14,18 +14,6 @@
 #include "DESFireLogging.h"
 #include "../MifareDESFire.h"
 
-const BYTE VERSION1[] = { 
-     0x04, 0x01, 0x01, 0x01, 0x00, 0x1a, 0x05 
-};
-const BYTE VERSION2[] = { 
-     0x04, 0x01, 0x01, 0x01, 0x03, 0x1a, 0x05 
-};
-const BYTE VERSION3[] = { 
-    // Expected Response: 00  04  91  3a  29  93  26  80  00  00  00  00  00  39  08  91  00
-    0x04, (BYTE) 0x91, 0x3a, 0x29, (BYTE) 0x93, 
-    0x26, (BYTE) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x39, 0x08 
-};
-
 DesfireSavedCommandStateType DesfireCommandState = { 0 };
 
 static uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t DefaultReturnValue) {
@@ -40,7 +28,6 @@ uint16_t CmdNotImplemented(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount) {
-
 
     /* Handle EV0 commands */
     switch (Buffer[0]) {
@@ -171,7 +158,7 @@ uint16_t EV0CmdGetVersion1(uint8_t* Buffer, uint16_t ByteCount) {
     GetPiccHardwareVersionInfo(&Buffer[4]);
     Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
     DesfireState = DESFIRE_GET_VERSION2;
-    return VERSION1_BYTES_PROCESSED;
+    return DESFIRE_VERSION1_BYTES_PROCESSED;
 }
 
 uint16_t EV0CmdGetVersion2(uint8_t* Buffer, uint16_t ByteCount) {
@@ -182,14 +169,14 @@ uint16_t EV0CmdGetVersion2(uint8_t* Buffer, uint16_t ByteCount) {
     GetPiccSoftwareVersionInfo(&Buffer[4]);
     Buffer[7] = DESFIRE_SW_PROTOCOL_TYPE;
     DesfireState = DESFIRE_GET_VERSION3;
-    return VERSION2_BYTES_PROCESSED;
+    return DESFIRE_VERSION2_BYTES_PROCESSED;
 }
 
 uint16_t EV0CmdGetVersion3(uint8_t* Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_OPERATION_OK;
     GetPiccManufactureInfo(&Buffer[1]);
     DesfireState = DESFIRE_IDLE;
-    return VERSION3_BYTES_PROCESSED;
+    return DESFIRE_VERSION3_BYTES_PROCESSED;
 }
 
 uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
@@ -204,7 +191,7 @@ uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify authentication settings */
-    if (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+    if(!Authenticated || (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
         /* PICC master key authentication is always required */
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -218,7 +205,7 @@ uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
  * DESFire key management commands
  */
 
-uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
+uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check ... 
     uint8_t KeyId;
     Crypto2KTDEAKeyType Key;
 
@@ -241,7 +228,6 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     ReadAppKey(SelectedApp.Slot, KeyId, Key, CRYPTO_2KTDEA_KEY_SIZE);
     LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, sizeof(Key));
     /* Generate the nonce B */
-    
     if(LocalTestingMode != 0) {
          RandomGetBuffer(DesfireCommandState.Authenticate.RndB, DESFIRE_2KTDEA_NONCE_SIZE);
     }
@@ -268,7 +254,7 @@ uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount) {
     return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_2KTDEA_NONCE_SIZE;
 }
 
-uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) {
+uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check ... 
     Crypto2KTDEAKeyType Key;
     DesfireState = DESFIRE_IDLE;
 
@@ -411,13 +397,14 @@ uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount) {
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
-uint16_t EV0CmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
+uint16_t EV0CmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check 
     /* Validate command length */
     if (ByteCount != 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
+    // TODO: Need to check the app master key settings to see if requires auth ... 
     Buffer[1] = ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey);
     Buffer[2] = DESFIRE_MAX_KEYS - 1;
 
@@ -426,8 +413,10 @@ uint16_t EV0CmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
     return DESFIRE_STATUS_RESPONSE_SIZE + 2;
 }
 
-uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
+uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check 
     uint8_t NewSettings;
+
+    // TODO: Need to check the app master key settings to see if requires auth ... 
 
     /* Validate command length */
     if (ByteCount != 1 + CRYPTO_DES_BLOCK_SIZE) {
@@ -468,7 +457,7 @@ uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) {
  * DESFire application management commands
  */
 
-uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) {
+uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check 
     /* Validate command length */
     if (ByteCount != 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
@@ -497,7 +486,6 @@ uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t KeyCount;
     uint8_t KeySettings;
-
     /* Require the PICC app to be selected */
     if (!IsPiccAppSelected()) {
         Status = STATUS_PERMISSION_DENIED;
@@ -508,25 +496,26 @@ uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    /* Verify authentication settings */
-    if (!(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_CREATE_DELETE) && 
-        AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
-        /* PICC master key authentication is required */
-        Status = STATUS_AUTHENTICATION_ERROR;
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
-    /* Validate number of keys: less than max */
+    KeySettings = Buffer[4];
     KeyCount = Buffer[5];
-    if (KeyCount > DESFIRE_MAX_KEYS) {
+    /* Validate number of keys: less than max (one for the Master Key) */
+    if (KeyCount > DESFIRE_MAX_KEYS || KeyCount == 0) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    KeySettings = Buffer[4];
+    if(PMKRequiredForAppCreateDelete() && !AuthenticatedWithPICCMasterKey) {
+         /* PICC master key authentication is required */
+         Status = STATUS_AUTHENTICATION_ERROR;
+         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
     /* Done */
     Status = CreateApp(Aid, KeyCount, KeySettings);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
+
+
+// TODO: Working from here ... 
 uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };

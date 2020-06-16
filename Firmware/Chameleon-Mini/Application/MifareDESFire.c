@@ -165,7 +165,7 @@ void ResetLocalStructureData(void) {
      memset(&AESCryptoIVBuffer, 0x00, sizeof(DesfireAESCryptoKey));
      AESAuthState = AESAUTH_STATE_IDLE;
      DesfireState = DESFIRE_IDLE;
-     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
+     InvalidateAuthState(0x00);
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {

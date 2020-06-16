@@ -15,15 +15,27 @@ CryptoKeyBufferType SessionKey = { 0 };
 CryptoIVBufferType SessionIV = { 0 };
 BYTE SessionIVByteSize = { 0 };
 
-uint8_t AuthenticatedWithKey = 0x00;
-
 DesfireAESCryptoContext AESCryptoContext = { 0 };
 DesfireAESCryptoKey AESCryptoKey = { 0 };
 DesfireAESCryptoKey AESCryptoRndB = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 DesfireAESAuthState AESAuthState = AESAUTH_STATE_IDLE;
 
-BYTE GetCryptoMethodKeySize(uint8_t cryptoType) {
+uint8_t Authenticated = 0x00;
+uint8_t AuthenticatedWithKey = 0x00;
+uint8_t AuthenticatedWithPICCMasterKey = 0x00;
+uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
+
+void InvalidateAuthState(BYTE keepPICCAuthData) {
+     if(!keepPICCAuthData) {
+          AuthenticatedWithPICCMasterKey = 0x00;
+     }
+     Authenticated = 0x00;
+     AuthenticatedWithKey = 0x00;
+     ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
+}
+
+BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
      switch(cryptoType) {
           case CRYPTO_TYPE_2K3DES:
                return CRYPTO_2KTDEA_KEY_SIZE;

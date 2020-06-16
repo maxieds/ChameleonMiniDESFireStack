@@ -81,13 +81,9 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 } DESFireCommandType;
 
-#define VERSION1_BYTES_PROCESSED     (8) 
-#define VERSION2_BYTES_PROCESSED     (8)
-#define VERSION3_BYTES_PROCESSED     (15)
-
-extern const BYTE VERSION_1[];
-extern const BYTE VERSION_2[];
-extern const BYTE VERSION_3[];
+#define DESFIRE_VERSION1_BYTES_PROCESSED     (8) 
+#define DESFIRE_VERSION2_BYTES_PROCESSED     (8)
+#define DESFIRE_VERSION3_BYTES_PROCESSED     (15)
 
 typedef union DESFIRE_FIRMWARE_PACKING {
     struct DESFIRE_FIRMWARE_PACKING {
@@ -107,7 +103,6 @@ typedef union DESFIRE_FIRMWARE_PACKING {
     } GetApplicationIds;
     uint8_t ActiveCommMode;
 } DesfireSavedCommandStateType;
-
 extern DesfireSavedCommandStateType DesfireCommandState;
 
 /*
