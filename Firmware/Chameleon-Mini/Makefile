@@ -204,15 +204,20 @@ AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
 # Default target
-default: clean desfire-dev
+default: desfire-dev
 
-all:
+local-clean:
+	@echo "Cleaning up past build data ... "
+	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{hex,eep}
+	@rm -rf $(OBJDIR)
+	@mkdir $(OBJDIR)
+	@rm -f Application/DESFire/*.code
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
 include $(LUFA_PATH)/Build/lufa_sources.mk
 include $(LUFA_PATH)/Build/lufa_build.mk
-include $(LUFA_PATH)/Build/lufa_cppcheck.mk
+# include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 # include $(LUFA_PATH)/Build/lufa_doxygen.mk
 # include $(LUFA_PATH)/Build/lufa_dfu.mk
 # include $(LUFA_PATH)/Build/lufa_hid.mk
@@ -227,7 +232,6 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 %.bin: %.elf
 	@echo $(MSG_OBJCPY_CMD) Extracting BIN file data from \"$<\"
 	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
-	
 
 # Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
 spmhelper: $(TARGET).elf
@@ -262,10 +266,7 @@ desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	#$(CROSS)-nm --size-sort --demangle --radix=d $(TARGET).elf
 	$(CROSS)-size --mcu=atxmega128a1u -C $(TARGET).elf
+	@rm -f $(OBJDIR)/*.d $(OBJDIR)/*.So $(OBJDIR)/*.co
 
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
-
-clean: lufa-clean
-	@rm -f $(OBJDIR)/*.{d,co,cxxo,So,o} Application/DESFire/*.code
-	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{elf,hex,eep,bin}

@@ -261,7 +261,8 @@ symbol-sizes: $(TARGET).elf
 # Cleans intermediary build files, leaving only the compiled application files
 mostlyclean:
 	@echo $(MSG_REMOVE_CMD) Removing object files of \"$(TARGET)\"
-	rm -f $(OBJECT_FILES)
+	#rm -f $(OBJECT_FILES)
+	rm -f $(DEST_OBJECT_FILES)
 	@echo $(MSG_REMOVE_CMD) Removing dependency files of \"$(TARGET)\"
 	rm -f $(DEPENDENCY_FILES)
 
@@ -299,25 +300,22 @@ $(SRC):
 # Compiles an input C source file and generates a linkable object file for it
 %.co: %.c $(MAKEFILE_LIST) 
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) \
-		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(shell basename $(@:%.co=%.d)) \
-		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) \
+		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
 	$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
-	@echo $(OBJECT_FILES)
 
 # Compiles an input C++ source file and generates a linkable object file for it
 %.cxxo: %.cpp $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) \
-		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(shell basename $(@:%.cxxo=%.d)) \
+		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(basename $@).d \
 		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
 
 # Assembles an input ASM source file and generates a linkable object file for it
 %.So: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
-	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) \
-		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(shell basename $(@:%.So=%.d)) \
-		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) \
+		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
 	$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
 
 # Generates a library archive file from the user application, which can be linked into other applications
@@ -327,13 +325,11 @@ $(SRC):
 	@echo $(MSG_ARCHIVE_CMD) Archiving object files into \"$@\"
 	$(CROSS)-ar rcs $@ $(OBJECT_FILES)
 
-
-
 # Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
 # files, or used for programming and debugging directly
-.PRECIOUS  : $(DEST_OBJECT_FILES)
+.PRECIOUS  : $(OBJECT_FILES)
 .SECONDARY : %.elf
-%.elf: $(OBJECT_FILES)
+%.elf: local-clean $(OBJECT_FILES)
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"
 	$(CROSS)-gcc $(DEST_OBJECT_FILES) -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
 
