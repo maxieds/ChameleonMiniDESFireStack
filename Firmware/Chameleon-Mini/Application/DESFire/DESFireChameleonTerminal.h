@@ -9,7 +9,6 @@
 #include "../../Terminal/Commands.h"
 #include "../../Terminal/CommandLine.h"
 
-// Version, manufacturer, serial number ... 
 #define DFCOMMAND_SET_HEADER                  "DF_SETHDR"
 CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam);
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutMessage, const char *InParams);

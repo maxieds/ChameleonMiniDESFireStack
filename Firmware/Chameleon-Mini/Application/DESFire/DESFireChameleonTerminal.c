@@ -9,11 +9,7 @@
 #include "DESFireChameleonTerminal.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
-
-static CommandStatusIdType CommandNotYetImplemented(char *OutMessage) {
-     snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("(!!!) DESFire Terminal Command NOT YET IMPLEMENTED."));
-     return COMMAND_ERR_INVALID_USAGE_ID;
-}
+#include "DESFireLogging.h"
 
 CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam) {
      snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
@@ -74,42 +70,102 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
      }
      if(StatusError) {
           CommandDESFireGetHeaderProperty(OutParam);
-          return COMMAND_ERR_INVALID_PARAM_ID;
+          return COMMAND_ERR_INVALID_USAGE_ID;
      }
      return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam) {
-     return CommandNotYetImplemented(OutParam);
+     // TODO
+     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
-     return CommandNotYetImplemented(OutParam);
+     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
+                PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
+                     "based on %s from "
+                     "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.git.\n"
+                     "Revision: %s\nLicense: GPLv3"), 
+                DESFIRE_FIRMWARE_BUILD_TIMESTAMP, 
+                DESFIRE_FIRMWARE_GIT_COMMIT_ID, 
+                DESFIRE_FIRMWARE_REVISION);
+     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
-     return CommandNotYetImplemented(OutParam);
+    switch(LocalLoggingMode) {
+         case OFF:
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("OFF"));
+              break;
+         case NORMAL:
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("NORMAL"));
+              break;
+         case VERBOSE:
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("VERBOSE"));
+              break;
+         case DEBUGGING:
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("DEBUGGING"));
+              break;
+         default:
+              break;
+    }
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandDESFireSetLoggingMode(char *OutParam, const char *InParams) {
-     return CommandNotYetImplemented(OutParam);
+     char valueStr[16];
+     if(!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
+          return COMMAND_ERR_INVALID_PARAM_ID;
+     }
+     valueStr[15] = '\0';
+     if(!strcasecmp_P(valueStr, PSTR("1")) || !strcasecmp_P(valueStr, PSTR("TRUE")) || 
+        !strcasecmp_P(valueStr, PSTR("ON"))) {
+          LocalLoggingMode = NORMAL;
+          return COMMAND_INFO_OK_ID;
+     }
+     else if(!strcasecmp_P(valueStr, PSTR("0")) || !strcasecmp_P(valueStr, PSTR("FALSE")) || 
+             !strcasecmp_P(valueStr, PSTR("OFF"))) {
+          LocalLoggingMode = OFF;
+          return COMMAND_INFO_OK_ID;
+     }
+     else if(!strcasecmp_P(valueStr, PSTR("VERBOSE"))) {
+          LocalLoggingMode = VERBOSE;
+          return COMMAND_INFO_OK_ID;
+     }
+     else if(!strcasecmp_P(valueStr, PSTR("DEBUGGING"))) {
+          LocalLoggingMode = DEBUGGING;
+          return COMMAND_INFO_OK_ID;
+     }
+     else {
+          snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s <ON|OFF|VERBOSE|DEBUGGING>"), 
+                     DFCOMMAND_LOGGING_MODE);
+          return COMMAND_ERR_INVALID_USAGE_ID;
+     }
 }
 
 CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam) {
-     return CommandNotYetImplemented(OutParam);
+     if(LocalTestingMode) {
+          return COMMAND_INFO_TRUE_ID;
+     }
+     return COMMAND_INFO_FALSE_ID;
 }
 
 CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InParams) {
-     return CommandNotYetImplemented(OutParam);
-}
-
-/*
-CommandStatusIDType CommandName(char *OutMessage, const char *InParam) {
-     // Syntax: CMDNAME <AppID> <FileID> <48-Byte Data Field>
-     uint32_t appID = 0;
-     uint8_t  fileID = 0;
-     uint32_t dataField[12];
-     if(!sscanf_P(InParam, PSTR("%06x"), &appID, PSTR("%02x"), &fileID, PSTR("%048x), &dataField[0])) {
+     char valueStr[16];
+     if(!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
           return COMMAND_ERR_INVALID_PARAM_ID;
      }
-*/
+     valueStr[15] = '\0';
+     if(!strcasecmp_P(valueStr, PSTR("1")) || !strcasecmp_P(valueStr, PSTR("TRUE")) || 
+        !strcasecmp_P(valueStr, PSTR("ON"))) {
+          LocalTestingMode = 0x01;
+          return COMMAND_INFO_TRUE_ID;
+     }
+     else if(!strcasecmp_P(valueStr, PSTR("0")) || !strcasecmp_P(valueStr, PSTR("FALSE")) || 
+             !strcasecmp_P(valueStr, PSTR("OFF"))) {
+          LocalTestingMode = 0x00;
+          return COMMAND_INFO_FALSE_ID;
+     }
+     return COMMAND_ERR_INVALID_USAGE_ID;
+}
+
