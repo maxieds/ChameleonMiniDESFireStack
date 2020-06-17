@@ -160,32 +160,33 @@ ifneq ($(UNKNOWN_SOURCE),)
 endif
 
 # Convert input source filenames into a list of required output object files
-OBJECT_FILES := $(addsuffix .Cobj, $(basename $(C_SOURCE))) \
+OBJECT_FILES += $(addsuffix .o, $(basename $(SRC)))
+#OBJECT_FILES := $(addsuffix .Cobj, $(basename $(C_SOURCE))) \
 			 	$(addsuffix .CXXobj, $(basename $(CPP_SOURCE))) \
 			 	$(addsuffix .Sobj, $(basename $(ASM_SOURCE)))
 OBJDIRSEP :=
 ifneq "$(shell echo $(OBJDIR) | awk '{print substr($$0,length,1)}')" "/"
 	OBJDIRSEP := /
 endif
-DEST_OBJECT_FILES := $(foreach objFile,$(OBJECT_FILES),$(OBJDIR)$(OBJDIRSEP)$(shell basename $(objFile)))
+#DEST_OBJECT_FILES := $(foreach objFile,$(OBJECT_FILES),$(OBJDIR)$(OBJDIRSEP)$(shell basename $(objFile)))
 
-## Check if an output object file directory was specified instead of the input file location
-#ifneq ($(OBJDIR),.)
-#   # Prefix all the object filenames with the output object file directory path
-#   OBJECT_FILES    := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
-#
-#   # Check if any object file (without path) appears more than once in the object file list
-#   ifneq ($(words $(sort $(OBJECT_FILES))), $(words $(OBJECT_FILES)))
-#       $(error Cannot build with OBJDIR parameter set - one or more object file name is not unique)
-#   endif
-#
-#   # Create the output object file directory if it does not exist and add it to the virtual path list
-#   $(shell mkdir $(OBJDIR) 2> /dev/null)
-#   VPATH           += $(dir $(SRC))
-#endif
+# Check if an output object file directory was specified instead of the input file location
+ifneq ($(OBJDIR),.)
+   # Prefix all the object filenames with the output object file directory path
+   OBJECT_FILES    := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
+
+   # Check if any object file (without path) appears more than once in the object file list
+   ifneq ($(words $(sort $(OBJECT_FILES))), $(words $(OBJECT_FILES)))
+       $(error Cannot build with OBJDIR parameter set - one or more object file name is not unique)
+   endif
+
+   # Create the output object file directory if it does not exist and add it to the virtual path list
+   $(shell mkdir $(OBJDIR) 2> /dev/null)
+   VPATH           += $(dir $(SRC))
+endif
 
 # Create a list of dependency files from the list of object files
-DEPENDENCY_FILES := $(DEST_OBJECT_FILES:%.co=%.d) $(DEST_OBJECT_FILES:%.cxxo=%.d) $(DEST_OBJECT_FILES:%.So=%.d)
+DEPENDENCY_FILES := $(OBJECT_FILES:%.o=%.d) 
 
 # Create a list of common flags to pass to the compiler/linker/assembler
 BASE_CC_FLAGS    := -pipe -g$(DEBUG_FORMAT) -g$(DEBUG_LEVEL)
@@ -298,26 +299,19 @@ $(SRC):
 	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) $< -o $@
 
 # Compiles an input C source file and generates a linkable object file for it
-%.Cobj: %.c $(MAKEFILE_LIST) 
+$(OBJDIR)/%.o: %.c $(MAKEFILE_LIST)
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
-	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) \
-		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
-	#$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
 
 # Compiles an input C++ source file and generates a linkable object file for it
-#%.cxxo: %.cpp $(MAKEFILE_LIST)
-#	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
-#	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) \
-#		-MMD -MP -MF $(OBJDIR)$(OBJDIRSEP)$(basename $@).d \
-#		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
+$(OBJDIR)/%.o: %.cpp $(MAKEFILE_LIST)
+	@echo $(MSG_COMPILE_CMD) Compiling C++ file \"$(notdir $<)\"
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
 
 # Assembles an input ASM source file and generates a linkable object file for it
-%.Sobj: %.S $(MAKEFILE_LIST)
+$(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
-	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) \
-		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
-	
-	#$(eval OBJECT_FILES:=$(OBJECT_FILES:$@=$(OBJDIR)$(OBJDIRSEP)$(shell basename $@)))
+	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
 
 # Generates a library archive file from the user application, which can be linked into other applications
 .PRECIOUS  : $(OBJECT_FILES)
@@ -328,11 +322,11 @@ $(SRC):
 
 # Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
 # files, or used for programming and debugging directly
-.PRECIOUS  : $(DEST_OBJECT_FILES) %.Sobj %.Cobj
+.PRECIOUS  : $(OBJECT_FILES)
 .SECONDARY : %.elf
 %.elf: $(OBJECT_FILES) 
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"
-	$(CROSS)-gcc $(DEST_OBJECT_FILES) -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
+	$(CROSS)-gcc $(OBJECT_FILES) -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
 
 # Extracts out the loadable FLASH memory data from the project ELF file, and creates an Intel HEX format file of it
 %.hex: %.elf
@@ -360,7 +354,7 @@ $(SRC):
 	$(CROSS)-nm -n $< > $@
 
 # Include build dependency files
-#-include $(DEPENDENCY_FILES)
+-include $(DEPENDENCY_FILES)
 
 # Phony build targets for this module
 .PHONY: build_begin build_end size symbol-sizes lib elf hex lss lufa-clean mostlyclean
