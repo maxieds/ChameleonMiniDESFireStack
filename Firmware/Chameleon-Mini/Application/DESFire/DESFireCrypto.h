@@ -125,12 +125,11 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
      };
 } DesfireAESCryptoKey;
 extern DesfireAESCryptoKey AESCryptoSessionKey;
-extern uint8_t AESCryptoRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
 extern DesfireAESCryptoKey AESCryptoIVBuffer;
 
 void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx);
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
-uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, DesfireAESCryptoContext *cryptoCtx);
+uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, BYTE keySizeBytes);
 uint16_t GetPaddedBufferSize(uint16_t bufSize);
 uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
 uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 

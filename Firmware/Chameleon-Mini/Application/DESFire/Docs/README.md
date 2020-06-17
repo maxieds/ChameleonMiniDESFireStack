@@ -18,6 +18,8 @@ Additionally, the following weblinks and posts clarify some common reference poi
 * [StackOverflow post on emulating DESFire on Android](https://stackoverflow.com/a/20068329)
 * [StackOverflow post on Android NFC support for DESFire](https://stackoverflow.com/a/26775311)
 * [Helpful source examples and hints on AES authenticate](https://www.linkedin.com/pulse/mifare-desfire-introduction-david-coelho)
+* [DESFire EV1 communication examples](https://stackoverflow.com/questions/38283998/desfire-ev1-communication-examples)
+* [Explanation of send/receive padding in encrypted transfer modes (with diagrams)](https://github.com/nceruchalu/easypay/blob/master/mifare/mifare_crypto.c#L707)
 
 ## ISO7816 Command set implementation hints:
 

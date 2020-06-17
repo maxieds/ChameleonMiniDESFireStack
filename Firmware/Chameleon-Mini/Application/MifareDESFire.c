@@ -73,6 +73,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount) {
+    /* TODO: Where are we deciphering wrapped payload data? 
+     *       This should depend on the CommMode standard? 
+     */
     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount < 6) {
         return CmdNotImplemented(Buffer, ByteCount);

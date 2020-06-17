@@ -92,6 +92,26 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 void SynchronizeAppDir(void);
 void SynchronizePICCInfo(void);
 
+/* PICC / Application master key settings */
+/* Mifare DESFire master key settings
+   bit 7 - 4: Always 0.
+   bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible); 
+          PICC master key settings changeable when authenticated with PICC master key = 1
+   bit 2: PICC master key authentication required for creating or deleting applications = 0; 
+          Authentication not required = 1
+   bit 1: PICC master key authentication required for listing of applications or 
+          reading key settings = 0; 
+          Free listing of applications and reading key settings = 1
+   bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; 
+          PICC master key changeable = 1
+*/
+#define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (1 << 0)
+#define DESFIRE_FREE_DIRECTORY_LIST      (1 << 1)
+#define DESFIRE_FREE_CREATE_DELETE       (1 << 2)
+#define DESFIRE_ALLOW_CONFIG_CHANGE      (1 << 3)
+#define DESFIRE_USE_TARGET_KEY           0xE
+#define DESFIRE_ALL_KEYS_FROZEN          0xF
+
 /* PICC master key (PMK) settings for application creation / deletion 
  * (see page 34 of the datasheet)
  */

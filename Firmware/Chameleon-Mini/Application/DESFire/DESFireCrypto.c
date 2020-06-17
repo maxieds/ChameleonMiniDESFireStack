@@ -20,7 +20,6 @@ BYTE SessionIVByteSize = { 0 };
 
 DesfireAESCryptoContext AESCryptoContext = { 0 };
 DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
-BYTE AESCryptoRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES] = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
 DesfireAESAuthState AESAuthState = AESAUTH_STATE_IDLE;
@@ -33,10 +32,10 @@ uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 
 void InvalidateAuthState(BYTE keepPICCAuthData) {
      if(!keepPICCAuthData) {
-          AuthenticatedWithPICCMasterKey = 0x00;
+          AuthenticatedWithPICCMasterKey = DESFIRE_NOT_AUTHENTICATED;
      }
-     Authenticated = 0x00;
-     AuthenticatedWithKey = 0x00;
+     Authenticated = DESFIRE_NOT_AUTHENTICATED;
+     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
      CryptoAuthMethod = CRYPTO_TYPE_ANY;
      ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
@@ -82,11 +81,11 @@ void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {
      memset(cryptoKeyData, 0x00, sizeof(DesfireAESCryptoKey));
 }
 
-uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, DesfireAESCryptoContext *cryptoCtx) {
+uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, BYTE keySizeBytes) {
      if(cryptoKey == NULL || cryptoCtx == NULL) {
           return NULL;
      }
-     switch(cryptoCtx->keySizeBytes) {
+     switch(keySizeBytes) {
           case 16:
                return (uint8_t *) cryptoKey->aes128Key;
           case 24:
@@ -240,17 +239,19 @@ uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
 
 void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
                               void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
+}
 
+void CryptoDecryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
+                              void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
+}
 
+void CryptoEncryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
+                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
 }
 
 void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
                                  void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
-
-
 }
-
-
 
 BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx) {
      if(cmacCtx == NULL || cryptoCtx == NULL) {

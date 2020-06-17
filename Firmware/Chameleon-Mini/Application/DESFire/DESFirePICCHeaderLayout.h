@@ -111,7 +111,10 @@ extern const BYTE DefaultDESFireATS[];
 #define PICC_EMPTY_BYTE                    (0x00)
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
-    /* Static data: does not change during the PICC's lifetime */
+    /* Static data: does not change during the PICC's lifetime.
+     * We will add Chameleon Mini terminal commands to enable 
+     * resetting this data so tags can be emulated authentically 
+     */
     uint8_t Uid[DESFIRE_UID_SIZE];
     uint8_t StorageSize;
     uint8_t HwVersionMajor;
@@ -126,28 +129,6 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t TransactionStarted;
     uint8_t Spare[9];
 } DESFirePICCInfoType;
-
-// TODO: Decode PICC master key settings (see datasheet, pp. 34-35) ... 
-
-/* PICC / Application master key settings */
-/* Mifare DESFire master key settings
-   bit 7 - 4: Always 0.
-   bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible); 
-          PICC master key settings changeable when authenticated with PICC master key = 1
-   bit 2: PICC master key authentication required for creating or deleting applications = 0; 
-          Authentication not required = 1
-   bit 1: PICC master key authentication required for listing of applications or 
-          reading key settings = 0; 
-          Free listing of applications and reading key settings = 1
-   bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; 
-          PICC master key changeable = 1
-*/
-#define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (1 << 0)
-#define DESFIRE_FREE_DIRECTORY_LIST      (1 << 1)
-#define DESFIRE_FREE_CREATE_DELETE       (1 << 2)
-#define DESFIRE_ALLOW_CONFIG_CHANGE      (1 << 3)
-#define DESFIRE_USE_TARGET_KEY           0xE
-#define DESFIRE_ALL_KEYS_FROZEN          0xF
 
 typedef struct {
     BYTE  Slot;
