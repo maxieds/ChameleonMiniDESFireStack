@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "aes.h"
-#include "../gfmul/gf256mul.h"
+//#include "../gfmul/gf256mul.h"
 #include "aes_sbox.h"
 #include "aes_enc.h"
 #include <avr/pgmspace.h>

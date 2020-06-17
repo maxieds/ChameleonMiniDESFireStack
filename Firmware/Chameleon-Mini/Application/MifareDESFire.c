@@ -15,7 +15,6 @@
 #include "DESFire/DESFireCrypto.h"
 #include "DESFire/DESFireISO14443Support.h"
 #include "DESFire/DESFireStatusCodes.h"
-#include "DESFire/DESFireAPDU.h"
 #include "DESFire/DESFireLogging.h"
 
 DesfireStateType DesfireState = DESFIRE_IDLE;
@@ -147,8 +146,6 @@ void MifareDesfireAppTask(void)
 }
 
 void ResetLocalStructureData(void) {
-     memset(&DESFireInternalAPDUCommand, 0x00, sizeof(DESFireInternalAPDUCommand));
-     memset(&DESFireInternalAPDUResponse, 0x00, sizeof(DESFireInternalAPDUResponse));
      memset(&SelectedApp, 0x00, sizeof(SelectedApp));
      memset(&SelectedFile, 0x00, sizeof(SelectedFile));
      memset(&TransferState, 0x00, sizeof(TransferState));
@@ -163,10 +160,8 @@ void ResetLocalStructureData(void) {
      memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
      SessionIVByteSize = 0x00;
      memset(&AESCryptoContext, 0x00, sizeof(DesfireAESCryptoContext));
-     memset(&AESCryptoSessionKey, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-     memset(&AESCryptoRndB, 0x00, sizeof(DesfireAESCryptoKey));
+     memset(&AESCryptoSessionKey, 0x00, sizeof(DesfireAESCryptoKey));
      memset(&AESCryptoIVBuffer, 0x00, sizeof(DesfireAESCryptoKey));
-     AESAuthState = AESAUTH_STATE_IDLE;
      DesfireState = DESFIRE_IDLE;
      InvalidateAuthState(0x00);
 }

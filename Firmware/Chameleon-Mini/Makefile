@@ -165,7 +165,6 @@ SRC         += Application/MifareUltralight.c \
 			Application/Sniff14443A.c
 SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
 			Application/MifareDESFire.c \
-			$(DESFIRE_MAINSRC)/DESFireAPDU.c \
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
 			$(DESFIRE_MAINSRC)/DESFireCrypto.c \
