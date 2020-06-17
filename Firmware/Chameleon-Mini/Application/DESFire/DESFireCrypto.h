@@ -11,6 +11,7 @@
 #include "DESFireAPDU.h"
 
 #include "ExternalCryptoLib/AVRCryptoLib/aes/aes.h"
+#include "ExternalCryptoLib/AVRCryptoLib/bcal/bcal-aes.h"
 #include "ExternalCryptoLib/AVRCryptoLib/des/des.h"
 
 /* Communication modes: 
@@ -165,7 +166,15 @@ extern CryptoCBCFuncType CryptoDecryptAES_CBCSend;
 extern CryptoCBCFuncType CryptoEncryptAES_CBCReceive;
 extern CryptoCBCFuncType CryptoDecryptAES_CBCReceive;
 
-/* Checksum routines: */
+/* CMAC local implementation */
+typedef bcal_cmac_ctx_t AESCryptoCMACContext;
+extern DesfireAESCryptoCMACContext AESCryptoChecksumContext;
+
+BYTE InitAESCryptoCMACContext(AESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx);
+void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
+                            AESCryptoCMACContext *cmacCtx);
+
+/* Public checksum routines: */
 void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer);
 

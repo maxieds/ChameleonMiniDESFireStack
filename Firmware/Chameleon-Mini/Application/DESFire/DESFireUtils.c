@@ -6,6 +6,25 @@
 #include "../../Terminal/Terminal.h"
 #include "DESFireUtils.h" 
 
+void RotateArrayRight(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize) {
+     destBuf[bufSize - 1] = srcBuf[0];
+     for(int bidx = 0; bidx < bufSize - 1; bidx++) {
+          destBuf[bidx] = srcBuf[bidx + 1];
+     }
+}
+
+void RotateArrayLeft(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize) {
+     for(int bidx = 1; bidx < bufSize; bidx++) {
+          destBuf[bidx] = srcBuf[bidx - 1];
+     }
+     destBuf[0] = srcBuf[bufSize - 1];
+}
+
+void ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BYTE *destArr) {
+     memcpy(destArr, arrA, arrASize);
+     memcpy(destArr + arrASize, arrB, arrBSize);
+}
+
 void DebugPrintP(const char *fmt, ...) {
     char Format[80];
     char Buffer[80];
@@ -27,5 +46,4 @@ SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize) {
      }
      return baseBlockSize;
 }
-
 

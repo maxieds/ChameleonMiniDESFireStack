@@ -17,6 +17,7 @@ to the mutifaceted Mifare DESFire tag specifications:
 Additionally, the following weblinks and posts clarify some common reference points:
 * [StackOverflow post on emulating DESFire on Android](https://stackoverflow.com/a/20068329)
 * [StackOverflow post on Android NFC support for DESFire](https://stackoverflow.com/a/26775311)
+* [Helpful source examples and hints on AES authenticate](https://www.linkedin.com/pulse/mifare-desfire-introduction-david-coelho)
 
 ## ISO7816 Command set implementation hints:
 
