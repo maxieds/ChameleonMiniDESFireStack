@@ -67,7 +67,6 @@ Additionally, the following weblinks and posts clarify some common reference poi
   1. ``#define EEPROM_ATTR __attribute__ ((section (".eeprom")))``
 
 ## List of (mostly) checked / cleaned new source files: 
-* :large_orange_diamond: ``DESFireAPDU.c``
 * :white_check_mark: ``DESFireApplicationDirectory.c``
 * :large_orange_diamond: ``DESFireChameleonTerminal.c``
 * :large_orange_diamond: ``DESFireCrypto.c``

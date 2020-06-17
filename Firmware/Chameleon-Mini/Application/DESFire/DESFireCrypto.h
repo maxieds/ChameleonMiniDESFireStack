@@ -8,7 +8,6 @@
 
 #include "../../Common.h"
 #include "DESFireFirmwareSettings.h"
-#include "DESFireAPDU.h"
 
 #include "ExternalCryptoLib/AVRCryptoLib/aes/aes.h"
 #include "ExternalCryptoLib/AVRCryptoLib/bcal/bcal-aes.h"
@@ -81,6 +80,7 @@ extern uint8_t ActiveCommMode;
 void InvalidateAuthState(BYTE keepPICCAuthData);
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
+BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
 
 #define MAC_LENGTH          4
 #define CMAC_LENGTH         8
@@ -136,17 +136,6 @@ uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *pla
                                 uint8_t *encDestBuf, uint16_t bufSize);
 uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
                                 uint8_t *plainDestBuf, uint16_t bufSize);
-
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-     AESAUTH_STATE_IDLE = 0,
-     AESAUTH_STATE_CHALLENGEI_RECV,
-     AESAUTH_STATE_RNDB_SENT2PCD,
-     AESAUTH_STATE_CHALLENGEII_RECV,
-     AESAUTH_STATE_AUTHENTICATED,
-     AESAUTH_STATE_ERROR,
-     AESAUTH_STATE_HALT_RESET,
-} DesfireAESAuthState;
-extern DesfireAESAuthState AESAuthState;
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 

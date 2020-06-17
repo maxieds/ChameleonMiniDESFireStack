@@ -101,6 +101,7 @@ typedef union DESFIRE_FIRMWARE_PACKING {
     struct DESFIRE_FIRMWARE_PACKING {
         uint8_t NextIndex;
     } GetApplicationIds;
+    uint8_t CryptoMethodType;
     uint8_t ActiveCommMode;
 } DesfireSavedCommandStateType;
 extern DesfireSavedCommandStateType DesfireCommandState;

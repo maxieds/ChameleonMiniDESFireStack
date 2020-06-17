@@ -8,7 +8,6 @@
 
 #include "../../Log.h"
 #include "DESFireFirmwareSettings.h"
-#include "DESFireAPDU.h"
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      OFF         = 0, 
@@ -29,21 +28,20 @@ extern DESFireLoggingMode LocalLoggingMode;
 extern BYTE LocalTestingMode; 
 
 DESFireLoggingMode StringToLoggingMode(BYTE *strParamBuf, SIZET strLength);
-DESFireLoggingMode GetActiveDESFireSlotLoggingMode(int slotIndex);
-BOOL StoreActiveDESFireSlotLoggingMode(int slotIndex, DESFireLoggingMode nextLogMode);
-BOOL SetActiveDESFireSlotLoggingMode(int slotIndex, DESFireLoggingMode nextLogMode);
+DESFireLoggingMode GetDESFireLoggingMode(void);
+void SetDESFireLoggingMode(DESFireLoggingMode nextLogMode);
 
-BOOL DESFireLogErrorMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
-BOOL DESFireLogError(SIZET swRespCodes, BYTE *bufMsg, SIZET bufSize);
-BOOL DESFireLogStatus(BYTE *bufMsg, SIZET bufSize);
-BOOL DESFireLogDebuggingMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
-BOOL DESFireLogIncomingData(BYTE *byteBuf, SIZET bufLength);
-BOOL DESFireLogOutgoingData(BYTE *byteBuf, SIZET bufLength);
-BOOL DESFireLogNativeCommand(APDUCommand *apduCmd);
-BOOL DESFireLogISO1443Command(APDUCommand *apduCmd);
-BOOL DESFireLogISO7816Command(APDUCommand *apduCmd);
-BOOL DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
-BOOL DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
-BOOL DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
+void DESFireLogErrorMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
+void DESFireLogError(SIZET swRespCodes, BYTE *bufMsg, SIZET bufSize);
+void DESFireLogStatus(BYTE *bufMsg, SIZET bufSize);
+void DESFireLogDebuggingMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
+void DESFireLogIncomingData(BYTE *byteBuf, SIZET bufLength);
+void DESFireLogOutgoingData(BYTE *byteBuf, SIZET bufLength);
+void DESFireLogNativeCommand(BYTE *Buffer, SIZET ByteCount);
+void DESFireLogISO1443Command(BYTE *Buffer, SIZET ByteCount);
+void DESFireLogISO7816Command(BYTE *Buffer, SIZET ByteCount);
+void DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
+void DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
+void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
 
 #endif

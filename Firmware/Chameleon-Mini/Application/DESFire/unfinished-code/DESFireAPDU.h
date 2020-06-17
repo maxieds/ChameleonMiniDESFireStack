@@ -8,8 +8,6 @@
 
 #include "DESFireFirmwareSettings.h" 
 
-#define DESFIRE_MAX_PAYLOAD_SIZE            64 // 59 /* Bytes */
-
 #define CLA_PROTECTED_APDU           (0x0c)
 #define CLA_ISO7816                  (0x00)
 #define P1_DF                        (0x04)

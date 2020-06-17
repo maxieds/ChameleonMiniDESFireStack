@@ -22,7 +22,6 @@ DesfireAESCryptoContext AESCryptoContext = { 0 };
 DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
-DesfireAESAuthState AESAuthState = AESAUTH_STATE_IDLE;
 
 uint8_t Authenticated = 0x00;
 uint8_t AuthenticatedWithKey = 0x00;
@@ -57,6 +56,23 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
      }
 }
 
+BYTE GetCryptoMethodCommSettings(uint8_t cryptoType) {
+     switch(cryptoType) {
+          case CRYPTO_TYPE_2K3DES:
+               return DESFIRE_COMMS_PLAINTEXT_MAC;
+          case CRYPTO_TYPE_3K3DES:
+               return DESFIRE_COMMS_CIPHERTEXT_DES;
+          case CRYPTO_TYPE_AES128:
+               return DESFIRE_COMMS_CIPHERTEXT_AES128;
+          case CRYPTO_TYPE_AES192:
+               return DESFIRE_COMMS_CIPHERTEXT_AES192;
+          case CRYPTO_TYPE_AES256:
+               return DESFIRE_COMMS_CIPHERTEXT_AES256;
+          default:
+               return DESFIRE_COMMS_PLAINTEXT;
+     }
+}
+
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
      switch(authCmdMethod) {
           case CMD_AUTHENTICATE_AES:
@@ -82,7 +98,7 @@ void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {
 }
 
 uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, BYTE keySizeBytes) {
-     if(cryptoKey == NULL || cryptoCtx == NULL) {
+     if(cryptoKey == NULL) {
           return NULL;
      }
      switch(keySizeBytes) {
@@ -227,7 +243,7 @@ uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
     /* Encrypt complete blocks in the buffer */
     CryptoEncryptAES_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], 
                              ExtractAESKeyBuffer(&AESCryptoIVBuffer, &AESCryptoContext), 
-                             &AESCryptoContext);
+                             AESCryptoContext.keySizeBytes);
     /* Return byte count to transfer */
     return BlockCount * CRYPTO_AES_BLOCK_SIZE; 
 }
