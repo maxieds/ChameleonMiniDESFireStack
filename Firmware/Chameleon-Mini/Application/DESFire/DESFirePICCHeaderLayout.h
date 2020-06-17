@@ -191,10 +191,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_APP_KEYS_PTR_BLOCK_ID,
 } DesfireCardLayout;
 
-// TODO: 
-BOOL PrettyPrintPICCHeaderData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength);
-BOOL PrettyPrintPICCImageData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength);
-BOOL PrettyPrintPICCApplicationDir(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength);
-BOOL PrettyPrintPICCFile(uint8_t slotNumber, uint8_t fileIndex, BYTE *outputBuffer, SIZET maxLength);
+SIZET PrettyPrintPICCHeaderData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCAppDir(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCKeys(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCFile(uint8_t slotNumber, uint8_t fileIndex, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCImageData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 
 #endif

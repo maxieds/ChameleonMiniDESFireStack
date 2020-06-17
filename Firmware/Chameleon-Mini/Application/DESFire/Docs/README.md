@@ -56,6 +56,8 @@ Additionally, the following weblinks and posts clarify some common reference poi
   for sensitive file and key data transfers? 
 * Need to store info about key type and byte size? 
 * Need a general function for transferring data based on the ``ActiveCommMode``.
+* Ledger Note: If something crucial breaks in the firmware while testing, removed the 
+  computation of ``avr-gcc`` dependency files from ``lufa_build.mk``.
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 

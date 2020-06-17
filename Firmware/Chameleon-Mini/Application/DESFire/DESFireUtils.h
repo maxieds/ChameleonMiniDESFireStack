@@ -10,26 +10,21 @@
 
 #include "DESFireFirmwareSettings.h"
 
-#define MAX2(x, y)      ((x) > (y) ? (x) : (y))
-#define MIN2(x, y)      ((x) < (y) ? (x) : (y))
-
-BOOL PadBuffer(BYTE *buf, SIZET startIdx, SIZET endIdx, BYTE fillByte);
-BOOL RightPadBuffer(BYTE *buf, SIZET origBufSize, SIZET padBytes, BYTE fillByte);
-BOOL LeftPadBuffer(BYTE *buf, SIZET padBytes, BYTE fillByte);
-BOOL ReverseBuffer(BYTE *buf, SIZET bufSize);
+void PadBuffer(BYTE *buf, SIZET startIdx, SIZET endIdx, BYTE fillByte);
+void RightPadBuffer(BYTE *buf, SIZET origBufSize, SIZET padBytes, BYTE fillByte);
+void LeftPadBuffer(BYTE *buf, SIZET padBytes, BYTE fillByte);
 
 void RotateArrayRight(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize);
 void RotateArrayLeft(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize);
 void ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BYTE *destArr);
 
-BOOL ShortToByteArray(SIZET shortValue, BYTE *outputArr);
-BOOL IntegerToByteArray(UINT intValue, BYTE *outputArr);
-BOOL CopySubByteArray(BYTE *inputData, SIZET startIdx, SIZET byteSizeToCopy, BYTE *destArr);
+void ShortToByteArray(SIZET shortValue, BYTE *outputArr);
+void IntegerToByteArray(UINT intValue, BYTE *outputArr);
 
-BOOL ByteToBinaryString(BYTE byteValue, char *destStrBuf, SIZET maxDestSize);
-BOOL ByteArrayToBinaryString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);
-BOOL ByteArrayToAsciiString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);
-BOOL StringArrayJoin(char **strArray, SIZET arrSize, char joinDelim, char *destStrBuf, SIZET maxDestSize);
+void ByteToBinaryString(BYTE byteValue, char *destStrBuf, SIZET maxDestSize);
+void ByteArrayToBinaryString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);
+void ByteArrayToAsciiString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);
+void StringArrayJoin(char **strArray, SIZET arrSize, char joinDelim, char *destStrBuf, SIZET maxDestSize);
 
 void DebugPrintP(const char *fmt, ...);
 
