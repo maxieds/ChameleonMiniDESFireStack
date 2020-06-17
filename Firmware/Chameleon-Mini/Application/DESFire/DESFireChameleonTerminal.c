@@ -30,7 +30,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
      }
      hdrPropSpecStr[23] = propSpecBytesStr[15] = '\0';
      dataByteCount = HexStringToBuffer(propSpecBytes, 16, propSpecBytesStr);
-     if(!strcmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
+     if(!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
           if(dataByteCount != 2) {
                StatusError = 0x01;
           }
@@ -39,7 +39,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
                Picc.HwVersionMinor = propSpecBytes[1];
           }
      }
-     else if(!strcmp_P(hdrPropSpecStr, PSTR("SoftwareVersion"))) {
+     else if(!strcasecmp_P(hdrPropSpecStr, PSTR("SoftwareVersion"))) {
           if(dataByteCount != 2) {
                StatusError = 0x01;
           }
@@ -48,7 +48,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
                Picc.SwVersionMinor = propSpecBytes[1];
           }
      }
-     else if(!strcmp_P(hdrPropSpecStr, PSTR("BatchNumber"))) {
+     else if(!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNumber"))) {
           if(dataByteCount != 5) {
                StatusError = 0x01;
           }
@@ -56,7 +56,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
                memcpy(Picc.BatchNumber, propSpecBytes, 5);
           }
      }
-     else if(!strcmp_P(hdrPropSpecStr, PSTR("ProductionDate"))) {
+     else if(!strcasecmp_P(hdrPropSpecStr, PSTR("ProductionDate"))) {
          if(dataByteCount != 2) {
                StatusError = 0x01;
           }
@@ -75,8 +75,39 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
      return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam) {
-     // TODO
+CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams) {
+     char pprintListSpecStr[32];
+     BYTE StatusError = 0x00;
+     if(!sscanf_P(InParams, PSTR("%31s"), pprintListSpecStr)) {
+          StatusError = 0x01;
+     }
+     else {
+          pprintListSpecStr[31] = '\0';
+          if(!strcasecmp_P(pprintListSpecStr, PSTR("FullImage"))) {
+               PrettyPrintPICCImageData(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
+          }
+          else if(!strcasecmp_P(pprintListSpecStr, PSTR("HeaderData"))) {
+               PrettyPrintPICCHeaderData(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
+          }
+          else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListDirs"))) {
+               PrettyPrintPICCAppDirsFull(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
+          }
+          else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListFiles"))) {
+               PrettyPrintPICCFilesFull(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
+          }
+          else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListKeys"))) {
+               PrettyPrintPICCKeysFull(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
+          }
+          else {
+               StatusError = 0x01;
+          }
+     }
+     if(StatusError) {
+          snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
+                     PSTR("%s <FullImage|HeaderData|ListDirs|ListFiles|ListKeys>"), 
+                     DFCOMMAND_LAYOUT_PPRINT);
+          return COMMAND_ERR_INVALID_USAGE_ID;
+     }
      return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 

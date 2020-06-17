@@ -192,9 +192,15 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 } DesfireCardLayout;
 
 SIZET PrettyPrintPICCHeaderData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
-SIZET PrettyPrintPICCAppDir(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
-SIZET PrettyPrintPICCKeys(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
-SIZET PrettyPrintPICCFile(uint8_t slotNumber, uint8_t fileIndex, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCAppDirs(uint8_t slotNumber, uint8_t appIndex, 
+                             BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCAppDirsFull(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCKeys(uint8_t slotNumber, uint8_t keyIndex, 
+                          BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCKeysFull(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCFiles(uint8_t slotNumber, uint8_t appIndex, 
+                           uint8_t fileIndex, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintPICCFilesFull(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintPICCImageData(uint8_t slotNumber, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 
 #endif

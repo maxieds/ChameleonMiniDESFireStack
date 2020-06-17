@@ -23,7 +23,6 @@ static uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t Def
 }
 
 uint16_t CmdNotImplemented(uint8_t* Buffer, uint16_t ByteCount) {
-    // TODO: Logging TODO ... (__FILE__, __LINE__, __FUNC__) 
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
@@ -113,17 +112,34 @@ uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount) {
     if (IsEmulatingEV1()) {
          switch(Buffer[0]) {
               case CMD_AUTHENTICATE_ISO:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_AUTHENTICATE_ISO), GetSourceFileLoggingData());
+                   break;
               case CMD_AUTHENTICATE_AES:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_AUTHENTICATE_AES), GetSourceFileLoggingData());
+                   break;
               case CMD_AUTHENTICATE_EV2_FIRST:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_AUTHENTICATE_EV2_FIRST), GetSourceFileLoggingData());
+                   break;
               case CMD_AUTHENTICATE_EV2_NONFIRST:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_AUTHENTICATE_EV2_NONFIRST), GetSourceFileLoggingData());
+                   break;
               case CMD_SET_CONFIGURATION:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_SET_CONFIGURATION), GetSourceFileLoggingData());
+                   break;
               case CMD_GET_KEY_VERSION:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_GET_KEY_VERSION), GetSourceFileLoggingData());
+                   break;
               case CMD_FREE_MEMORY:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_FREE_MEMORY), GetSourceFileLoggingData());
+                   break;
               case CMD_GET_DF_NAMES:
-                  break;
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_GET_DF_NAMES), GetSourceFileLoggingData());
+                   break;
               case CMD_GET_CARD_UID: /* TODO: Possible randomization if #if defined(DESFIRE_RANDOMIZE_UIDS_PREAUTH) */
                    return DesfireCmdGetCardUID(Buffer, ByteCount);
               case CMD_GET_ISO_FILE_IDS:
+                   DESFireLogSourceCodeTODO(GetSymbolNameString(), GetSourceFileLoggingData());
+                   break;
               default:
                    break;
          }
@@ -136,13 +152,29 @@ uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount) {
      switch(Buffer[0]) { 
           case CMD_ISO7816_SELECT:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_SELECT), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_GET_CHALLENGE:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_GET_CHALLENGE), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_EXTERNAL_AUTHENTICATE:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_EXTERNAL_AUTHENTICATE), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_INTERNAL_AUTHENTICATE:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_INTERNAL_AUTHENTICATE), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_READ_BINARY:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_READ_BINARY), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_UPDATE_BINARY:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_UPDATE_BINARY), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_READ_RECORDS:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_READ_RECORDS), GetSourceFileLoggingData());
+              break;
           case CMD_ISO7816_APPEND_RECORD:
+              DESFireLogSourceCodeTODO(GetSymbolNameString(CMD_ISO7816_APPEND_RECORD), GetSourceFileLoggingData());
+              break;
           default:
                break;
      }
@@ -674,16 +706,19 @@ uint16_t EV0CmdDeleteFile(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdGetFileIds(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO 
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdGetFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdChangeFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
@@ -872,31 +907,37 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdCredit(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdDebit(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdLimitedCredit(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdClearRecords(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
@@ -906,11 +947,13 @@ uint16_t EV0CmdClearRecords(uint8_t* Buffer, uint16_t ByteCount) {
  */
 
 uint16_t EV0CmdCommitTransaction(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO 
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount) {
+    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
@@ -920,10 +963,12 @@ uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount) {
  */
 
 uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
+     DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
      return CmdNotImplemented(Buffer, ByteCount);
 }
 
 uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
+     DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
      return CmdNotImplemented(Buffer, ByteCount);
 }
 
@@ -1068,5 +1113,6 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount) {
+     DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
      return CmdNotImplemented(Buffer, ByteCount);
 }

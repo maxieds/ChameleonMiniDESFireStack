@@ -70,7 +70,7 @@ Additionally, the following weblinks and posts clarify some common reference poi
 
 ## List of (mostly) checked / cleaned new source files: 
 * :white_check_mark: ``DESFireApplicationDirectory.c``
-* :large_orange_diamond: ``DESFireChameleonTerminal.c``
+* :white_check_mark: ``DESFireChameleonTerminal.c``
 * :large_orange_diamond: ``DESFireCrypto.c``
 * :white_check_mark: ``DESFireFile.c``
 * :interrobang: ``DESFireISO14443Support.c``

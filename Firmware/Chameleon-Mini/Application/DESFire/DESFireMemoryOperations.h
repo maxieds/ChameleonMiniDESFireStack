@@ -13,8 +13,11 @@
    on a bothersome heap-based scheme for passing pointers to functions: */
 #define MAX_DATA_BUFFER_SIZE                (128)
 #define DATA_BUFFER_SIZE_SMALL              (64)
-extern BYTE DESFireInternalDataBuffer[MAX_DATA_BUFFER_SIZE];
-extern BYTE DESFireInternalDataBufferSmall[DATA_BUFFER_SIZE_SMALL];
+#define STRING_BUFFER_SIZE                  (64)
+extern BYTE __InternalDataBuffer[MAX_DATA_BUFFER_SIZE];
+extern char __InternalStringBuffer[STRING_BUFFER_SIZE];
+extern char __InternalStringBuffer2[STRING_BUFFER_SIZE];
+
 /*
  * EEPROM memory management routines:
  */

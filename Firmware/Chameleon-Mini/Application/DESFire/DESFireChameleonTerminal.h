@@ -14,7 +14,7 @@ CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam);
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutMessage, const char *InParams);
 
 #define DFCOMMAND_LAYOUT_PPRINT               "DF_PPRINT_PICC"
-CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam);
+CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams);
 
 #define DFCOMMAND_FIRMWARE_INFO               "DF_FWINFO"
 CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam);

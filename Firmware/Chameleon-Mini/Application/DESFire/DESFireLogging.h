@@ -8,6 +8,7 @@
 
 #include "../../Log.h"
 #include "DESFireFirmwareSettings.h"
+#include "DESFireMemoryOperations.h"
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      OFF         = 0, 
@@ -22,19 +23,15 @@ extern DESFireLoggingMode LocalLoggingMode;
  * This variable can be toggled to indicated whether to employ 
  * testable pseudo-randomness in the encrypted transfers. 
  * When this value id non-zero, then any random session numbers 
- * (e.g., RndA) and IV salt vectors should default back to 
+ * (e.g., RndB) and IV salt vectors should default back to 
  * predictable constant values for testing purposes. 
  */
 extern BYTE LocalTestingMode; 
 
-DESFireLoggingMode StringToLoggingMode(BYTE *strParamBuf, SIZET strLength);
-DESFireLoggingMode GetDESFireLoggingMode(void);
-void SetDESFireLoggingMode(DESFireLoggingMode nextLogMode);
-
-void DESFireLogErrorMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
-void DESFireLogError(SIZET swRespCodes, BYTE *bufMsg, SIZET bufSize);
+void DESFireLogErrorMessage(char *fmtMsg, ...);
 void DESFireLogStatus(BYTE *bufMsg, SIZET bufSize);
-void DESFireLogDebuggingMessage(BYTE *fmtMsg, SIZET fmtLength, ...);
+void DESFireLogDebuggingMessage(char *fmtMsg, ...);
+void DESFireLogSourceCodeTODO(char *implNoteMsg, char *srcFileLoggingData);
 void DESFireLogIncomingData(BYTE *byteBuf, SIZET bufLength);
 void DESFireLogOutgoingData(BYTE *byteBuf, SIZET bufLength);
 void DESFireLogNativeCommand(BYTE *Buffer, SIZET ByteCount);
@@ -43,5 +40,40 @@ void DESFireLogISO7816Command(BYTE *Buffer, SIZET ByteCount);
 void DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
 void DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
 void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
+
+#define GetSourceFileLoggingData()                           ({ \
+        char *strBuffer;                                        \
+        do {                                                    \
+		snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
+                   PSTR("@@ LINE #%d in *%s of \"%s\" @@"),     \
+			       __LINE__, __FILE__, __FUNCTION__);           \
+	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';  \
+        } while(0);                                             \
+        strBuffer = __InternalStringBuffer;                     \
+        strBuffer;                                              \
+        })
+
+#define GetSymbolNameString(symbolName)                      ({ \
+        char *strBuffer;                                        \
+        do {                                                    \
+        snprintf_P(__InternalStringBuffer2, STRING_BUFFER_SIZE, \
+                   PSTR("%s"),                                  \
+                   #symbolName);                                \
+        } while(0);                                             \
+        strBuffer = __InternalStringBuffer2;                    \
+        strBuffer;                                              \
+        })
+
+#define SetHexBytesString(byteArray, arrSize)                ({ \
+    char *strBuffer;                                            \
+    do {                                                        \
+        BufferToHexString(__InternalStringBuffer,               \
+                          STRING_BUFFER_SIZE,                   \
+                          byteArray, arrSize);                  \
+        __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';  \
+    } while(0);                                                 \
+    strBuffer = __InternalStringBuffer;                         \
+    strBuffer;                                                  \
+    })
 
 #endif

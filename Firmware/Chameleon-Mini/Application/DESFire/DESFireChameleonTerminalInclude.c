@@ -14,8 +14,8 @@
      },
      {
           .Command        = DFCOMMAND_LAYOUT_PPRINT, 
-          .ExecFunc       = CommandDESFireLayoutPPrint,
-          .ExecParamFunc  = NO_FUNCTION,
+          .ExecFunc       = NO_FUNCTION,
+          .ExecParamFunc  = CommandDESFireLayoutPPrint,
           .SetFunc        = NO_FUNCTION,
           .GetFunc        = NO_FUNCTION
      },
