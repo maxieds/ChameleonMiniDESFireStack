@@ -160,7 +160,7 @@ void ResetLocalStructureData(void) {
      memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
      SessionIVByteSize = 0x00;
      memset(&AESCryptoContext, 0x00, sizeof(DesfireAESCryptoContext));
-     memset(&AESCryptoKey, 0x00, sizeof(DesfireAESCryptoKey));
+     memset(&AESCryptoSessionKey, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
      memset(&AESCryptoRndB, 0x00, sizeof(DesfireAESCryptoKey));
      memset(&AESCryptoIVBuffer, 0x00, sizeof(DesfireAESCryptoKey));
      AESAuthState = AESAUTH_STATE_IDLE;

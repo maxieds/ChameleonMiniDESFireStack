@@ -12,6 +12,7 @@
 
 #include "ExternalCryptoLib/AVRCryptoLib/aes/aes.h"
 #include "ExternalCryptoLib/AVRCryptoLib/bcal/bcal-aes.h"
+#include "ExternalCryptoLib/AVRCryptoLib/bcal/bcal-cmac.h"
 #include "ExternalCryptoLib/AVRCryptoLib/des/des.h"
 
 /* Communication modes: 
@@ -88,7 +89,6 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 #define DESFIRE_2KTDEA_NONCE_SIZE CRYPTO_DES_BLOCK_SIZE
 
 /* Authentication status */
-#define DESFIRE_MASTER_KEY_ID     0
 #define DESFIRE_NOT_AUTHENTICATED 0xFF
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
@@ -124,8 +124,8 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
           uint8_t aes256Key[32];
      };
 } DesfireAESCryptoKey;
-extern DesfireAESCryptoKey AESCryptoKey;
-extern DesfireAESCryptoKey AESCryptoRndB;
+extern DesfireAESCryptoKey AESCryptoSessionKey;
+extern uint8_t AESCryptoRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
 extern DesfireAESCryptoKey AESCryptoIVBuffer;
 
 void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx);
@@ -157,22 +157,24 @@ typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
 
-/* Prototype the CBC function pointer in case anyone needs it */
-typedef void (*CryptoCBCFuncType)(uint16_t Count, const void *PlainText, 
-                                  void *Ciphertext, void *IV, const uint8_t *Keys);
+typedef void (*CryptoAESCBCFuncType)(uint16_t, const void*, void*, void*, DesfireAESCryptoContext*);
 
-extern CryptoCBCFuncType CryptoEncryptAES_CBCSend;
-extern CryptoCBCFuncType CryptoDecryptAES_CBCSend;
-extern CryptoCBCFuncType CryptoEncryptAES_CBCReceive;
-extern CryptoCBCFuncType CryptoDecryptAES_CBCReceive;
+void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
+                              void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+void CryptoDecryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
+                              void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+void CryptoEncryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
+                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
+                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData);
 
 /* CMAC local implementation */
-typedef bcal_cmac_ctx_t AESCryptoCMACContext;
+typedef bcal_cmac_ctx_t DesfireAESCryptoCMACContext;
 extern DesfireAESCryptoCMACContext AESCryptoChecksumContext;
 
-BYTE InitAESCryptoCMACContext(AESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx);
+BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx);
 void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
-                            AESCryptoCMACContext *cmacCtx);
+                            DesfireAESCryptoCMACContext *cmacCtx);
 
 /* Public checksum routines: */
 void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);
@@ -209,6 +211,10 @@ Both operations employ TDEA encryption on the PICC's side and decryption on
 PCD's side.
 
 */
+
+/* Prototype the CBC function pointer in case anyone needs it */
+typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void *PlainText, 
+                                      void *Ciphertext, void *IV, const uint8_t *Keys);
 
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *
@@ -260,9 +266,8 @@ void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ci
                                  void *IV, const uint8_t* Keys);
 void CryptoDecrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
                                  void *IV, const uint8_t* Keys);
-
-void CryptoEncrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
-                                    void *IV, const uint8_t* Keys);
+void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+                                 void *IV, const uint8_t* Keys);
 void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
                                     void *IV, const uint8_t* Keys);
 

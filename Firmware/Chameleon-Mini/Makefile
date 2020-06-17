@@ -2,7 +2,7 @@
 # Note when using AVR-Toolchain, you have to install cygwin and 
 # append cygwin's bin directory to the PATH environment variable 
 # because Atmel does not ship sh.exe anymore with the toolchain. 
-SHELL = /bin/sh
+SHELL = /bin/bash
 
 #Supported configurations
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
@@ -108,10 +108,10 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
 #Support for some randomization in each custom compiled instantiation of the firmware:
-RANDOMIZED_DATA_SIZE         = 128
-RAW_RANDOMIZED_DATA         := $(shell openssl rand -rand /dev/urandom $(RANDOMIZED_DATA_SIZE) 2> /dev/null)
-RANDOMIZED_DATA_HEXFMTBYTES := $(shell echo $(RAW_RANDOMIZED_DATA) | xxd -p | sed 's/.\{2\}/0x&, /g' | sed 's/, 0x0//g')
-RANDOMIZED_DATA             := $(shell echo $(RANDOMIZED_DATA_HEXFMTBYTES) | sed 's/..$$//')
+#RANDOMIZED_DATA_SIZE         = 128
+#RAW_RANDOMIZED_DATA         := $(shell openssl rand -rand /dev/urandom $(RANDOMIZED_DATA_SIZE) 2> /dev/null)
+#RANDOMIZED_DATA_HEXFMTBYTES := $(shell echo $(RAW_RANDOMIZED_DATA) | xxd -p | sed 's/.\{2\}/0x&, /g' | sed 's/, 0x0//g')
+#RANDOMIZED_DATA             := $(shell echo $(RANDOMIZED_DATA_HEXFMTBYTES) | sed 's/..$$//')
 #SETTINGS	+= -DENABLE_RANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA_SIZE) -DRANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA)
 
 #Memory definitions and objcopy flags to include sections in binaries
@@ -210,6 +210,8 @@ local-clean:
 	@rm -rf $(OBJDIR)
 	@mkdir $(OBJDIR)
 	@rm -f Application/DESFire/*.code
+
+all:
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk

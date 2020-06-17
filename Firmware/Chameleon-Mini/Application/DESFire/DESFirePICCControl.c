@@ -120,7 +120,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
        case DESFIRE_COMMS_PLAINTEXT_MAC:
            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-           TransferState.Checksums.MACData.CryptoChecksumFunc = &CryptoEncrypt2KTDEA_CBCSend;
+           TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCSend;
            memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
            SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
            break;
@@ -151,7 +151,7 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
        case DESFIRE_COMMS_PLAINTEXT_MAC:
            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-           TransferState.Checksums.MACData.CryptoChecksumFunc = &CryptoEncrypt2KTDEA_CBCReceive;
+           TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCReceive;
            memset(SessionIV, 0, sizeof(SessionIVByteSize));
            SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
            break;

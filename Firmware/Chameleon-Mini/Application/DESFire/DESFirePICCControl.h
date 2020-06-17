@@ -46,11 +46,14 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         BYTE AvailablePlaintext;
         struct DESFIRE_FIRMWARE_ALIGNAT {
             BYTE               BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];
-            CryptoCBCFuncType  CryptoChecksumFunc;
+            union DESFIRE_FIRMWARE_ALIGNAT {
+                CryptoAESCBCFuncType   AESFunc;
+                CryptoTDEACBCFuncType  TDEAFunc;
+            } CryptoChecksumFunc;
             union {
                  SIZET CRCA;
                  UINT  CRC32;
-                 UINT  CMAC[2];
+                 BYTE  CMAC[CMAC_LENGTH];
             };
         } MACData;
     } Checksums;

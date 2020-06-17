@@ -160,14 +160,14 @@ ifneq ($(UNKNOWN_SOURCE),)
 endif
 
 # Convert input source filenames into a list of required output object files
-OBJECT_FILES += $(addsuffix .co, $(basename $(C_SOURCE))) \
-			 $(addsuffix .cxxo, $(basename $(CPP_SOURCE))) \
-			 $(addsuffix .So, $(basename $(ASM_SOURCE)))
-OBJDIRSEP =
+OBJECT_FILES := $(addsuffix .Cobj, $(basename $(C_SOURCE))) \
+			 	$(addsuffix .CXXobj, $(basename $(CPP_SOURCE))) \
+			 	$(addsuffix .Sobj, $(basename $(ASM_SOURCE)))
+OBJDIRSEP :=
 ifneq "$(shell echo $(OBJDIR) | awk '{print substr($$0,length,1)}')" "/"
-	OBJDIRSEP = /
+	OBJDIRSEP := /
 endif
-DEST_OBJECT_FILES = $(foreach objFile,$(OBJECT_FILES),$(OBJDIR)$(OBJDIRSEP)$(shell basename $(objFile)))
+DEST_OBJECT_FILES := $(foreach objFile,$(OBJECT_FILES),$(OBJDIR)$(OBJDIRSEP)$(shell basename $(objFile)))
 
 ## Check if an output object file directory was specified instead of the input file location
 #ifneq ($(OBJDIR),.)
@@ -298,7 +298,7 @@ $(SRC):
 	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) $< -o $@
 
 # Compiles an input C source file and generates a linkable object file for it
-%.co: %.c $(MAKEFILE_LIST) 
+%.Cobj: %.c $(MAKEFILE_LIST) 
 	@echo $(MSG_COMPILE_CMD) Compiling C file \"$(notdir $<)\"
 	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) \
 		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
@@ -312,7 +312,7 @@ $(SRC):
 #		-o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) $<
 
 # Assembles an input ASM source file and generates a linkable object file for it
-%.So: %.S $(MAKEFILE_LIST)
+%.Sobj: %.S $(MAKEFILE_LIST)
 	@echo $(MSG_ASSEMBLE_CMD) Assembling \"$(notdir $<)\"
 	$(CROSS)-gcc $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) \
 		-MMD -MP -o $(OBJDIR)$(OBJDIRSEP)$(shell basename $@) -c $<
@@ -328,7 +328,7 @@ $(SRC):
 
 # Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
 # files, or used for programming and debugging directly
-.PRECIOUS  : $(DEST_OBJECT_FILES) %.So %.co
+.PRECIOUS  : $(DEST_OBJECT_FILES) %.Sobj %.Cobj
 .SECONDARY : %.elf
 %.elf: $(OBJECT_FILES) 
 	@echo $(MSG_LINK_CMD) Linking object files into \"$@\"
@@ -360,7 +360,7 @@ $(SRC):
 	$(CROSS)-nm -n $< > $@
 
 # Include build dependency files
--include $(DEPENDENCY_FILES)
+#-include $(DEPENDENCY_FILES)
 
 # Phony build targets for this module
 .PHONY: build_begin build_end size symbol-sizes lib elf hex lss lufa-clean mostlyclean

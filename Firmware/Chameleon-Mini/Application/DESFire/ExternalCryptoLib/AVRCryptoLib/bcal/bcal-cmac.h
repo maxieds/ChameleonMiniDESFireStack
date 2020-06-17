@@ -27,7 +27,7 @@
 #define AES_BLOCK_SIZE          16
 
 typedef struct{
-	bcdesc_t*    desc;
+	const bcdesc_t*    desc;
 	bcgen_ctx_t  cctx;
 	uint8_t      accu[AES_BLOCK_SIZE];
 	uint8_t      k1[AES_BLOCK_SIZE];
