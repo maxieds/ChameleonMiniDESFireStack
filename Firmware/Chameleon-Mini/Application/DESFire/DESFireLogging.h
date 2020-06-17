@@ -58,13 +58,13 @@ void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
         do {                                                    \
         snprintf_P(__InternalStringBuffer2, STRING_BUFFER_SIZE, \
                    PSTR("%s"),                                  \
-                   #symbolName);                                \
+                   PSTR(#symbolName));                          \
         } while(0);                                             \
         strBuffer = __InternalStringBuffer2;                    \
         strBuffer;                                              \
         })
 
-#define SetHexBytesString(byteArray, arrSize)                ({ \
+#define GetHexBytesString(byteArray, arrSize)                ({ \
     char *strBuffer;                                            \
     do {                                                        \
         BufferToHexString(__InternalStringBuffer,               \

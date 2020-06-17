@@ -1006,7 +1006,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     *IVBuffer = ExtractAESKeyBuffer(&AESCryptoIVBuffer, keySize);
 
     /* Indicate that we are in AES key authentication land */
-    DesfireCommandState.AuthenticateAES.KeyId = KeyId;
+    DesfireCommandState.Authenticate.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = cryptoKeyType;
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(cryptoKeyType);
 
@@ -1070,7 +1070,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     }
    
     /* Reset parameters for authentication from the first exchange */
-    KeyId = DesfireCommandState.AuthenticateAES.KeyId;
+    KeyId = DesfireCommandState.Authenticate.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(cryptoKeyType);
     *Key = ExtractAESKeyBuffer(&AESCryptoSessionKey, keySize);
@@ -1086,7 +1086,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     memcpy(challengeRndB, challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Check that the returned RndB matches what we sent in the previous round */
-    if(memcmp(DesfireCommandState.AuthenticateAES.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
+    if(memcmp(DesfireCommandState.Authenticate.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
          InvalidateAuthState(0x00);
          Buffer[0] = STATUS_AUTHENTICATION_ERROR;
          return DESFIRE_STATUS_RESPONSE_SIZE;

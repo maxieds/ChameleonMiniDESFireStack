@@ -88,16 +88,8 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 typedef union DESFIRE_FIRMWARE_PACKING {
     struct DESFIRE_FIRMWARE_PACKING {
         uint8_t KeyId;
-        uint8_t RndB[CRYPTO_DES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+        uint8_t RndB[CRYPTO_MAX_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     } Authenticate;
-    struct DESFIRE_FIRMWARE_PACKING {
-        uint8_t KeyId;
-        uint8_t RndB[CRYPTO_3KTDEA_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    } AuthenticateIso;
-    struct DESFIRE_FIRMWARE_PACKING {
-        uint8_t KeyId;
-        uint8_t RndB[CRYPTO_AES_KEY_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    } AuthenticateAES;
     struct DESFIRE_FIRMWARE_PACKING {
         uint8_t NextIndex;
     } GetApplicationIds;

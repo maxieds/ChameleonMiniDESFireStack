@@ -84,19 +84,19 @@ CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InPar
      else {
           pprintListSpecStr[31] = '\0';
           if(!strcasecmp_P(pprintListSpecStr, PSTR("FullImage"))) {
-               PrettyPrintPICCImageData(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
+               PrettyPrintPICCImageData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
           }
           else if(!strcasecmp_P(pprintListSpecStr, PSTR("HeaderData"))) {
-               PrettyPrintPICCHeaderData(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
+               PrettyPrintPICCHeaderData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
           }
           else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListDirs"))) {
-               PrettyPrintPICCAppDirsFull(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
+               PrettyPrintPICCAppDirsFull((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
           }
           else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListFiles"))) {
-               PrettyPrintPICCFilesFull(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
+               PrettyPrintPICCFilesFull((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
           }
           else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListKeys"))) {
-               PrettyPrintPICCKeysFull(SelectedApp.Slot, (BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
+               PrettyPrintPICCKeysFull((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
           }
           else {
                StatusError = 0x01;
