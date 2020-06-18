@@ -28,7 +28,7 @@
 #include "aes.h"
 #include "aes_enc.h"
 
-void aes192_enc(void *buffer, aes192_ctx_t *ctx){
-	aes_encrypt_core(buffer, (aes_genctx_t*)ctx, 12);
+void aes192_enc(void *buffer, aes_ctx_t *ctx){
+	aes_encrypt_core(buffer, (aes_genctx_t*) &(ctx->aes192_ctx_t), 12);
 }
 

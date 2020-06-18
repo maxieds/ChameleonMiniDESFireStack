@@ -1,5 +1,6 @@
 unfinished-code
 unfinished-code/*
+*.DS_Store
 *.swp*
 *.*.
 *.code

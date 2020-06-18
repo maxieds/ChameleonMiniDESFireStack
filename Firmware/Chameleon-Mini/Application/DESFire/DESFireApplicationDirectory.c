@@ -12,12 +12,12 @@
 #include "DESFireMemoryOperations.h"
 #include "DESFireUtils.h"
 
-const BYTE DEFAULT_SELECT_DESFIRE_AID[] = { 
-     0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 
-};
-const BYTE DEFAULT_SELECT_ISO7816_AID[] = { 
-     0xa0, 0x00, 0x00, 0x00, 0x03, 0x96 
-};
+//const BYTE DEFAULT_SELECT_DESFIRE_AID[] = { 
+//     0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 
+//};
+//const BYTE DEFAULT_SELECT_ISO7816_AID[] = { 
+//     0xa0, 0x00, 0x00, 0x00, 0x03, 0x96 
+//};
 
 /*
  * Global card structure support routines

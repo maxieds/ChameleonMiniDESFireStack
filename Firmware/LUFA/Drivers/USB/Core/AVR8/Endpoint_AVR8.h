@@ -129,7 +129,7 @@
 					 *  be used in the device. Different USB AVR models support different amounts of endpoints,
 					 *  this value reflects the maximum number of endpoints for the currently selected AVR model.
 					 */
-					#define ENDPOINT_TOTAL_ENDPOINTS        7
+					#define ENDPOINT_TOTAL_ENDPOINTS        5 //7 (TODO)
 				#else
 					#define ENDPOINT_TOTAL_ENDPOINTS        5
 				#endif

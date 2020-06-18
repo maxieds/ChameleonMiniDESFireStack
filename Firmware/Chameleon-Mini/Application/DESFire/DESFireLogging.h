@@ -45,23 +45,23 @@ void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
         char *strBuffer;                                        \
         do {                                                    \
 		snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
-                   PSTR("@@ LINE #%d in *%s of \"%s\" @@"),     \
-			       __LINE__, __FILE__, __FUNCTION__);           \
+                   PSTR("@@ LINE #%d in *%s @@"),               \
+			       __LINE__, __FILE__);                         \
 	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';  \
         } while(0);                                             \
         strBuffer = __InternalStringBuffer;                     \
         strBuffer;                                              \
         })
 
-#define GetSymbolNameString(symbolName)                      ({ \
-        char *strBuffer;                                        \
-        do {                                                    \
-        snprintf_P(__InternalStringBuffer2, STRING_BUFFER_SIZE, \
-                   PSTR("%s"),                                  \
-                   PSTR(#symbolName));                          \
-        } while(0);                                             \
-        strBuffer = __InternalStringBuffer2;                    \
-        strBuffer;                                              \
+#define GetSymbolNameString(symbolName)                          ({ \
+        char *strBuffer;                                            \
+        do {                                                        \
+        snprintf_P(__InternalStringBuffer2, DATA_BUFFER_SIZE_SMALL, \
+                   PSTR("%s"),                                      \
+                   PSTR(#symbolName));                              \
+        } while(0);                                                 \
+        strBuffer = __InternalStringBuffer2;                        \
+        strBuffer;                                                  \
         })
 
 #define GetHexBytesString(byteArray, arrSize)                ({ \

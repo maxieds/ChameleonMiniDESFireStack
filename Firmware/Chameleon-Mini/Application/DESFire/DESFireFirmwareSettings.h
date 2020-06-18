@@ -20,12 +20,13 @@
 
 #define DESFIRE_LITTLE_ENDIAN                       (1)
 
-#define DESFIRE_PICC_STRUCT_PACKING                 __attribute__((packed))
-#define DESFIRE_FIRMWARE_PACKING                    __attribute__((packed))
-#define DESFIRE_FIRMWARE_ALIGNAT                    __attribute__((aligned(1)))
-#define DESFIRE_PICC_ARRAY_ALIGNAT                  __attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              __attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_ENUM_PACKING               __attribute__((aligned(1)))
+#define DESFIRE_PICC_STRUCT_PACKING                 //__attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_PACKING                    //__attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ALIGNAT                    //__attribute__((aligned(1)))
+#define DESFIRE_PICC_ARRAY_ALIGNAT                  //__attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              //__attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ENUM_PACKING               //__attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_NOINIT                     __attribute__ ((section (".noinit")))
 
 /* Some standard boolean interpreted and other values for types and return values: */
 typedef int      BOOL;

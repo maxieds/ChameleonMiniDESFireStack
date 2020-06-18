@@ -33,17 +33,17 @@ typedef struct{
 	uint8_t ks[16];
 } aes_roundkey_t;
 
-typedef struct{
-	aes_roundkey_t key[10+1];
-} aes128_ctx_t;
-
-typedef struct{
-	aes_roundkey_t key[12+1];
-} aes192_ctx_t;
-
-typedef struct{
-	aes_roundkey_t key[14+1];
-} aes256_ctx_t;
+typedef union __attribute__((packed)) {
+    struct {
+	    aes_roundkey_t key[10+1];
+    } aes128_ctx_t;
+    struct {
+	    aes_roundkey_t key[12+1];
+    } aes192_ctx_t;
+    struct {
+	    aes_roundkey_t key[14+1];
+    } aes256_ctx_t;
+} aes_ctx_t;
 
 typedef struct{
 	aes_roundkey_t key[1]; /* just to avoid the warning */

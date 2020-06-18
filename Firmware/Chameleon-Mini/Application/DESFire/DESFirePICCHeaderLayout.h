@@ -117,22 +117,22 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
      * We will add Chameleon Mini terminal commands to enable 
      * resetting this data so tags can be emulated authentically 
      */
-    uint8_t Uid[DESFIRE_UID_SIZE];
+    uint8_t Uid[DESFIRE_UID_SIZE] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t StorageSize;
     uint8_t HwVersionMajor;
     uint8_t HwVersionMinor;
     uint8_t SwVersionMajor;
     uint8_t SwVersionMinor;
-    uint8_t BatchNumber[5];
+    uint8_t BatchNumber[5] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t ProductionWeek;
     uint8_t ProductionYear;
     /* Dynamic data: changes during the PICC's lifetime */
     uint8_t FirstFreeBlock;
     uint8_t TransactionStarted;
-    uint8_t Spare[9];
+    uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT;
 } DESFirePICCInfoType;
 
-typedef struct {
+typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE  Slot;
     BYTE  KeyCount;
     BYTE  FileCount;

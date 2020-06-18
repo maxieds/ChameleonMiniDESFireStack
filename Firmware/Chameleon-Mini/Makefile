@@ -10,7 +10,7 @@ SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
-#SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
+SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
 SETTINGS    += -DCONFIG_ISO14443A_SNIFF_SUPPORT
 SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
 
@@ -103,7 +103,7 @@ SETTINGS	+= -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
 SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DDESFIRE_CUSTOM_MAX_APPS=8
 #SETTINGS	+= -DDESFIRE_CUSTOM_MAX_KEYS=6
-#SETTINGS += -DDESFIRE_CUSTOM_MAX_FILES=6
+#SETTINGS   += -DDESFIRE_CUSTOM_MAX_FILES=6
 #SETTINGS	+= -DDESFIRE_USE_FACTORY_SIZES
 #SETTINGS	+= -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
@@ -117,8 +117,6 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
-#FLASH_DATA_ADDR = 0x1000 #Start of data section in flash
-#FLASH_DATA_SIZE = 0xffa0 #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -165,7 +163,7 @@ SRC         += Application/MifareUltralight.c \
 			Application/Crypto1.c \
 			Application/Reader14443A.c \
 			Application/Sniff14443A.c
-#SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
+SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
 			Application/MifareDESFire.c \
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
@@ -181,7 +179,7 @@ SRC         += Application/MifareUltralight.c \
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S
-#ASRC        += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S \
+ASRC        += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S \
 			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
@@ -191,7 +189,9 @@ CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			#-D__AVR_ATxmega128A4U__
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 				-Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-				#-Wl,--section-start,.data=0x801100
+				-ffunction-sections -fdata-sections \
+				#-Wl,--defsym,__stack=0x7fff
+				#-Wl,--section-start,.data=0x808000,--defsym=__heap_end=0x80ffff
 OBJDIR       = Bin
 OBJECT_FILES = 
 
@@ -208,7 +208,7 @@ AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
 # Default target
-all:
+all: desfire-dev
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
@@ -234,7 +234,7 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 spmhelper: $(TARGET).elf
 	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
-		
+	
 # Program the device using avrdude  
 program: $(TARGET).hex $(TARGET).eep
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
@@ -261,13 +261,10 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
-	$(CROSS)-size --mcu=avrxmega7 -C $(TARGET).elf
+	$(CROSS)-size --mcu=atmega128 -C $(TARGET).elf
 
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
-
-
-default: desfire-dev
 
 local-clean:
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{hex,eep}

@@ -75,7 +75,7 @@ CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam)
   uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
   uint16_t UidSize = ActiveConfiguration.UidSize;
 
-  if (strcmp_P(InParam, PSTR(COMMAND_UID_RANDOM)) == 0) {
+  if (strcmp_P(InParam, COMMAND_UID_RANDOM) == 0) {
     /* Load with random bytes */
     for (uint8_t i=0; i<UidSize; i++) {
       UidBuffer[i] = RandomGetByte();

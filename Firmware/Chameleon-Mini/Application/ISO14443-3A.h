@@ -9,6 +9,7 @@
 #define ISO14443_3A_H_
 
 #include "../Common.h"
+#include "../Codec/Codec.h"
 #include <string.h>
 
 #define ISO14443A_UID_SIZE_SINGLE   4    /* bytes */
@@ -45,6 +46,8 @@
 
 #define ISO14443A_CALC_BCC(ByteBuffer) \
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
+
+extern uint8_t Thresholds[(CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS];
 
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);

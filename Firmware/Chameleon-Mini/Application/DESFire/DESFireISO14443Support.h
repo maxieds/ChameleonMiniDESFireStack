@@ -30,7 +30,8 @@ extern Iso144434StateType Iso144434State;
 extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 extern uint8_t Iso144434LastBlockLength;
-extern uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+//extern uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+extern uint8_t Iso144434LastBlock[2];
 
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);

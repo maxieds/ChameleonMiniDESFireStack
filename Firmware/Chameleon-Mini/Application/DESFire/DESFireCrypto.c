@@ -138,19 +138,19 @@ uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize,
           keySize = 32;
           paddedKeyBuf = (uint8_t *) cryptoKeyBuf.aes256Key;
           memcpy(paddedKeyBuf, initKeyBuffer, bufSize);
-          aes256_init(paddedKeyBuf, &(cryptoCtx->aes256Context));
+          aes256_init(paddedKeyBuf, cryptoCtx);
      }
      else if(bufSize > 16 && bufSize <= 24) {
           keySize = 24;
           paddedKeyBuf = (uint8_t *) cryptoKeyBuf.aes192Key;
           memcpy(paddedKeyBuf, initKeyBuffer, bufSize);
-          aes192_init(paddedKeyBuf, &(cryptoCtx->aes192Context));
+          aes192_init(paddedKeyBuf, cryptoCtx);
      }
      else {
           keySize = 16;
           paddedKeyBuf = (uint8_t *) cryptoKeyBuf.aes128Key;
           memcpy(paddedKeyBuf, initKeyBuffer, bufSize);
-          aes128_init(paddedKeyBuf, &(cryptoCtx->aes128Context));
+          aes128_init(paddedKeyBuf, cryptoCtx);
      }
      cryptoCtx->keySizeBytes = keySize;
      return STATUS_OPERATION_OK;
@@ -169,13 +169,13 @@ uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *pla
           memcpy(encBlockData, plainSrcBuf + blockOffset, CRYPTO_AES_BLOCK_SIZE);
           switch(cryptoCtx->keySizeBytes) {
                case 16:
-                    aes128_enc(encBlockData, &cryptoCtx->aes128Context);
+                    aes128_enc(encBlockData, cryptoCtx);
                     break;
                case 24:
-                    aes192_enc(encBlockData, &cryptoCtx->aes192Context);
+                    aes192_enc(encBlockData, cryptoCtx);
                     break;
                case 32:
-                    aes256_enc(encBlockData, &cryptoCtx->aes256Context);
+                    aes256_enc(encBlockData, cryptoCtx);
                     break;
                default:
                     return STATUS_NO_SUCH_KEY;
@@ -198,13 +198,13 @@ uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx,
           memcpy(decBlockData, encSrcBuf + blockOffset, CRYPTO_AES_BLOCK_SIZE);
           switch(cryptoCtx->keySizeBytes) {
                case 16:
-                    aes128_dec(decBlockData, &cryptoCtx->aes128Context);
+                    aes128_dec(decBlockData, cryptoCtx);
                     break;
                case 24:
-                    aes192_dec(decBlockData, &cryptoCtx->aes192Context);
+                    aes192_dec(decBlockData, cryptoCtx);
                     break;
                case 32:
-                    aes256_dec(decBlockData, &cryptoCtx->aes256Context);
+                    aes256_dec(decBlockData, cryptoCtx);
                     break;
                default:
                     return STATUS_NO_SUCH_KEY;
@@ -222,7 +222,7 @@ uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
     uint8_t *tempBufOffset;
     if(AvailablePlaintext) {
         /* Fill the partial block */
-        memcpy(&TempBuffer[0], &TransferState.ReadData.Encryption.BlockBuffer[0], bufFillSize);
+        memcpy(&TempBuffer[0], &TransferState.BlockBuffer[0], bufFillSize);
     }
     /* Copy fresh plaintext to the temp buffer */
     if(Count > bufFillSize && tempBufSize - bufFillSize > 0) {
@@ -236,7 +236,7 @@ uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
     /* Stash extra plaintext for later */
     AvailablePlaintext = Count - BlockCount * CRYPTO_AES_BLOCK_SIZE;
     if (AvailablePlaintext) {
-        memcpy(&TransferState.ReadData.Encryption.BlockBuffer[0],
+        memcpy(&TransferState.BlockBuffer[0],
                &Buffer[BlockCount * CRYPTO_AES_BLOCK_SIZE], AvailablePlaintext);
     }
     TransferState.ReadData.Encryption.AvailablePlaintext = AvailablePlaintext;
@@ -277,17 +277,17 @@ BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCr
           case 16:
                cmacCtx->desc = &aes128_desc;
                cmacCtx->cctx.keysize = 16;
-               cmacCtx->cctx.ctx = &(cryptoCtx->aes128Context);
+               cmacCtx->cctx.ctx = cryptoCtx;
                break;
           case 24:
                cmacCtx->desc = &aes192_desc;
                cmacCtx->cctx.keysize = 24;
-               cmacCtx->cctx.ctx = &(cryptoCtx->aes192Context);
+               cmacCtx->cctx.ctx = cryptoCtx;
                break;
           case 32:
                cmacCtx->desc = &aes256_desc;
                cmacCtx->cctx.keysize = 32;
-               cmacCtx->cctx.ctx = &(cryptoCtx->aes256Context);
+               cmacCtx->cctx.ctx = cryptoCtx;
                break;
           default:
                return STATUS_PARAMETER_ERROR;
@@ -327,11 +327,11 @@ void TransferChecksumUpdateMACTDEA(const uint8_t* Buffer, uint8_t Count) {
         TempBytes = CRYPTO_DES_BLOCK_SIZE - AvailablePlaintext;
         if (TempBytes > Count)
             TempBytes = Count;
-        memcpy(&TransferState.Checksums.MACData.BlockBuffer[AvailablePlaintext], &Buffer[0], TempBytes);
+        memcpy(&TransferState.BlockBuffer[AvailablePlaintext], &Buffer[0], TempBytes);
         Count -= TempBytes;
         Buffer += TempBytes;
         /* MAC the partial block */
-        TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
+        TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc(1, &TransferState.BlockBuffer[0], 
                                                                     &TempBuffer[0], SessionIV, SessionKey);
     }
     /* MAC complete blocks in the buffer */
@@ -345,7 +345,7 @@ void TransferChecksumUpdateMACTDEA(const uint8_t* Buffer, uint8_t Count) {
     }
     /* Copy the new partial block */
     if (Count) {
-        memcpy(&TransferState.Checksums.MACData.BlockBuffer[0], &Buffer[0], Count);
+        memcpy(&TransferState.BlockBuffer[0], &Buffer[0], Count);
     }
     TransferState.Checksums.AvailablePlaintext = Count;
 }
@@ -356,9 +356,9 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t* Buffer) {
 
     if (AvailablePlaintext) {
         /* Apply padding */
-        CryptoPaddingTDEA(&TransferState.Checksums.MACData.BlockBuffer[0], AvailablePlaintext, false);
+        CryptoPaddingTDEA(&TransferState.BlockBuffer[0], AvailablePlaintext, false);
         /* MAC the partial block */
-        TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc(1, &TransferState.Checksums.MACData.BlockBuffer[0], 
+        TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc(1, &TransferState.BlockBuffer[0], 
                                                                     &TempBuffer[0], SessionIV, SessionKey);
         TransferState.Checksums.AvailablePlaintext = 0;
     }
@@ -377,7 +377,7 @@ uint8_t TransferEncryptTDEASend(uint8_t* Buffer, uint8_t Count) {
 
     if (AvailablePlaintext) {
         /* Fill the partial block */
-        memcpy(&TempBuffer[0], &TransferState.ReadData.Encryption.BlockBuffer[0], AvailablePlaintext);
+        memcpy(&TempBuffer[0], &TransferState.BlockBuffer[0], AvailablePlaintext);
     }
     /* Copy fresh plaintext to the temp buffer */
     memcpy(&TempBuffer[AvailablePlaintext], Buffer, Count);
@@ -386,7 +386,7 @@ uint8_t TransferEncryptTDEASend(uint8_t* Buffer, uint8_t Count) {
     /* Stash extra plaintext for later */
     AvailablePlaintext = Count - BlockCount * CRYPTO_DES_BLOCK_SIZE;
     if (AvailablePlaintext) {
-        memcpy(&TransferState.ReadData.Encryption.BlockBuffer[0], 
+        memcpy(&TransferState.BlockBuffer[0], 
                &Buffer[BlockCount * CRYPTO_DES_BLOCK_SIZE], AvailablePlaintext);
     }
     TransferState.ReadData.Encryption.AvailablePlaintext = AvailablePlaintext;

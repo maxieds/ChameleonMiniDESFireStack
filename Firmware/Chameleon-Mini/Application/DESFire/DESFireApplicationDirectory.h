@@ -68,8 +68,8 @@
 
 typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
 
-extern const BYTE DEFAULT_SELECT_DESFIRE_AID[]; 
-extern const BYTE DEFAULT_SELECT_ISO7816_AID[]; 
+//extern const BYTE DEFAULT_SELECT_DESFIRE_AID[]; 
+//extern const BYTE DEFAULT_SELECT_ISO7816_AID[]; 
 
 /* 
  * Defines the application directory contents.

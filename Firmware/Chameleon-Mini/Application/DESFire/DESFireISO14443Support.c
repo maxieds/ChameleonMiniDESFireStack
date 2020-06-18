@@ -16,7 +16,8 @@ Iso144434StateType Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
 uint8_t Iso144434BlockNumber = 0x00;
 uint8_t Iso144434CardID = 0x00;
 uint8_t Iso144434LastBlockLength = 0x00;
-uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+//uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+uint8_t Iso144434LastBlock[2];
 
 void ISO144434SwitchState(Iso144434StateType NewState) {
     Iso144434State = NewState;
@@ -164,8 +165,9 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
     ISO14443AAppendCRCA(Buffer, ByteCount);
     /* Stash the block for possible retransmissions */
     ByteCount += ISO14443A_CRCA_SIZE;
-    Iso144434LastBlockLength = ByteCount;
-    memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
+    Iso144434LastBlockLength = 2; //ByteCount;
+    //memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
+    Iso144434LastBlock[0] = Iso144434LastBlock[1] = 0x00;
     return ByteCount;
 }
 

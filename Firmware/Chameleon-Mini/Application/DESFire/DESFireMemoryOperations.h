@@ -11,12 +11,12 @@
 /* Reserve some space on the stack (text / data segment) for intermediate 
    storage of strings and data we need to write so we do not have to rely 
    on a bothersome heap-based scheme for passing pointers to functions: */
-#define MAX_DATA_BUFFER_SIZE                (128)
-#define DATA_BUFFER_SIZE_SMALL              (64)
+#define MAX_DATA_BUFFER_SIZE                (64)
+#define DATA_BUFFER_SIZE_SMALL              (32)
 #define STRING_BUFFER_SIZE                  (64)
 extern BYTE __InternalDataBuffer[MAX_DATA_BUFFER_SIZE];
 extern char __InternalStringBuffer[STRING_BUFFER_SIZE];
-extern char __InternalStringBuffer2[STRING_BUFFER_SIZE];
+extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
 
 /*
  * EEPROM memory management routines:

@@ -5,6 +5,7 @@
 
 #include "../../Terminal/Terminal.h"
 #include "DESFireUtils.h" 
+#include "DESFirePICCControl.h"
 
 void RotateArrayRight(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize) {
      destBuf[bufSize - 1] = srcBuf[0];
@@ -40,10 +41,11 @@ SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize) {
      if(blockSize == 0) {
           return 0;
      }
-     SIZET baseBlockSize = byteSize / blockSize;
-     if((byteSize % blockSize) != 0) {
-          baseBlockSize += 1;
-     }
-     return baseBlockSize;
+     //SIZET baseBlockSize = byteSize / blockSize;
+     //if((byteSize % blockSize) != 0) {
+     //     baseBlockSize += 1;
+     //}
+     //return baseBlockSize;
+     return DESFIRE_BYTES_TO_BLOCKS(byteSize);
 }
 

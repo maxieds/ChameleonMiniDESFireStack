@@ -28,7 +28,7 @@
 #include "aes.h"
 #include "aes_dec.h"
 
-void aes192_dec(void *buffer, aes192_ctx_t *ctx){
-	aes_decrypt_core(buffer, (aes_genctx_t*)ctx, 12);
+void aes192_dec(void *buffer, aes_ctx_t *ctx){
+	aes_decrypt_core(buffer, (aes_genctx_t*) &(ctx->aes192_ctx_t), 12);
 }
 

@@ -3,6 +3,8 @@
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
+#include <avr/pgmspace.h>
+
 #include "../Common.h"
 
 #define MAX_COMMAND_LENGTH          16
