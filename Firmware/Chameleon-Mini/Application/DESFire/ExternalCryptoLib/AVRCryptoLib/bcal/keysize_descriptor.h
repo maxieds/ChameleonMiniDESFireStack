@@ -40,19 +40,19 @@
 typedef struct{ /* keysize is valid if listed in items */
 	uint8_t  n_items;  /* number of items (value 0 is reserved) */
 	uint16_t items[]; /* list of valid lengths */
-}keysize_desc_list_t;
+} keysize_desc_list_t;
 
 typedef struct{ /* keysize is valid if min<=keysize<=max */
 	uint16_t min;
 	uint16_t max;
-}keysize_desc_range_t;
+} keysize_desc_range_t;
 
 typedef struct{ /* keysize is valid if min<=keysize<=max and if keysize mod distance == offset */
 	uint16_t min;
 	uint16_t max;
 	uint16_t distance;
 	uint16_t offset;
-}keysize_desc_arg_range_t;
+} keysize_desc_arg_range_t;
 
 uint8_t is_valid_keysize_P(PGM_VOID_P ks_desc, uint16_t keysize);
 uint16_t get_keysize(PGM_VOID_P ks_desc);

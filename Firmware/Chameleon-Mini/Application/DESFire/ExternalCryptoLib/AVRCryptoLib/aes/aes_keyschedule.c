@@ -84,13 +84,13 @@ void aes_init(const void *key, uint16_t keysize_b, aes_genctx_t *ctx){
 }
 
 void aes128_init(const void *key, aes_ctx_t *ctx){
-	aes_init(key, 128, (aes_genctx_t*) &(ctx->aes128_ctx_t));
+	aes_init(key, 128, (aes_genctx_t*) &ctx);
 }
 
 void aes192_init(const void *key, aes_ctx_t *ctx){
-	aes_init(key, 192, (aes_genctx_t*) &(ctx->aes192_ctx_t));
+	aes_init(key, 192, (aes_genctx_t*) &ctx);
 }
 
 void aes256_init(const void *key, aes_ctx_t *ctx){
-	aes_init(key, 256, (aes_genctx_t*) &(ctx->aes256_ctx_t));
+	aes_init(key, 256, (aes_genctx_t*) &ctx);
 }

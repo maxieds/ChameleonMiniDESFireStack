@@ -118,14 +118,17 @@ void aes_dec_firstround(aes_cipher_state_t *state, const aes_roundkey_t *k){
 	}
 }
 
-void aes_decrypt_core(aes_cipher_state_t *state, const aes_genctx_t *ks, uint8_t rounds){
+void aes_decrypt_core(aes_cipher_state_t *state, aes_genctx_t *ks, uint8_t rounds){
 	uint8_t i;
-	aes_dec_firstround(state, &(ks->key[i=rounds]));
+	eeprom_read_block(&active_key, &(ks->key[i=rounds]), AES_ROUNDKEY_SIZE);
+    aes_dec_firstround(state, &active_key);
 	for(;rounds>1;--rounds){
 		--i;
-		aes_dec_round(state, &(ks->key[i]));
+		eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+        aes_dec_round(state, &active_key);
 	}
+	eeprom_read_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
 	for(i=0; i<16; ++i){
-		state->s[i] ^= ks->key[0].ks[i];
+        state->s[i] ^= active_key.ks[i];
 	}
 }

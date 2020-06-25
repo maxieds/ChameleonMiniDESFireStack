@@ -29,23 +29,30 @@
 
 #include <stdint.h>
 
-typedef struct{
-	uint8_t ks[16];
+#include <avr/eeprom.h>
+
+#define AES_ROUNDKEY_SIZE      (16)
+
+typedef struct {
+	uint8_t ks[AES_ROUNDKEY_SIZE];
 } aes_roundkey_t;
 
-typedef union __attribute__((packed)) {
-    struct {
-	    aes_roundkey_t key[10+1];
+typedef struct EEMEM __attribute__((packed)) {
+    aes_roundkey_t key[14+1];
+    /*struct {
+	    aes_roundkey_t EEMEM key[10+1];
     } aes128_ctx_t;
     struct {
-	    aes_roundkey_t key[12+1];
+	    aes_roundkey_t EEMEM key[12+1];
     } aes192_ctx_t;
     struct {
-	    aes_roundkey_t key[14+1];
-    } aes256_ctx_t;
+	    aes_roundkey_t EEMEM key[14+1];
+    } aes256_ctx_t;*/
 } aes_ctx_t;
 
-typedef struct{
+extern aes_roundkey_t active_key;
+
+typedef struct EEMEM {
 	aes_roundkey_t key[1]; /* just to avoid the warning */
 } aes_genctx_t;
 

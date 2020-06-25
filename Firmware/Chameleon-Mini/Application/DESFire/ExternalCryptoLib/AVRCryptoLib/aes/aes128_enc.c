@@ -29,6 +29,6 @@
 #include "aes_enc.h"
 
 void aes128_enc(void *buffer, aes_ctx_t *ctx){
-	aes_encrypt_core(buffer, (aes_genctx_t*) &(ctx->aes128_ctx_t), 10);
+	aes_encrypt_core(buffer, (aes_genctx_t*) &ctx, 10);
 }
 

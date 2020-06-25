@@ -33,6 +33,8 @@
 #include "aes_enc.h"
 #include <avr/pgmspace.h>
 
+aes_roundkey_t active_key = { 0 };
+
 void aes_shiftcol(void *data, uint8_t shift){
 	uint8_t tmp[4];
 	tmp[0] = ((uint8_t*)data)[ 0];
@@ -106,15 +108,18 @@ void aes_enc_lastround(aes_cipher_state_t *state,const aes_roundkey_t *k){
 	}
 }
 
-void aes_encrypt_core(aes_cipher_state_t *state, const aes_genctx_t *ks, uint8_t rounds){
+void aes_encrypt_core(aes_cipher_state_t *state, aes_genctx_t *ks, uint8_t rounds){
 	uint8_t i;
-	for(i=0; i<16; ++i){
-		state->s[i] ^= ks->key[0].ks[i];
+	eeprom_read_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
+    for(i=0; i<16; ++i){
+		state->s[i] ^= active_key.ks[i];
 	}
 	i=1;
 	for(;rounds>1;--rounds){
-		aes_enc_round(state, &(ks->key[i]));
+		eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+        aes_enc_round(state, &active_key);
 		++i;
 	}
-	aes_enc_lastround(state, &(ks->key[i]));
+    eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+	aes_enc_lastround(state, &active_key);
 }
