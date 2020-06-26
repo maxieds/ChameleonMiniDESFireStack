@@ -327,6 +327,19 @@ BYTE LookupFileNumberIndex(uint8_t AppSlot, BYTE FileNumber) {
      return fileIndex;
 }
 
+BYTE LookupFileNumberByIndex(uint8_t AppSlot, BYTE FileIndex) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS) {
+          return DESFIRE_MAX_FILES;
+     }
+     else if(FileIndex >= DESFIRE_MAX_FILES) {
+          return DESFIRE_MAX_FILES;
+     }
+     SIZET fileNumbersHashmapBlockId = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, AppSlot);
+     BYTE fileNumbersHashmap[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
+     return fileNumbersHashmap[FileIndex];
+}
+
 void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
           return;
@@ -425,6 +438,15 @@ void SelectAppBySlot(uint8_t AppSlot) {
                                     AppSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
     ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;
+}
+
+void GetAppData(uint8_t appSlot, SelectedAppCacheType *destData) {
+    if(destData == NULL) {
+         return;
+    }
+    SIZET appCacheSelectedBlockId = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID + 
+                                    appSlot * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
+    ReadBlockBytes(&destData, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
 }
 
 uint16_t SelectApp(const DESFireAidType Aid) {

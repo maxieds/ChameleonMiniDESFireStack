@@ -44,19 +44,19 @@ typedef void(*bc_dec1_fpt)(void*, void*);
 typedef void(*bc_dec2_fpt)(void*, void*, void*);
 typedef void(*bc_free_fpt)(void*);
 
-typedef union{
+typedef union __attribute__((packed)) {
 	void_fpt  initvoid;
 	bc_init1_fpt init1;
 	bc_init2_fpt init2;
 } bc_init_fpt;
 
-typedef union{
+typedef union __attribute__((packed)) {
 	void_fpt  encvoid;
 	bc_enc1_fpt enc1;
 	bc_enc2_fpt enc2;
 } bc_enc_fpt;
 
-typedef union{
+typedef union __attribute__((packed)) {
 	void_fpt  decvoid;
 	bc_dec1_fpt dec1;
 	bc_dec2_fpt dec2;
@@ -76,7 +76,7 @@ typedef union{
 
 #define BCDESC_TYPE_BLOCKCIPHER 0x01
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint8_t  type; /* 1==blockcipher */
 	uint8_t  flags;
 	PGM_P    name;
@@ -89,10 +89,10 @@ typedef struct {
 	PGM_VOID_P valid_keysize_desc;
 } bcdesc_t; /* blockcipher descriptor type */
 
-typedef struct{
+typedef struct __attribute__((packed)) {
 	bcdesc_t *desc_ptr;
 	uint16_t  keysize;
-	void*     ctx;
+	void     *ctx;
 } bcgen_ctx_t;
 
 #endif /* BLOCKCIPHER_DESCRIPTOR_H_ */

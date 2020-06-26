@@ -122,13 +122,16 @@ void aes_decrypt_core(aes_cipher_state_t *state, aes_genctx_t *ks, uint8_t round
 	uint8_t i;
 	eeprom_read_block(&active_key, &(ks->key[i=rounds]), AES_ROUNDKEY_SIZE);
     aes_dec_firstround(state, &active_key);
-	for(;rounds>1;--rounds){
+	eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+    for(;rounds>1;--rounds){
 		--i;
 		eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
         aes_dec_round(state, &active_key);
+        eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 	}
 	eeprom_read_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
 	for(i=0; i<16; ++i){
         state->s[i] ^= active_key.ks[i];
 	}
+    eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 }

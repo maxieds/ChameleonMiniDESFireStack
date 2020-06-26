@@ -25,7 +25,7 @@
  */
 
 #include <stdint.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <avr/pgmspace.h>
 #include "keysize_descriptor.h"
 
@@ -95,7 +95,7 @@ uint16_t get_keysizes(PGM_VOID_P ks_desc, uint16_t** list){
 		items = pgm_read_byte(ks_desc);
 		ks_desc = (uint8_t*)ks_desc + 1;
 		if(!*list){
-			*list = malloc(items*2);
+			*list = NULL; //malloc(items*2);
 			if(!*list){
 				return 0;
 			}
@@ -122,7 +122,7 @@ uint16_t get_keysizes(PGM_VOID_P ks_desc, uint16_t** list){
 			min += (distance-(min%distance-offset))%distance;
 		}
 		if(!*list){
-			*list = malloc(items*2);
+			*list = NULL; //malloc(items*2);
 			if(!*list){
 				return 0;
 			}
@@ -145,7 +145,7 @@ uint16_t get_keysizes(PGM_VOID_P ks_desc, uint16_t** list){
 			min += (distance-(min%distance-offset))%distance;
 		}
 		if(!*list){
-			*list = malloc(items*2);
+			*list = NULL; //malloc(items*2);
 			if(!*list){
 				return 0;
 			}

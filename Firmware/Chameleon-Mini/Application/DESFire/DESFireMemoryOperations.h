@@ -13,7 +13,7 @@
    on a bothersome heap-based scheme for passing pointers to functions: */
 #define MAX_DATA_BUFFER_SIZE                (32)
 #define DATA_BUFFER_SIZE_SMALL              (24)
-#define STRING_BUFFER_SIZE                  (32)
+#define STRING_BUFFER_SIZE                  (48)
 extern BYTE __InternalDataBuffer[MAX_DATA_BUFFER_SIZE];
 extern char __InternalStringBuffer[STRING_BUFFER_SIZE];
 extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];

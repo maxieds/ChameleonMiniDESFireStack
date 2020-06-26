@@ -46,7 +46,6 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         TransferChecksumFinalFuncType FinalFunc;
         BYTE AvailablePlaintext;
         struct DESFIRE_FIRMWARE_ALIGNAT {
-            //BYTE BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];
             union DESFIRE_FIRMWARE_ALIGNAT {
                 CryptoAESCBCFuncType   AESFunc;
                 CryptoTDEACBCFuncType  TDEAFunc;
@@ -68,7 +67,6 @@ typedef union DESFIRE_FIRMWARE_PACKING {
             BOOL FirstPaddingBitSet;
             TransferEncryptFuncType Func;
             BYTE AvailablePlaintext;
-            //BYTE BlockBuffer[CRYPTO_MAX_KEY_SIZE];
         } Encryption; 
     } ReadData;
     struct DESFIRE_FIRMWARE_ALIGNAT {
@@ -80,7 +78,6 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferEncryptFuncType Func;
             BYTE AvailablePlaintext;
-            //BYTE BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];          
         } Encryption;
     } WriteData;
 } TransferStateType;

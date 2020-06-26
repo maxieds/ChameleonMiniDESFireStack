@@ -28,7 +28,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "aes.h"
-//#include "../gfmul/gf256mul.h"
 #include "aes_sbox.h"
 #include "aes_enc.h"
 #include <avr/pgmspace.h>
@@ -114,12 +113,15 @@ void aes_encrypt_core(aes_cipher_state_t *state, aes_genctx_t *ks, uint8_t round
     for(i=0; i<16; ++i){
 		state->s[i] ^= active_key.ks[i];
 	}
+    eeprom_write_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
 	i=1;
 	for(;rounds>1;--rounds){
 		eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
         aes_enc_round(state, &active_key);
-		++i;
+		eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+        ++i;
 	}
     eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 	aes_enc_lastround(state, &active_key);
+    eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 }

@@ -57,10 +57,12 @@ void aes_init(const void *key, uint16_t keysize_b, aes_genctx_t *ctx){
 	} tmp;
 	nk=keysize_b>>5; /* 4, 6, 8 */
 	hi=4*(nk+6+1);
-	memcpy(ctx, key, keysize_b/8);
+	memcpy_P(ctx, key, keysize_b/8);
 	next_nk = nk;
+    aes_roundkey_t tempKey;
 	for(i=nk;i<hi;++i){
-		tmp.v32 = ((uint32_t*)(ctx->key[0].ks))[i-1];
+        eeprom_read_block(&tempKey, &(ctx->key[0]), AES_ROUNDKEY_SIZE);
+        tmp.v32 = ((uint32_t*)(tempKey.ks))[i-1];
 		if(i!=next_nk){
 			if(nk==8 && i%8==4){
 				tmp.v8[0] = pgm_read_byte(aes_sbox+tmp.v8[0]);
@@ -78,8 +80,10 @@ void aes_init(const void *key, uint16_t keysize_b, aes_genctx_t *ctx){
 			tmp.v8[0] ^= pgm_read_byte(rc_tab+rc);
 			rc++;
 		}
-		((uint32_t*)(ctx->key[0].ks))[i] = ((uint32_t*)(ctx->key[0].ks))[i-nk]
-		                                   ^ tmp.v32;
+        eeprom_write_block(&tempKey, &(ctx->key[0]), AES_ROUNDKEY_SIZE);
+        eeprom_read_block(&tempKey, &(ctx->key[0]), AES_ROUNDKEY_SIZE);
+		((uint32_t*)(tempKey.ks))[i] = ((uint32_t*)(tempKey.ks))[i-nk] ^ tmp.v32;
+        eeprom_write_block(&tempKey, &(ctx->key[0]), AES_ROUNDKEY_SIZE);
 	}
 }
 

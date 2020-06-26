@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <avr/pgmspace.h>
@@ -37,13 +37,13 @@ uint8_t bcal_cipher_init(const bcdesc_t *cipher_descriptor,
 	flags = pgm_read_byte(cipher_descriptor->flags);
 	init_fpt.initvoid = (void_fpt)(pgm_read_word(&(cipher_descriptor->init.initvoid)));
 	if(init_fpt.initvoid == NULL){
-		if(!(ctx->ctx = malloc((keysize_b+7)/8)))
-			return 2;
-		memcpy(ctx->ctx, key, (keysize_b+7)/8);
+		//if(!(ctx->ctx = malloc((keysize_b+7)/8)))
+		//	return 2;
+		memcpy_P(ctx->ctx, key, (keysize_b+7)/8);
 		return 0;
 	}
-	if(!(ctx->ctx = malloc(pgm_read_word(&(cipher_descriptor->ctxsize_B)))))
-		return 3;
+	//if(!(ctx->ctx = malloc(pgm_read_word(&(cipher_descriptor->ctxsize_B)))))
+	//	return 3;
 	if((flags&BC_INIT_TYPE)==BC_INIT_TYPE_1){
 		init_fpt.init1((void*)key, (ctx->ctx));
 	}else{
@@ -59,7 +59,7 @@ void bcal_cipher_free(bcgen_ctx_t *ctx){
 	free_fpt = (bc_free_fpt)(pgm_read_word(&(ctx->desc_ptr->free)));
 	if(free_fpt)
 		free_fpt((ctx->ctx));
-	free(ctx->ctx);
+	//free(ctx->ctx);
 }
 
 void bcal_cipher_enc(void *block, const bcgen_ctx_t *ctx){

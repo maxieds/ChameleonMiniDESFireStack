@@ -81,6 +81,8 @@ void InvalidateAuthState(BYTE keepPICCAuthData);
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
+const char * GetCryptoMethodDesc(uint8_t cryptoType);
+const char * GetCommSettingsDesc(uint8_t cryptoType);
 
 #define MAC_LENGTH          4
 #define CMAC_LENGTH         8

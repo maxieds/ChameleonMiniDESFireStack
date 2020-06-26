@@ -10,6 +10,7 @@
 #include "DESFireInstructions.h"
 #include "DESFireApplicationDirectory.h"
 #include "../MifareDESFire.h"
+#include "../../Common.h"
 
 uint16_t GetFileSize(DESFireFileTypeSettings *File) {
      if(File == NULL) {
@@ -456,3 +457,29 @@ uint8_t ValidateAuthentication(uint16_t AccessRights, uint16_t CheckMask) {
     return VALIDATED_ACCESS_DENIED;
 }
 
+const char * GetFileAccessPermissionsDesc(uint16_t fileAccessRights) {
+     __InternalStringBuffer[0] = '\0';
+     BYTE removeTrailingText = 0x00;
+     if(GetReadPermissions(fileAccessRights) != DESFIRE_ACCESS_DENY) {
+          strcat_P(__InternalStringBuffer, PSTR("R/"));
+          removeTrailingText = 0x01;
+     }
+     if(GetWritePermissions(fileAccessRights) != DESFIRE_ACCESS_DENY) {
+          strcat_P(__InternalStringBuffer, PSTR("W/"));
+          removeTrailingText = 0x01;
+
+     }
+     if(GetReadWritePermissions(fileAccessRights) != DESFIRE_ACCESS_DENY) {
+          strcat_P(__InternalStringBuffer, PSTR("RW/"));
+          removeTrailingText = 0x01;
+     }
+     if(GetChangePermissions(fileAccessRights) != DESFIRE_ACCESS_DENY) {
+          strcat_P(__InternalStringBuffer, PSTR("CHG"));
+          removeTrailingText = 0x00;
+     }
+     if(removeTrailingText) {
+          BYTE bufSize = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);
+          __InternalStringBuffer[bufSize - 1] = '\0';
+     }
+     return __InternalStringBuffer;
+}

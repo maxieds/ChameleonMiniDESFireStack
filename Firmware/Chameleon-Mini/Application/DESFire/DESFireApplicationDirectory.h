@@ -68,9 +68,6 @@
 
 typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
 
-//extern const BYTE DEFAULT_SELECT_DESFIRE_AID[]; 
-//extern const BYTE DEFAULT_SELECT_ISO7816_AID[]; 
-
 /* 
  * Defines the application directory contents.
  * The application directory maps AIDs to application slots:
@@ -155,6 +152,7 @@ void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZET KeySi
 BYTE ReadFileCount(uint8_t AppSlot);
 void WriteFileCount(uint8_t AppSlot, BYTE FileCount);
 BYTE LookupFileNumberIndex(uint8_t AppSlot, BYTE FileNumber);
+BYTE LookupFileNumberByIndex(uint8_t AppSlot, BYTE FileIndex);
 void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber);
 BYTE ReadFileCommSettings(uint8_t AppSlot, uint8_t FileIndex);
 void WriteFileCommSettings(uint8_t AppSlot, uint8_t FileIndex, BYTE CommSettings);
@@ -166,6 +164,7 @@ void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettin
 /* Application selection */
 uint8_t LookupAppSlot(const DESFireAidType Aid);
 void SelectAppBySlot(uint8_t AppSlot);
+void GetAppData(uint8_t appSlot, SelectedAppCacheType *destData);
 uint16_t SelectApp(const DESFireAidType Aid);
 void SelectPiccApp(void);
 bool IsPiccAppSelected(void);

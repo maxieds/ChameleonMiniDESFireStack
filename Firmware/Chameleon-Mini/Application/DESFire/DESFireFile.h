@@ -137,6 +137,8 @@ uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 #define GetChangePermissions(AccessRights) \
      (BYTE) (((0xf000 & AccessRights) >> 12) & 0x000f)
 
+const char * GetFileAccessPermissionsDesc(uint16_t fileAccessRights);
+
 /*
  * There are also command/instruction-wise
  * citations given from file's access permissions. This data is taken

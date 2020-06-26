@@ -57,6 +57,23 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
      }
 }
 
+const char * GetCryptoMethodDesc(uint8_t cryptoType) {
+     switch(cryptoType) {
+          case CRYPTO_TYPE_2K3DES:
+               return PSTR("2K3DES");
+          case CRYPTO_TYPE_3K3DES:
+               return PSTR("3K3DES");
+          case CRYPTO_TYPE_AES128:
+               return PSTR("AES128");
+          case CRYPTO_TYPE_AES192:
+               return PSTR("AES192");
+          case CRYPTO_TYPE_AES256:
+               return PSTR("AES256");
+          default:
+               return PSTR("");
+     }
+}
+
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType) {
      switch(cryptoType) {
           case CRYPTO_TYPE_2K3DES:
@@ -73,6 +90,24 @@ BYTE GetCryptoMethodCommSettings(uint8_t cryptoType) {
                return DESFIRE_COMMS_PLAINTEXT;
      }
 }
+
+const char * GetCommSettingsDesc(uint8_t cryptoType) {
+     switch(cryptoType) {
+          case CRYPTO_TYPE_2K3DES:
+               return PSTR("PTEXT-MAC");
+          case CRYPTO_TYPE_3K3DES:
+               return PSTR("CTEXT-DES");
+          case CRYPTO_TYPE_AES128:
+               return PSTR("CTEXT-AES128-CMAC");
+          case CRYPTO_TYPE_AES192:
+               return PSTR("CTEXT-AES192-CMAC");
+          case CRYPTO_TYPE_AES256:
+               return PSTR("CTEXT-AES256-CMAC");
+          default:
+               return PSTR("PTEXT-DEFAULT");
+     }
+}
+
 
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
      switch(authCmdMethod) {
