@@ -7,7 +7,7 @@
 #
 
 LUFA_BUILD_MODULES         += BUILD
-LUFA_BUILD_TARGETS         += size sysizes all lib elf bin hex lss lufa-clean mostlyclean
+LUFA_BUILD_TARGETS         += size sysizes all lib elf bin hex lss clean mostlyclean
 LUFA_BUILD_MANDATORY_VARS  += TARGET ARCH MCU SRC F_USB LUFA_PATH
 LUFA_BUILD_OPTIONAL_VARS   += BOARD OPTIMIZATION C_STANDARD CPP_STANDARD F_CPU C_FLAGS CPP_FLAGS ASM_FLAGS CC_FLAGS LD_FLAGS OBJDIR OBJECT_FILES DEBUG_TYPE DEBUG_LEVEL LINKER_RELAXATIONS COMPILER_PATH
 LUFA_BUILD_PROVIDED_VARS   +=
@@ -268,7 +268,7 @@ mostlyclean:
 	rm -f $(DEPENDENCY_FILES)
 
 # Cleans all build files, leaving only the original source code
-lufa-clean: mostlyclean
+clean: mostlyclean
 	@echo $(MSG_REMOVE_CMD) Removing output files of \"$(TARGET)\"
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).eep $(TARGET).map $(TARGET).lss $(TARGET).sym lib$(TARGET).a
 
@@ -357,4 +357,4 @@ $(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
 -include $(DEPENDENCY_FILES)
 
 # Phony build targets for this module
-.PHONY: build_begin build_end size symbol-sizes lib elf hex lss lufa-clean mostlyclean
+.PHONY: build_begin build_end size symbol-sizes lib elf hex lss clean mostlyclean

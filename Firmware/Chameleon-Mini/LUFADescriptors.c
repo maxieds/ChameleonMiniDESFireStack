@@ -204,11 +204,11 @@ const USB_Descriptor_String_t PROGMEM LanguageString =
 const USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
     #ifdef ENABLE_LUFAUSB_CUSTOM_VERSIONS
-    .Header                 = {.Size = USB_STRING_LEN(20), .Type = DTYPE_String},
-    .UnicodeString          = L"Kasper & Oswald GmbH"
-    #else 
     .Header                 = {.Size = USB_STRING_LEN(27), .Type = DTYPE_String},
     .UnicodeString          = L"Kasper & Oswald GmbH (RevG)"
+    #else 
+    .Header                 = {.Size = USB_STRING_LEN(20), .Type = DTYPE_String},
+    .UnicodeString          = L"Kasper & Oswald GmbH"
     #endif
 };
 
@@ -219,8 +219,8 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
     #ifdef ENABLE_LUFAUSB_CUSTOM_VERSIONS
-    .Header                 = {.Size = USB_STRING_LEN(22), .Type = DTYPE_String},
-    .UnicodeString          = L"Chameleon-Mini-DESFire"
+    .Header                 = {.Size = USB_STRING_LEN(25), .Type = DTYPE_String},
+    .UnicodeString          = L"Chameleon-Mini-DESFireMod"
     #else
     .Header                 = {.Size = USB_STRING_LEN(14), .Type = DTYPE_String},
     .UnicodeString          = L"Chameleon-Mini"
@@ -268,10 +268,10 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                     Address = &ProductString;
                     Size    = pgm_read_byte(&ProductString.Header.Size);
                     break;
-		case 0xdc: // device unique serial number:
-		    Address = INTERNAL_SERIAL_START_ADDRESS;
-		    Size    = INTERNAL_SERIAL_LENGTH_BITS;
-		    break;
+		        //case 0xdc: // device unique serial number:
+		        //    Address = INTERNAL_SERIAL_START_ADDRESS;
+		        //    Size    = INTERNAL_SERIAL_LENGTH_BITS;
+		        //    break;
             }
             break;
     }

@@ -115,7 +115,7 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DENABLE_RANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA_SIZE) -DRANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA)
 
 #Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+FLASH_DATA_ADDR = 0x00000 #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
@@ -186,10 +186,18 @@ LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 			-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
-			#-D__AVR_ATxmega128A4U__
-LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
-				-Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-				-ffunction-sections -fdata-sections \
+			-Wa,--gstabs \
+			-D__AVR_ATxmega128A4U__
+LD_FLAGS     = $(CC_FLAGS) \
+			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
+			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
+			   -Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
+			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0 \
+			   #-Wl,-u,malloc #-nolibc
+			   #-Wl,-u,vfprintf -lprintf_flt -lm -Wl,--start-group -Wl,--as-needed \
+			   #-Wl,--export-dynamic -O0 -Wl,--as-needed -nodefaultlibs -nostdlib \
+			   #-lc -lm
+				#-ffunction-sections -fdata-sections \
 				#-Wl,--defsym,__stack=0x7fff
 				#-Wl,--section-start,.data=0x808000,--defsym=__heap_end=0x80ffff
 OBJDIR       = Bin
@@ -225,6 +233,11 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 %.hex: %.elf
 	@echo $(MSG_OBJCPY_CMD) LOCAL Extracting HEX file data from \"$<\"
 	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
+
+%.eep: %.elf
+	$(CROSS)-objcopy -j .eeprom  --set-section-flags=.eeprom=alloc,load \
+		--change-section-lma .eeprom=0  --no-change-warnings -O ihex \
+		$(TARGET).elf $(TARGET).eep
 
 %.bin: %.elf
 	@echo $(MSG_OBJCPY_CMD) LOCAL Extracting BIN file data from \"$<\"

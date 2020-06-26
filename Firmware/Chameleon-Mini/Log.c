@@ -14,9 +14,9 @@ static bool EnableLogSRAMtoFRAM = false;
 LogFuncType CurrentLogFunc;
 
 static const MapEntryType PROGMEM LogModeMap[] = {
-    { .Id = LOG_MODE_OFF, 	.Text = "OFF" 		},
-    { .Id = LOG_MODE_MEMORY, 	.Text = "MEMORY" 	},
-    { .Id = LOG_MODE_LIVE, 	.Text = "LIVE" 	}
+    { .Id = LOG_MODE_OFF, 	 .Text = "OFF" 		},
+    { .Id = LOG_MODE_MEMORY, .Text = "MEMORY" 	},
+    { .Id = LOG_MODE_LIVE, 	 .Text = "LIVE" 	}
 };
 
 static void LogFuncOff(LogEntryEnum Entry, const void* Data, uint8_t Length)

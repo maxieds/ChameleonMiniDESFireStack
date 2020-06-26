@@ -18,7 +18,7 @@ CryptoKeyBufferType SessionKey = { 0 };
 CryptoIVBufferType SessionIV = { 0 };
 BYTE SessionIVByteSize = { 0 };
 
-DesfireAESCryptoContext AESCryptoContext;
+DesfireAESCryptoContext AESCryptoContext = { 0 };
 uint16_t AESCryptoKeySizeBytes = 0;
 DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
@@ -91,7 +91,7 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
 }
 
 void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx) {
-     //memset(cryptoCtx, 0x00, sizeof(DesfireAESCryptoContext));
+     memset_P(cryptoCtx, 0x00, sizeof(DesfireAESCryptoContext));
 }
 
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {
