@@ -187,14 +187,14 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 
     case BUTTON_ACTION_CLONE:
     {
-        CommandExecute("CLONE");
+        CommandExecute(PSTR("CLONE"));
         break;
     }
 
     #ifdef CONFIG_MF_DESFIRE_SUPPORT
     case BUTTON_ACTION_PRINT_STATE:
     {
-        CommandExecute("DF_PPRINT_PICC FullImage");
+        CommandExecute(PSTR("DF_PPRINT_PICC FullImage"));
         break;
     }
     #endif
