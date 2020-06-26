@@ -243,7 +243,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
 		.ReadOnly = false
 	},
-	[CONFIG_MF_DESFIRE_EV1_4K] = {
+	[CONFIG_MF_DESFIRE_EV1_8K] = {
 		.CodecInitFunc = ISO14443ACodecInit,
 		.CodecDeInitFunc = ISO14443ACodecDeInit,
 		.CodecTaskFunc = ISO14443ACodecTask,
@@ -255,7 +255,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationGetUidFunc = MifareDesfireGetUid,
 		.ApplicationSetUidFunc = MifareDesfireSetUid,
 		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
-		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.MemorySize = 2 * MIFARE_CLASSIC_4K_MEM_SIZE,
 		.ReadOnly = false
 	},
 #endif

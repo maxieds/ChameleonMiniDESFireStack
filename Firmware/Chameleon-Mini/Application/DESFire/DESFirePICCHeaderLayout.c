@@ -164,6 +164,15 @@ SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbo
 }
 
 SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose) {
-    return 0;
+    BYTE charsWritten = 0x00;
+    charsWritten += snprintf_P(outputBuffer, maxLength, 
+                               PSTR("**** DESFIRE HEADER DATA ****\n"));
+    ++PPrintIndentLevel;
+    charsWritten += PrettyPrintPICCHeaderData(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
+    PPrintIndentLevel--;
+    charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
+                               PSTR("**** DESFIRE INTERNAL STORAGE ****\n"));
+    ++PPrintIndentLevel;
+    charsWritten += PrettyPrintPICCAppDirsFull(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
+    return charsWritten;
 }
-

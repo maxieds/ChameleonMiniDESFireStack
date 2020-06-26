@@ -28,7 +28,10 @@ static const MapEntryType PROGMEM ButtonActionMap[] = {
     { .Id = BUTTON_ACTION_RECALL_MEM,			.Text = "RECALL_MEM" },
     { .Id = BUTTON_ACTION_TOGGLE_FIELD,			.Text = "TOGGLE_FIELD" },
     { .Id = BUTTON_ACTION_STORE_LOG,			.Text = "STORE_LOG" },
-    { .Id = BUTTON_ACTION_CLONE,			.Text = "CLONE" },
+    { .Id = BUTTON_ACTION_CLONE,			    .Text = "CLONE" },
+    #ifdef CONFIG_MF_DESFIRE_SUPPORT
+    { .Id = BUTTON_ACTION_PRINT_STATE,          .Text = "PRINT_STATE" },
+    #endif
 };
 
 static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
@@ -187,6 +190,14 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
         CommandExecute("CLONE");
         break;
     }
+
+    #ifdef CONFIG_MF_DESFIRE_SUPPORT
+    case BUTTON_ACTION_PRINT_STATE:
+    {
+        CommandExecute("DF_PPRINT_PICC FullImage");
+        break;
+    }
+    #endif
 
     default:
         break;
