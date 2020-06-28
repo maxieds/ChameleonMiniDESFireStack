@@ -388,15 +388,17 @@ void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 void MemoryClear(void)
 {
     FlashErase((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
-
     MemoryRecall();
+    
+    uint8_t fillBuffer[16];
+    memset(fillBuffer, 0xff, 16);
+    MemoryWriteBlock(fillBuffer, 0, 16);
 }
 
 void MemoryRecall(void)
 {
     /* Recall memory from permanent flash */
     FlashToFRAM((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
-
     SystemTickClearFlag();
 }
 

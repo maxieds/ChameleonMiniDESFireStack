@@ -68,7 +68,7 @@ TransferStatus PiccToPcdTransfer(uint8_t* Buffer) { // TODO: Check
     /* Only read if required */
     if (TransferState.ReadData.BytesLeft) {
         /* Figure out how much to read */
-        erBytes = (uint8_t)TransferState.ReadData.BytesLeft;
+        XferBytes = (uint8_t)TransferState.ReadData.BytesLeft;
         if (TransferState.ReadData.BytesLeft > DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE) {
             XferBytes = DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE;
         }
@@ -174,8 +174,8 @@ void InitialisePiccBackendEV0(uint8_t StorageSize) {
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    if (Picc.Uid[0] == PICC_EMPTY_BYTE && Picc.Uid[1] == PICC_EMPTY_BYTE && 
-        Picc.Uid[2] == PICC_EMPTY_BYTE && Picc.Uid[3] == PICC_EMPTY_BYTE) {
+    if(Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
+        Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
         const char *logMsg = "\r\nFactory resetting the device\r\n";
         LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
         FactoryFormatPiccEV0();
@@ -190,8 +190,8 @@ void InitialisePiccBackendEV1(uint8_t StorageSize) {
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    if (Picc.Uid[0] == PICC_EMPTY_BYTE && Picc.Uid[1] == PICC_EMPTY_BYTE && 
-        Picc.Uid[2] == PICC_EMPTY_BYTE && Picc.Uid[3] == PICC_EMPTY_BYTE) {
+    if(Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
+        Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
         const char *logMsg = "\r\nFactory resetting the device\r\n";
         LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
         FactoryFormatPiccEV1(StorageSize);
@@ -243,11 +243,10 @@ void FormatPicc(void) {
     memset(&AppDir, PICC_EMPTY_BYTE, sizeof(DESFireAppDirType));
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 1;
+    /* Flush the new local struct data out to the FRAM: */
+    SynchronizeAppDir();
     /* Initialize the root app data */
     CreatePiccApp();
-    /* Flush the new local struct data out to the FRAM: */
-    SynchronizePICCInfo();
-    SynchronizeAppDir();
 }
 
 void CreatePiccApp(void) { 
@@ -266,7 +265,7 @@ void FactoryFormatPiccEV0(void) {
     /* Set a random new UID */
     BYTE uidData[DESFIRE_UID_SIZE];
     RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
-    memset(&Picc.Uid, uidData, DESFIRE_UID_SIZE);
+    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
     /* Initialize params to look like EV0 */
     Picc.StorageSize = DESFIRE_STORAGE_SIZE_4K;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV0;
@@ -286,7 +285,7 @@ void FactoryFormatPiccEV1(uint8_t StorageSize) {
     /* Set a random new UID */
     BYTE uidData[DESFIRE_UID_SIZE];
     RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
-    memset(&Picc.Uid, uidData, DESFIRE_UID_SIZE);
+    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
     /* Initialize params to look like EV1 */
     Picc.StorageSize = StorageSize;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV1;

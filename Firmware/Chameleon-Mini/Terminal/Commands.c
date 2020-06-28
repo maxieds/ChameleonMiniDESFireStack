@@ -36,7 +36,6 @@ CommandStatusIdType CommandGetVersion(char* OutParam)
 CommandStatusIdType CommandGetConfig(char* OutParam)
 {
   ConfigurationGetByName(OutParam, TERMINAL_BUFFER_SIZE);
-
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 

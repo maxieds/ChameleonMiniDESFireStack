@@ -1,10 +1,13 @@
-#include "Random.h"
-
 #include <stdlib.h>
+
+#include "Random.h"
+#include "System.h"
 
 void RandomInit(void)
 {
-
+    uint32_t randomSeed = (uint32_t) ((uint32_t) (SystemGetSysTick() + 768) | 
+                                      ((uint32_t) (SystemGetSysTick() % 512) << 20));
+    srand(randomSeed);
 }
 
 uint8_t RandomGetByte(void)
@@ -14,8 +17,8 @@ uint8_t RandomGetByte(void)
 
 void RandomGetBuffer(void* Buffer, uint8_t ByteCount)
 {
+    //RandomInit();
     uint8_t* BufferPtr = (uint8_t*) Buffer;
-
     while(ByteCount--) {
         *BufferPtr++ = RandomGetByte();
     }

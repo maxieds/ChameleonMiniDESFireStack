@@ -325,7 +325,8 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 {
-    MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
+    MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), 
+                GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
 }
 
 MapIdType ConfigurationCheckByName(const char *Configuration) {

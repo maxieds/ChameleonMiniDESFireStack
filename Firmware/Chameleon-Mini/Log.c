@@ -59,6 +59,8 @@ static void LogFuncLive(LogEntryEnum Entry, const void* Data, uint8_t Length)
     TerminalSendByte((uint8_t) (SysTick >> 8));
     TerminalSendByte((uint8_t) (SysTick >> 0));
     TerminalSendBlock(Data, Length);
+    TerminalFlushBuffer();
+
 }
 
 void LogInit(void)
