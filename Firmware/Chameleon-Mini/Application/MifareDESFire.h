@@ -33,7 +33,9 @@ void MifareDesfireSetUid(ConfigurationUidType Uid);
  */
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+    DESFIRE_HALT,
     DESFIRE_IDLE,
+    DESFIRE_CMD_READY,
     DESFIRE_GET_VERSION2,
     DESFIRE_GET_VERSION3,
     DESFIRE_GET_APPLICATION_IDS2,
@@ -46,13 +48,13 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_READ_DATA_FILE,
     DESFIRE_WRITE_DATA_FILE,
 } DesfireStateType;
+
 extern DesfireStateType DesfireState;
+extern bool DesfireFromHalt;
 extern BYTE DesfireCmdCLA;
 
 void ResetLocalStructureData(void);
-uint16_t MifareDesfireProcessIdle(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t ByteCount);
 void MifareDesfireReset(void);
 
 #endif /* MIFAREDESFIRE_H_ */

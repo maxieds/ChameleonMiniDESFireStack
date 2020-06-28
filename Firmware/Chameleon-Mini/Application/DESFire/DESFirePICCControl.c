@@ -3,7 +3,9 @@
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#include "../../Settings.h"
 #include "../../Log.h"
+#include "../../Random.h"
 
 #include "DESFirePICCControl.h"
 #include "DESFirePICCHeaderLayout.h"
@@ -18,40 +20,30 @@ const BYTE DefaultDESFireATS[] = {
      0x06, 0x75, 0x77, 0x81, 0x02, 0x80 
 };
 
-BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = 0;
-BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE = 0;
-BYTE APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE = 0;
-BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE = 0;
+BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(sizeof(SelectedAppCacheType));
+BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
+BYTE APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_FILES);
+BYTE APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_FILES);
+BYTE APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_FILES);
+BYTE APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
+BYTE APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
+BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(2 * DESFIRE_MAX_KEYS);
+BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(2 * DESFIRE_MAX_KEYS);
+BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(CRYPTO_MAX_KEY_SIZE);
 
-SIZET DESFIRE_PICC_INFO_BLOCK_ID = 0;
+SIZET DESFIRE_PICC_INFO_BLOCK_ID = 1;
 SIZET DESFIRE_APP_DIR_BLOCK_ID = 0;
 SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = 0;
 SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = 0;
 SIZET DESFIRE_FIRST_FREE_BLOCK_ID = 0;
 SIZET CardCapacityBlocks = 0;
 
-static void InitBlockSizes(void) __attribute__((constructor));
 void InitBlockSizes(void) {
-     SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = RoundBlockSize(sizeof(SelectedAppCacheType), DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE = RoundBlockSize(DESFIRE_MAX_KEYS, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE = RoundBlockSize(DESFIRE_MAX_FILES, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE = RoundBlockSize(DESFIRE_MAX_FILES, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE = RoundBlockSize(2 * DESFIRE_MAX_FILES, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE = RoundBlockSize(DESFIRE_MAX_KEYS, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE = RoundBlockSize(DESFIRE_MAX_KEYS, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE = RoundBlockSize(2 * DESFIRE_MAX_KEYS, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE = RoundBlockSize(2 * DESFIRE_MAX_FILES, DESFIRE_EEPROM_BLOCK_SIZE);
-     APP_CACHE_MAX_KEY_BLOCK_SIZE = RoundBlockSize(CRYPTO_MAX_KEY_SIZE, DESFIRE_EEPROM_BLOCK_SIZE);
+     DESFIRE_PICC_INFO_BLOCK_ID = 0; //GlobalSettings.ActiveSettingIdx * DESFIRE_BYTES_TO_BLOCKS(MEMORY_SIZE_PER_SETTING);
      DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID + 
-                                RoundBlockSize(sizeof(DESFirePICCInfoType), DESFIRE_EEPROM_BLOCK_SIZE);
+                                DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFirePICCInfoType));
      DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + 
-                                             RoundBlockSize(sizeof(DESFireAppDirType), DESFIRE_EEPROM_BLOCK_SIZE);
+                                             DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
      DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID + 
                                    DESFIRE_MAX_SLOTS * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
      DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = DESFIRE_FIRST_FREE_BLOCK_ID;
@@ -179,12 +171,19 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
 
 void InitialisePiccBackendEV0(uint8_t StorageSize) {
     /* Init backend junk */
+    InitBlockSizes();
     CardCapacityBlocks = StorageSize;
+    //char logMsg[64];
+    //snprintf_P(logMsg, 64, PSTR("Free Block: %d"), DESFIRE_FIRST_FREE_BLOCK_ID);
+    //logMsg[63] = '\0';
+    //LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) logMsg, strlen(logMsg) + 1);
+    //ConfigurationSetByName("MF_CLASSIC_1K");
+    //return;
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    if (Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
-        Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
+    if (Picc.Uid[0] == PICC_EMPTY_BYTE && Picc.Uid[1] == PICC_EMPTY_BYTE && 
+        Picc.Uid[2] == PICC_EMPTY_BYTE && Picc.Uid[3] == PICC_EMPTY_BYTE) {
         const char *logMsg = "\r\nFactory resetting the device\r\n";
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg) + 1);
         FactoryFormatPiccEV0();
     }
     else {
@@ -194,12 +193,13 @@ void InitialisePiccBackendEV0(uint8_t StorageSize) {
 
 void InitialisePiccBackendEV1(uint8_t StorageSize) {
     /* Init backend junk */
+    InitBlockSizes();
     CardCapacityBlocks = StorageSize;
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    if (Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
-        Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
+    if (Picc.Uid[0] == PICC_EMPTY_BYTE && Picc.Uid[1] == PICC_EMPTY_BYTE && 
+        Picc.Uid[2] == PICC_EMPTY_BYTE && Picc.Uid[3] == PICC_EMPTY_BYTE) {
         const char *logMsg = "\r\nFactory resetting the device\r\n";
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg) + 1);
         FactoryFormatPiccEV1(StorageSize);
     }
     else {
@@ -208,6 +208,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize) {
 }
 
 void ResetPiccBackend(void) {
+    InitBlockSizes();
     SelectPiccApp(); 
 }
 
@@ -246,13 +247,11 @@ uint8_t GetPiccKeySettings(void) {
 void FormatPicc(void) {
     /* Wipe application directory */
     memset(&AppDir, PICC_EMPTY_BYTE, sizeof(DESFireAppDirType));
-    BYTE fileCacheArrayBlocks = DESFIRE_MAX_SLOTS * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE; 
-    SetBlockBytes(DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID, 0x00, 
-                  fileCacheArrayBlocks * DESFIRE_EEPROM_BLOCK_SIZE);
+    MemoryClear();
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 1;
-    /* Reset the free block pointer */
-    Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
+    /* Initialize the root app data */
+    CreatePiccApp();
     /* Flush the new local struct data out to the EEPROM: */
     SynchronizePICCInfo();
     SynchronizeAppDir();
@@ -261,40 +260,46 @@ void FormatPicc(void) {
 void CreatePiccApp(void) { 
     CryptoKeyBufferType Key; // TODO: Should default to some AES-based protocol
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
-    CreateApp(MasterAppAID, DESFIRE_MAX_KEYS - 1, 0x0f);
+    CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
     SelectPiccApp();
-    memset(Key, 0, sizeof(CryptoKeyBufferType));
+    memset(&Key, 0, sizeof(CryptoKeyBufferType));
     WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
+    SynchronizeAppDir();
 }
 
 void FactoryFormatPiccEV0(void) {
     /* Wipe PICC data */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    memset(&Picc.Uid[0], PICC_EMPTY_BYTE, DESFIRE_UID_SIZE);
+    /* Set a random new UID */
+    BYTE uidData[DESFIRE_UID_SIZE];
+    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
+    memset(&Picc.Uid, uidData, DESFIRE_UID_SIZE);
     /* Initialize params to look like EV0 */
     Picc.StorageSize = DESFIRE_STORAGE_SIZE_4K;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV0;
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV0;
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV0;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV0;
-    /* Initialize the root app data */
-    CreatePiccApp();
+    /* Reset the free block pointer */
+    Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
     /* Continue with user data initialization */
+    SynchronizePICCInfo();
     FormatPicc();
 }
 
 void FactoryFormatPiccEV1(uint8_t StorageSize) {
     /* Wipe PICC data */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    memset(&Picc.Uid[0], PICC_EMPTY_BYTE, DESFIRE_UID_SIZE);
+    /* Set a random new UID */
+    BYTE uidData[DESFIRE_UID_SIZE];
+    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
+    memset(&Picc.Uid, uidData, DESFIRE_UID_SIZE);
     /* Initialize params to look like EV1 */
     Picc.StorageSize = StorageSize;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV1;
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV1;
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV1;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV1;
-    /* Initialize the root app data */
-    CreatePiccApp();
     /* Continue with user data initialization */
     FormatPicc();
 }

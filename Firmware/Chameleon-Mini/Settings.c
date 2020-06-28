@@ -11,7 +11,7 @@
 #define SETTING_TO_INDEX(S) (S - SETTINGS_FIRST)
 #define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)
 
-SettingsType GlobalSettings;
+SettingsType GlobalSettings = { 0 };
 SettingsType EEMEM StoredSettings = {
     .ActiveSettingIdx = SETTING_TO_INDEX(DEFAULT_SETTING),
     .ActiveSettingPtr = &GlobalSettings.Settings[SETTING_TO_INDEX(DEFAULT_SETTING)],
@@ -72,15 +72,16 @@ bool SettingsSetActiveById(uint8_t Setting) {
             GlobalSettings.ActiveSettingPtr =
                     &GlobalSettings.Settings[SettingIdx];
 
-            /* Settings have changed. Progress changes through system */
-            ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
-            LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
-
             /* Recall new memory contents */
             MemoryRecall();
 
+            /* Settings have changed. Progress changes through system */
+            ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
+            LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+ 
             SETTING_UPDATE(GlobalSettings.ActiveSettingIdx);
             SETTING_UPDATE(GlobalSettings.ActiveSettingPtr);
+
         }
 
         /* Notify LED. blink according to current setting */

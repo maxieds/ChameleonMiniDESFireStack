@@ -27,10 +27,10 @@ SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
-#SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
+SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
-#SETTINGS       += -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE_EV1_2K
-SETTINGS       += -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_SNIFF
+#SETTINGS       += -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE
+#SETTINGS       += -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_SNIFF
 
 #Default button actions
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RANDOM
@@ -55,8 +55,8 @@ SETTINGS	+= -DLED_SETTING_GLOBAL
 
 #Default logging mode
 #SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
-SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_MEMORY
-#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_TERMINAL
+#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_MEMORY
+SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_LIVE
 
 #Define if log settings should be global
 SETTINGS	+= -DLOG_SETTING_GLOBAL
@@ -116,8 +116,8 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DENABLE_RANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA_SIZE) -DRANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA)
 
 #Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x00000 #Start of data section in flash
-FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
+FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
+FLASH_DATA_SIZE = 0x0FFF0 #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -232,21 +232,22 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 
 #Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
 %.hex: %.elf
-	@echo $(MSG_OBJCPY_CMD) LOCAL Extracting HEX file data from \"$<\"
+	@echo $(MSG_OBJCPY_CMD) "(Chameleon) Extracting HEX file data from \"$<\""
 	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
 
 %.eep: %.elf
+	@echo $(MSG_OBJCPY_CMD) "(Chameleon) Extracting EEP file data from \"$<\""
 	$(CROSS)-objcopy -j .eeprom  --set-section-flags=.eeprom=alloc,load \
 		--change-section-lma .eeprom=0  --no-change-warnings -O ihex \
 		$(TARGET).elf $(TARGET).eep
 
 %.bin: %.elf
-	@echo $(MSG_OBJCPY_CMD) LOCAL Extracting BIN file data from \"$<\"
+	@echo $(MSG_OBJCPY_CMD) "(Chameleon) Extracting BIN file data from \"$<\""
 	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
 
 # Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
 spmhelper: $(TARGET).elf
-	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
+	@echo $(MSG_OBJCPY_CMD) "(Chameleon) Extracting SPM helper HEX file from $(TARGET).elf"
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
 	
 # Program the device using avrdude  

@@ -22,26 +22,26 @@ void WriteBlockBytes(const void* Buffer, SIZET StartBlock, SIZET Count) {
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
     uint8_t Buffer[DESFIRE_EEPROM_BLOCK_SIZE];
-    uint16_t SrcOffset = SrcBlock * DESFIRE_EEPROM_BLOCK_SIZE;
-    uint16_t DestOffset = DestBlock * DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t SrcOffset = SrcBlock; //* DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t DestOffset = DestBlock; //* DESFIRE_EEPROM_BLOCK_SIZE;
     while(Count > 0) {
         SIZET bytesToWrite = MIN(Count, DESFIRE_EEPROM_BLOCK_SIZE);
         MemoryReadBlock(Buffer, SrcOffset, bytesToWrite);
         MemoryWriteBlock(Buffer, DestOffset, bytesToWrite);
-        SrcOffset += DESFIRE_EEPROM_BLOCK_SIZE;
-        DestOffset += DESFIRE_EEPROM_BLOCK_SIZE;
+        SrcOffset += 1; //DESFIRE_EEPROM_BLOCK_SIZE;
+        DestOffset += 1; //DESFIRE_EEPROM_BLOCK_SIZE;
         Count -= DESFIRE_EEPROM_BLOCK_SIZE;
     }
 }
 
-void SetBlockBytes(SIZET DestBlock, BYTE InitByteValue, SIZET Count) {
+void SetBlockBytes(SIZET DestBlock, BYTE InitByteValue, SIZET ByteCount) {
      BYTE initValueArray[DESFIRE_EEPROM_BLOCK_SIZE];
      memset(initValueArray, InitByteValue, DESFIRE_EEPROM_BLOCK_SIZE);
-     while(Count > 0) {
-          SIZET bytesToWrite = MIN(Count, DESFIRE_EEPROM_BLOCK_SIZE);
+     while(ByteCount > 0) {
+          SIZET bytesToWrite = MIN(ByteCount, DESFIRE_EEPROM_BLOCK_SIZE);
           WriteBlockBytes(initValueArray, DestBlock, bytesToWrite);
-          DestBlock += 1;
-          Count -= DESFIRE_EEPROM_BLOCK_SIZE;
+          DestBlock += DESFIRE_EEPROM_BLOCK_SIZE;
+          ByteCount -= DESFIRE_EEPROM_BLOCK_SIZE;
      }
 }
 
@@ -49,7 +49,7 @@ uint8_t AllocateBlocks(uint8_t BlockCount) {
     uint8_t Block;
     /* Check if we have space */
     Block = Picc.FirstFreeBlock;
-    if (Block + BlockCount < Block || Block + BlockCount > CardCapacityBlocks) {
+    if (Block + BlockCount < Block) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;

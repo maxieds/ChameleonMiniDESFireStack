@@ -11,6 +11,7 @@
 #include "Settings.h"
 #include "Map.h"
 #include "AntennaLevel.h"
+#include "LEDHook.h"
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
      #include "Application/MifareDESFire.h"
@@ -255,7 +256,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationGetUidFunc = MifareDesfireGetUid,
 		.ApplicationSetUidFunc = MifareDesfireSetUid,
 		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
-		.MemorySize = 2 * MIFARE_CLASSIC_4K_MEM_SIZE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
 		.ReadOnly = false
 	},
 #endif
@@ -308,9 +309,8 @@ void ConfigurationInit(void)
 void ConfigurationSetById( ConfigurationEnum Configuration )
 {
     CodecDeInit();
-
     CommandLinePendingTaskBreak(); // break possibly pending task
-
+    
     GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
     /* Copy struct from PROGMEM to RAM */
@@ -319,6 +319,9 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 
     CodecInit();
     ApplicationInit();
+
+    /* Notify LED. blink according to current setting */
+    LEDHook(LED_SETTING_CHANGE, LED_BLINK + Configuration);
 }
 
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)

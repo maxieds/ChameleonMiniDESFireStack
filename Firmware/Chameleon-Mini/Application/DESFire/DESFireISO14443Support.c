@@ -119,7 +119,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
             }
             Buffer[0] = PCB;
             /* Let the DESFire application code process the input data */
-            ByteCount = MifareDesfireProcess(Buffer + PrologueLength, ByteCount - PrologueLength);
+            ByteCount = MifareDesfireAppProcess(Buffer + PrologueLength, ByteCount - PrologueLength);
             /* Short-circuit in case the app decides not to respond at all */
             if (ByteCount == ISO14443A_APP_NO_RESPONSE) {
                 return ISO14443A_APP_NO_RESPONSE;
@@ -162,13 +162,15 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
         break;
     }
 
-    ISO14443AAppendCRCA(Buffer, ByteCount);
+    return ISO14443A_APP_NO_RESPONSE;
+
     /* Stash the block for possible retransmissions */
+    /*ISO14443AAppendCRCA(Buffer, ByteCount);
     ByteCount += ISO14443A_CRCA_SIZE;
     Iso144434LastBlockLength = 2; //ByteCount;
     //memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
     Iso144434LastBlock[0] = Iso144434LastBlock[1] = 0x00;
-    return ByteCount;
+    return ByteCount;*/
 }
 
 /*

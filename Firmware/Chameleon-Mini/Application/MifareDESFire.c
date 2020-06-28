@@ -17,119 +17,111 @@
 #include "DESFire/DESFireStatusCodes.h"
 #include "DESFire/DESFireLogging.h"
 
-DesfireStateType DesfireState = DESFIRE_IDLE;
+DesfireStateType DesfireState = DESFIRE_HALT;
+bool DesfireFromHalt = false;
 BYTE DesfireCmdCLA = 0x90;
 
 /* Dispatching routines */
 
-uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount) {
-    if(ByteCount > 0 && DesfireCmdCLA == 0x90) {
-        return ProcessNativeDESFireCommand(Buffer, ByteCount);
-    }
-    else if(ByteCount > 0 && DesfireCmdCLA == 0x00) {
-        return ProcessISO7816Command(Buffer, ByteCount);
-    }
-    else if(ByteCount == 0) {
+uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
+    if(ByteCount == 0) {
          Buffer[0] = STATUS_PARAMETER_ERROR;
          return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
-}
-
-uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
-    if (DesfireState == DESFIRE_IDLE)
-        return MifareDesfireProcessIdle(Buffer, ByteCount);
+    else if(DesfireState == DESFIRE_IDLE || 
+            (DesfireState == DESFIRE_CMD_READY && DesfireCmdCLA != 0x90)) {
+        Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    else if(DesfireState == DESFIRE_CMD_READY) {
+        LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+        uint16_t ReturnBytes = ProcessNativeDESFireCommand(Buffer, ByteCount);
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
+        return ReturnBytes;
+    }
 
     /* Expecting further data here */
-    if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
+    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         AbortTransaction();
         DesfireState = DESFIRE_IDLE;
         Buffer[0] = STATUS_COMMAND_ABORTED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
+    uint16_t ReturnBytes = 0;
     switch (DesfireState) {
     case DESFIRE_GET_VERSION2:
-        return EV0CmdGetVersion2(Buffer, ByteCount);
+        ReturnBytes = EV0CmdGetVersion2(Buffer, ByteCount);
+        break;
     case DESFIRE_GET_VERSION3:
-        return EV0CmdGetVersion3(Buffer, ByteCount);
+        ReturnBytes = EV0CmdGetVersion3(Buffer, ByteCount);
+        break;
     case DESFIRE_GET_APPLICATION_IDS2:
-        return GetApplicationIdsIterator(Buffer, ByteCount);
+        ReturnBytes = GetApplicationIdsIterator(Buffer, ByteCount);
+        break;
     case DESFIRE_LEGACY_AUTHENTICATE2:
-        return EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
+        ReturnBytes = EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
+        break;
     case DESFIRE_ISO_AUTHENTICATE2:
-        return DesfireCmdAuthenticate3KTDEA2(Buffer, ByteCount);
+        ReturnBytes = DesfireCmdAuthenticate3KTDEA2(Buffer, ByteCount);
+        break;
     case DESFIRE_AES_AUTHENTICATE2:
-        return DesfireCmdAuthenticateAES2(Buffer, ByteCount);
+        ReturnBytes = DesfireCmdAuthenticateAES2(Buffer, ByteCount);
+        break;
     case DESFIRE_READ_DATA_FILE:
-        return ReadDataFileIterator(Buffer, ByteCount);
+        ReturnBytes = ReadDataFileIterator(Buffer, ByteCount);
+        break;
     default:
         /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-}
+    LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
+    return ReturnBytes;
 
-uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount) {
-    /* TODO: Where are we deciphering wrapped payload data? 
-     *       This should depend on the CommMode standard? 
-     */
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
-    if(ByteCount < 6) {
-        return CmdNotImplemented(Buffer, ByteCount);
-    }
-    /* TODO: Properly detect ISO 7816-4 PDUs and switch modes to avoid doing this all the time */
-    if (Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
-        DesfireCmdCLA = Buffer[0];
-        /* Unwrap the PDU from ISO 7816-4 */
-        ByteCount = Buffer[4];
-        Buffer[0] = Buffer[1];
-        memmove(&Buffer[1], &Buffer[5], ByteCount);
-        /* Process the command */
-        ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
-        if (ByteCount) {
-            /* Re-wrap into ISO 7816-4 */
-            Buffer[ByteCount] = Buffer[0];
-            memmove(&Buffer[0], &Buffer[1], ByteCount - 1);
-            Buffer[ByteCount - 1] = 0x91;
-            ByteCount++;
-        }
-        return ByteCount;
-    }
-    else {
-        /* ISO/IEC 14443-4 PDUs, no extra work */
-        DesfireCmdCLA = Buffer[0];
-        return MifareDesfireProcessCommand(Buffer, ByteCount);
-    }
 }
 
 void MifareDesfireReset(void) {
-    ResetLocalStructureData();
-    ResetPiccBackend();
+    DesfireState = DESFIRE_IDLE;
 }
 
 void MifareDesfireEV0AppInit(void) {
     /* Init lower layers: nothing for now */
+    ResetLocalStructureData();
+    DesfireState = DESFIRE_IDLE;
+    DesfireFromHalt = false;
     InitialisePiccBackendEV0(DESFIRE_STORAGE_SIZE_4K);
     /* The rest is handled in reset */
 }
 
 static void MifareDesfireEV1AppInit(uint8_t StorageSize) {
     /* Init lower layers: nothing for now */
+    ResetLocalStructureData();
+    DesfireState = DESFIRE_IDLE;
+    DesfireFromHalt = false;
     InitialisePiccBackendEV1(StorageSize);
     /* The rest is handled in reset */
 }
 
 void MifareDesfire2kEV1AppInit(void) {
+    ResetLocalStructureData();
+    DesfireState = DESFIRE_IDLE;
+    DesfireFromHalt = false;
     MifareDesfireEV1AppInit(DESFIRE_STORAGE_SIZE_2K);
 }
 
 void MifareDesfire4kEV1AppInit(void) {
+    ResetLocalStructureData();
+    DesfireState = DESFIRE_IDLE;
+    DesfireFromHalt = false;
     MifareDesfireEV1AppInit(DESFIRE_STORAGE_SIZE_4K);
 }
 
 void MifareDesfire8kEV1AppInit(void) {
+    ResetLocalStructureData();
+    DesfireState = DESFIRE_IDLE;
+    DesfireFromHalt = false;
     MifareDesfireEV1AppInit(DESFIRE_STORAGE_SIZE_8K);
 }
 
@@ -146,29 +138,79 @@ void MifareDesfireAppTask(void)
 }
 
 void ResetLocalStructureData(void) {
+     DesfireState = DESFIRE_HALT;
+     InvalidateAuthState(0x00);
+     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
      memset(&SelectedApp, 0x00, sizeof(SelectedApp));
      memset(&SelectedFile, 0x00, sizeof(SelectedFile));
      memset(&TransferState, 0x00, sizeof(TransferState));
-     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
-     Iso144434BlockNumber = 0x00;
-     Iso144434CardID = 0x00;
-     Iso144434LastBlockLength = 0x00;
-     memset(Iso144434LastBlock, 0x00, CODEC_BUFFER_SIZE);
-     Iso144433AState = ISO14443_3A_STATE_IDLE;
-     Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
      memset(&SessionKey, 0x00, sizeof(CryptoKeyBufferType));
      memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
      SessionIVByteSize = 0x00;
-     memset(&AESCryptoContext, 0x00, sizeof(DesfireAESCryptoContext));
      memset(&AESCryptoSessionKey, 0x00, sizeof(DesfireAESCryptoKey));
      memset(&AESCryptoIVBuffer, 0x00, sizeof(DesfireAESCryptoKey));
-     DesfireState = DESFIRE_IDLE;
-     InvalidateAuthState(0x00);
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
-    LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, BitCount);
-    return ISO144433APiccProcess(Buffer, BitCount);
+    
+    /* Wakeup and Request may occure in all states */
+    if ( (BitCount == 7) &&
+         /* precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount */
+         (((DesfireState != DESFIRE_HALT) && (Buffer[0] == ISO14443A_CMD_REQA)) ||
+         (Buffer[0] == ISO14443A_CMD_WUPA) )){
+        DesfireFromHalt = (DesfireState == DESFIRE_HALT);
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
+            DesfireState = DESFIRE_CMD_READY;
+            return BitCount;
+        }
+    } 
+    else if(DesfireState == DESFIRE_HALT || DesfireState == DESFIRE_IDLE) {
+        DesfireFromHalt = (DesfireState == DESFIRE_HALT);
+        if(ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
+            DesfireState = DESFIRE_CMD_READY;
+            return BitCount;
+        }
+        else {
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+    }
+    
+    uint16_t BitCountCheck = BitCount;
+    if(ISO14443AWakeUp(Buffer, &BitCountCheck, ATQA_VALUE, DesfireFromHalt)) {
+         DesfireState = DESFIRE_IDLE;
+         return ISO14443A_APP_NO_RESPONSE;
+    }
+    else if (BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) {
+        DesfireCmdCLA = Buffer[0];
+        /* Unwrap the PDU from ISO 7816-4 */
+        BitCount = Buffer[4];
+        Buffer[0] = Buffer[1];
+        memmove(&Buffer[1], &Buffer[5], BitCount);
+        /* Process the command */
+        /* TODO: Where are we deciphering wrapped payload data? 
+         *       This should depend on the CommMode standard? 
+         */
+        BitCount = MifareDesfireProcessCommand(Buffer, BitCount + 1);
+        /* TODO: Where are we re-wrapping the data according to the CommMode standards? */
+        if (BitCount) {
+            /* Re-wrap into ISO 7816-4 */
+            Buffer[BitCount] = Buffer[0];
+            memmove(&Buffer[0], &Buffer[1], BitCount - 1);
+            Buffer[BitCount - 1] = 0x91;
+            BitCount++;
+        }
+        return BitCount;
+    }
+    else {
+        /* ISO/IEC 14443-4 PDUs: No extra work */
+        DesfireCmdCLA = Buffer[0];
+        BitCount = ISO144433APiccProcess(Buffer, BitCount);
+        if(Iso144433AIdleState == ISO14443_3A_STATE_HALT) {
+            DesfireState = DESFIRE_HALT;
+            DesfireFromHalt = true;
+        }
+        return BitCount;
+    }
 }
 
 void MifareDesfireGetUid(ConfigurationUidType Uid)
