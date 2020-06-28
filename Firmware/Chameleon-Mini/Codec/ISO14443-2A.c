@@ -413,6 +413,7 @@ void ISO14443ACodecDeInit(void)
 
 }
 
+
 void ISO14443ACodecTask(void) {
     if (Flags.DemodFinished) {
         Flags.DemodFinished = 0;

@@ -43,19 +43,6 @@ void TerminalSendStringP(const char* s) {
     }
 }
 
-/*
-void TerminalSendHex(void* Buffer, uint16_t ByteCount)
-{
-    char* pTerminalBuffer = (char*) TerminalBuffer;
-
-    BufferToHexString(pTerminalBuffer, sizeof(TerminalBuffer), Buffer, ByteCount);
-
-    TerminalSendString(pTerminalBuffer);
-}
-
-*/
-
-
 void TerminalSendBlock(const void* Buffer, uint16_t ByteCount)
 {
     CDC_Device_SendData(&TerminalHandle, Buffer, ByteCount);

@@ -9,7 +9,6 @@
 
 #include "Configuration.h"
 #include "Settings.h"
-#include "Map.h"
 #include "AntennaLevel.h"
 #include "LEDHook.h"
 
@@ -327,6 +326,14 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 {
     MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
+}
+
+MapIdType ConfigurationCheckByName(const char *Configuration) {
+    MapIdType Id;
+    if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+        return Id;
+    }
+    return 0xff;
 }
 
 bool ConfigurationSetByName(const char* Configuration)

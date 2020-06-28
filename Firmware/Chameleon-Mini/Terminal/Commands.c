@@ -24,7 +24,9 @@ extern const PROGMEM CommandEntryType CommandTable[];
 CommandStatusIdType CommandGetVersion(char* OutParam)
 {
   snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR(
-    "ChameleonMini RevG %S using LUFA %S compiled with AVR-GCC %S. Based on the open-source NFC tool ChameleonMini. https://github.com/emsec/ChameleonMini commit %S"
+    "ChameleonMini RevG with DESFire stack support %S using LUFA %S compiled with AVR-GCC %S. "
+    "Sources: https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack\n"
+    "Logger:  https://github.com/maxieds/ChameleonMiniLiveDebugger."
     ), PSTR(CHAMELEON_MINI_VERSION_STRING), PSTR(LUFA_VERSION_STRING), PSTR(__VERSION__), PSTR(COMMIT_ID)
   );
 
@@ -43,7 +45,9 @@ CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam)
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         ConfigurationGetList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
-    } else if (ConfigurationSetByName(InParam)) {
+    } else if (ConfigurationCheckByName(InParam)) {
+        MemoryClear();
+        ConfigurationSetByName(InParam);
         SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
         return COMMAND_INFO_OK_ID;
     } else {
