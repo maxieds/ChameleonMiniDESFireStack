@@ -29,11 +29,11 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
          return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     else if(DesfireState == DESFIRE_IDLE || 
-            (DesfireState == DESFIRE_CMD_READY && DesfireCmdCLA != 0x90)) {
+            (DesfireState == DESFIRE_CMD_READY_ACTIVE && DesfireCmdCLA != 0x90)) {
         Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    else if(DesfireState == DESFIRE_CMD_READY) {
+    else if(DesfireState == DESFIRE_CMD_READY_ACTIVE) {
         if(ByteCount >= DESFIRE_MIN_INCOMING_LOGSIZE) {
             LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
         }
@@ -159,8 +159,6 @@ void ResetLocalStructureData(void) {
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     
-
-    // Currently, WUPA is not getting handled correctly ... 
     /* Wakeup and Request may occure in all states */
     if ( (BitCount == 7) &&
          /* precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount */
@@ -168,18 +166,61 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
          (Buffer[0] == ISO14443A_CMD_WUPA) )){
         DesfireFromHalt = (DesfireState == DESFIRE_HALT);
         if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
-            SelectPiccApp();
-            DesfireState = DESFIRE_CMD_READY;
+            DesfireState = DESFIRE_STATE1_READY;
             return BitCount;
         }
     } 
     else if(DesfireState == DESFIRE_HALT || DesfireState == DESFIRE_IDLE) {
         DesfireFromHalt = (DesfireState == DESFIRE_HALT);
         if(ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
-            DesfireState = DESFIRE_CMD_READY;
+            DesfireState = DESFIRE_STATE1_READY;
             return BitCount;
         }
         else {
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+    }
+    else if(DesfireState == DESFIRE_STATE1_READY) {
+        if(ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
+            DesfireState = DesfireFromHalt ? DESFIRE_HALT : DESFIRE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
+        } 
+        else if(Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
+            /* Load UID CL1 and perform anticollision */
+            uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
+            /* For Longer UIDs indicate that more UID-Bytes follow (-> CL2) */
+            if(ActiveConfiguration.UidSize == ISO14443A_UID_SIZE_DOUBLE) {
+                memcpy(&UidCL1[1], &Picc.Uid[0], ISO14443A_CL_UID_SIZE - 1);
+                UidCL1[0] = ISO14443A_UID0_CT;
+                if(ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_UID_NOT_FINISHED)) {
+                     DesfireState = DESFIRE_STATE2_READY;
+                }
+            } 
+            return BitCount;
+        } 
+        else {
+            /* Unknown command. Enter HALT state. */
+            DesfireState = DESFIRE_HALT;
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+    }
+    else if(DesfireState == DESFIRE_STATE2_READY) {
+        if(ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
+            DesfireState = DesfireFromHalt ? DESFIRE_HALT : DESFIRE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
+        } 
+        else if(Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
+            /* Load UID CL2 and perform anticollision */
+            uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
+            memcpy(UidCL2, Picc.Uid + ISO14443A_CL_UID_SIZE, ISO14443A_CL_UID_SIZE);
+            if(ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
+                DesfireState = DESFIRE_CMD_READY_ACTIVE;
+            }
+            return BitCount;
+        } 
+        else {
+            /* Unknown command. Enter HALT state. */
+            DesfireState = DESFIRE_HALT;
             return ISO14443A_APP_NO_RESPONSE;
         }
     }
@@ -205,9 +246,9 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
         /* TODO: Where are we re-wrapping the data according to the CommMode standards? */
         if (BitCount) {
             /* Re-wrap into ISO 7816-4 */
-            Buffer[BitCount + 4] = Buffer[0];
-            memmove(&Buffer[4], &Buffer[1], BitCount - 1);
-            Buffer[BitCount + 4 - 1] = 0x91;
+            Buffer[BitCount] = Buffer[0];
+            memmove(&Buffer[0], &Buffer[1], BitCount - 1);
+            Buffer[BitCount - 1] = 0x91;
             BitCount++;
         }
         return BitCount * BITS_PER_BYTE;
@@ -216,7 +257,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
         /* ISO/IEC 14443-4 PDUs: No extra work */
         DesfireCmdCLA = Buffer[0];
         BitCount = ISO144433APiccProcess(Buffer, BitCount);
-        return BitCount;
+        return BitCount * BITS_PER_BYTE;
     }
 }
 

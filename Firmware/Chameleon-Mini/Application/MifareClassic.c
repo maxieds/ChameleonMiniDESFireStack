@@ -548,10 +548,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
                 if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
                         AccessAddress = 0xff; /* invalid, force reload */
-            State = STATE_ACTIVE;
-                    }
+                        State = STATE_ACTIVE;
+                }
             }
-
             return BitCount;
         } else {
             /* Unknown command. Enter HALT state. */

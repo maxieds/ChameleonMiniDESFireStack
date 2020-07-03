@@ -32,6 +32,7 @@ extern const BYTE DefaultDESFireATS[];
 #define ATQA_VALUE              0x0344
 #define SAK_CL1_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT | ISO14443A_SAK_INCOMPLETE)
 #define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
+#define SAK_UID_NOT_FINISHED    0x04
 
 #define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
 

@@ -136,13 +136,10 @@ bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool 
          (DataPtr[0] == ISO14443A_CMD_WUPA) ){
         DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
         DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
-
         *BitCount = ISO14443A_ATQA_FRAME_SIZE;
-
         return true;
     } else {
         *BitCount = 0;
-
         return false;
     }
 }

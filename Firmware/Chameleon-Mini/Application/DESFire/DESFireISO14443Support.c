@@ -18,7 +18,6 @@ uint8_t Iso144434BlockNumber = 0x00;
 uint8_t Iso144434CardID = 0x00;
 uint8_t Iso144434LastBlockLength = 0x00;
 uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
-//uint8_t Iso144434LastBlock[2];
 
 void ISO144434SwitchState(Iso144434StateType NewState) {
     Iso144434State = NewState;
