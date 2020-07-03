@@ -10,6 +10,19 @@
 #include "DESFireFirmwareSettings.h"
 #include "DESFireMemoryOperations.h"
 
+#ifndef DESFIRE_MIN_INCOMING_LOGSIZE
+     #define DESFIRE_MIN_INCOMING_LOGSIZE       (1)
+#endif
+#ifndef DESFIRE_MIN_OUTGOING_LOGSIZE
+     #define DESFIRE_MIN_OUTGOING_LOGSIZE       (1)
+#endif
+
+INLINE void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {
+     if(DESFIRE_MIN_OUTGOING_LOGSIZE >= BufSize) {
+          LogEntry(LogCode, LogDataBuffer, BufSize);
+     }
+}
+
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
      OFF         = 0, 
      NORMAL      = 1, 
@@ -40,6 +53,9 @@ void DESFireLogISO7816Command(BYTE *Buffer, SIZET ByteCount);
 void DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
 void DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
 void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
+
+#define DEBUG_PRINT(fmtStr, ...) \
+        DESFireLogErrorMessage(fmtStr, ##__VA_ARGS__)
 
 #define GetSourceFileLoggingData()                           ({ \
         char *strBuffer;                                        \

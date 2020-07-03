@@ -51,9 +51,10 @@ void EVENT_USB_Device_ControlRequest(void);
 INLINE void TerminalSendChar(char c) { CDC_Device_SendByte(&TerminalHandle, c); }
 INLINE void TerminalSendByte(uint8_t Byte) { CDC_Device_SendByte(&TerminalHandle, Byte); }
 INLINE void TerminalFlushBuffer(void) {
+    //USB_USBTask();
     CDC_Device_Flush(&TerminalHandle);
-    TerminalBuffer[TerminalBufferIdx] = '\0';
     TerminalBufferIdx = 0;
+    TerminalBuffer[TerminalBufferIdx] = '\0';
 }
 
 #endif /* TERMINAL_H_ */

@@ -109,10 +109,6 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 #define CryptoBitsToBytes(cryptoBits) \
      (cryptoBits / BITS_PER_BYTE)
 
-/*typedef struct DESFIRE_FIRMWARE_PACKING {
-     aes_ctx_t aesCtx;
-     uint16_t keySizeBytes;
-} DesfireAESCryptoContext;*/
 typedef aes_ctx_t DesfireAESCryptoContext;
 
 extern DesfireAESCryptoContext EEMEM AESCryptoContext;

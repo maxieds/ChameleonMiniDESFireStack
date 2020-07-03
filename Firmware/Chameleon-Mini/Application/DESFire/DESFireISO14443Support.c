@@ -7,6 +7,7 @@
 
 #include "DESFireISO14443Support.h"
 #include "DESFirePICCControl.h"
+#include "DESFireLogging.h"
 #include "../MifareDESFire.h"
 
 /*
@@ -16,12 +17,12 @@ Iso144434StateType Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
 uint8_t Iso144434BlockNumber = 0x00;
 uint8_t Iso144434CardID = 0x00;
 uint8_t Iso144434LastBlockLength = 0x00;
-//uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
-uint8_t Iso144434LastBlock[2];
+uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+//uint8_t Iso144434LastBlock[2];
 
 void ISO144434SwitchState(Iso144434StateType NewState) {
     Iso144434State = NewState;
-    LogEntry(LOG_ISO14443_4_STATE, &Iso144434State, 1);
+    DesfireLogEntry(LOG_ISO14443_4_STATE, &Iso144434State, 1);
 }
 
 void ISO144434Reset(void) {
@@ -39,8 +40,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
     /* Verify the block's length: at the very least PCB + CRCA */
     if (ByteCount < (1 + ISO14443A_CRCA_SIZE)) {
         /* Huh? Broken frame? */
-        /* TODO: LOG ME */
-        //DEBUG_PRINT("\r\nISO14443-4: length fail");
+        DEBUG_PRINT("\r\nISO14443-4: length fail");
         return ISO14443A_APP_NO_RESPONSE;
     }
     ByteCount -= 2;
@@ -49,8 +49,8 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
     if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
         LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, ByteCount);
         /* ISO/IEC 14443-4, clause 7.5.5. The PICC does not attempt any error recovery. */
-        //DEBUG_PRINT("\r\nISO14443-4: CRC fail; %04X vs %04X", *(uint16_t*)&Buffer[ByteCount], 
-        //            ISO14443AComputeCRCA(Buffer, ByteCount));
+        DEBUG_PRINT("\r\nISO14443-4: CRC fail; %04X vs %04X", *(uint16_t*)&Buffer[ByteCount], 
+                    ISO14443AUpdateCRCA(Buffer, ByteCount, 0x00));
         return ISO14443A_APP_NO_RESPONSE;
     }
 
@@ -99,14 +99,14 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
             if (HaveNAD) {
                 PrologueLength++;
                 /* Not currently supported => the frame is ignored */
-                /* TODO: LOG ME */
+                DEBUG_PRINT("Error in ISO144434ProcessBlock: ISO14443_PCB_I_BLOCK on line #%d", __LINE__);
                 return ISO14443A_APP_NO_RESPONSE;
             }
             /* 7.5.3.2, rule D: toggle on each I-block */
             Iso144434BlockNumber = MyBlockNumber = !MyBlockNumber;
             if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
                 /* Currently not supported => the frame is ignored */
-                /* TODO: LOG ME */
+                DEBUG_PRINT("Error in ISO144434ProcessBlock: ISO14443_PCB_I_BLOCK on line #%d", __LINE__);
                 return ISO14443A_APP_NO_RESPONSE;
             }
 
@@ -142,6 +142,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
             } else {
                 /* This is an ACK */
                 /* NOTE: Chaining is not supported yet. */
+                DEBUG_PRINT("Warning in ISO144434ProcessBlock: ISO14443_PCB_R_BLOCK on line #%d", __LINE__);
                 return ISO14443A_APP_NO_RESPONSE;
             }
             break;
@@ -150,7 +151,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
             if (PCB == ISO14443_PCB_S_DESELECT) {
                 /* Reset our state */
                 ISO144434Reset();
-                LogEntry(LOG_ISO14443_4_STATE, &Iso144434State, 1);
+                DesfireLogEntry(LOG_ISO14443_4_STATE, &Iso144434State, 1);
                 /* Transition to HALT */
                 ISO144433AHalt();
                 /* Answer with S(DESELECT) -- just send the copy of the message */
@@ -161,16 +162,14 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
         }
         break;
     }
-
-    return ISO14443A_APP_NO_RESPONSE;
+    //return ISO14443A_APP_NO_RESPONSE;
 
     /* Stash the block for possible retransmissions */
-    /*ISO14443AAppendCRCA(Buffer, ByteCount);
+    ISO14443AAppendCRCA(Buffer, ByteCount);
     ByteCount += ISO14443A_CRCA_SIZE;
-    Iso144434LastBlockLength = 2; //ByteCount;
-    //memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
-    Iso144434LastBlock[0] = Iso144434LastBlock[1] = 0x00;
-    return ByteCount;*/
+    Iso144434LastBlockLength = ByteCount;
+    memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
+    return ByteCount;
 }
 
 /*
@@ -193,7 +192,7 @@ Iso144433AStateType Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
 
 void ISO144433ASwitchState(Iso144433AStateType NewState) {
     Iso144433AState = NewState;
-    LogEntry(LOG_ISO14443_3A_STATE, &Iso144433AState, 1);
+    DesfireLogEntry(LOG_ISO14443_3A_STATE, &Iso144433AState, 1);
 }
 
 void ISO144433AReset(void) {
@@ -279,7 +278,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         if (ISO144433AIsHalt(Buffer, BitCount)) {
             LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
             ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
-            //DEBUG_PRINT("\r\nISO14443-3: Got HALT");
+            DEBUG_PRINT("\r\nISO14443-3: Got HALT");
             return ISO14443A_APP_NO_RESPONSE;
         }
         /* Forward to ISO/IEC 14443-4 processing code */
@@ -287,7 +286,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     }
 
     /* Unknown command. Reset back to idle/halt state. */
-    //DEBUG_PRINT("\r\nISO14443-3: RESET TO IDLE");
+    DEBUG_PRINT("\r\nISO14443-3: RESET TO IDLE");
     ISO144433ASwitchState(Iso144433AIdleState);
     return ISO14443A_APP_NO_RESPONSE;
 }

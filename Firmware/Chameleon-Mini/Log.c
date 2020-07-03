@@ -54,12 +54,13 @@ static void LogFuncLive(LogEntryEnum Entry, const void* Data, uint8_t Length)
 {
     uint16_t SysTick = SystemGetSysTick();
 
+    //TerminalFlushBuffer();
     TerminalSendByte((uint8_t) Entry);
     TerminalSendByte((uint8_t) Length);
     TerminalSendByte((uint8_t) (SysTick >> 8));
     TerminalSendByte((uint8_t) (SysTick >> 0));
     TerminalSendBlock(Data, Length);
-    TerminalFlushBuffer();
+    //TerminalFlushBuffer();
 
 }
 

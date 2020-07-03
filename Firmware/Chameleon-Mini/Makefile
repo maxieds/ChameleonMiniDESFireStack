@@ -108,6 +108,11 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS	+= -DDESFIRE_USE_FACTORY_SIZES
 #SETTINGS	+= -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
+#Set a minimum incoming/outgoing log size so we do not spam the 
+#Chameleon Mini logs to much by logging everything:
+SETTINGS	+= -DDESFIRE_MIN_INCOMING_LOGSIZE=10
+SETTINGS	+= -DDESFIRE_MIN_OUTGOING_LOGSIZE=10
+
 #Support for some randomization in each custom compiled instantiation of the firmware:
 #RANDOMIZED_DATA_SIZE         = 128
 #RAW_RANDOMIZED_DATA         := $(shell openssl rand -rand /dev/urandom $(RANDOMIZED_DATA_SIZE) 2> /dev/null)
@@ -187,20 +192,12 @@ LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 			-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
-			-Wa,--gstabs \
 			-D__AVR_ATxmega128A4U__
 LD_FLAGS     = $(CC_FLAGS) \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-			   -Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
+			   #-Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
 			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0 \
-			   #-Wl,-u,malloc #-nolibc
-			   #-Wl,-u,vfprintf -lprintf_flt -lm -Wl,--start-group -Wl,--as-needed \
-			   #-Wl,--export-dynamic -O0 -Wl,--as-needed -nodefaultlibs -nostdlib \
-			   #-lc -lm
-				#-ffunction-sections -fdata-sections \
-				#-Wl,--defsym,__stack=0x7fff
-				#-Wl,--section-start,.data=0x808000,--defsym=__heap_end=0x80ffff
 OBJDIR       = Bin
 OBJECT_FILES = 
 
