@@ -9,9 +9,22 @@
 #include "DESFireFirmwareSettings.h"
 #include "DESFireCrypto.h"
 
-/*
- * DESFire backend API functions
- */
+#define DESFIRE_VERSION1_BYTES_PROCESSED     (8) 
+#define DESFIRE_VERSION2_BYTES_PROCESSED     (8)
+#define DESFIRE_VERSION3_BYTES_PROCESSED     (15)
+
+typedef union DESFIRE_FIRMWARE_PACKING {
+    struct DESFIRE_FIRMWARE_PACKING {
+        uint8_t KeyId;
+        uint8_t RndB[CRYPTO_MAX_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
+    } Authenticate;
+    struct DESFIRE_FIRMWARE_PACKING {
+        uint8_t NextIndex;
+    } GetApplicationIds;
+    uint8_t CryptoMethodType;
+    uint8_t ActiveCommMode;
+} DesfireSavedCommandStateType;
+extern DesfireSavedCommandStateType DesfireCommandState;
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE BytesProcessed;
@@ -44,8 +57,8 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_GET_FILE_IDS =  0x6F,
     CMD_GET_FILE_SETTINGS = 0xF5,
     CMD_CHANGE_FILE_SETTINGS = 0x5F,
-    CMD_CREATE_STDDATAFILE =  0xCD,
-    CMD_CREATE_BACKUPDATAFILE =  0xCB,
+    CMD_CREATE_STDDATA_FILE =  0xCD,
+    CMD_CREATE_BACKUPDATA_FILE =  0xCB,
     CMD_CREATE_VALUE_FILE =  0xCC,
     CMD_CREATE_LINEAR_RECORD_FILE = 0xC1,
     CMD_CREATE_CYCLIC_RECORD_FILE = 0xC0,
@@ -81,31 +94,27 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 } DESFireCommandType;
 
-#define DESFIRE_VERSION1_BYTES_PROCESSED     (8) 
-#define DESFIRE_VERSION2_BYTES_PROCESSED     (8)
-#define DESFIRE_VERSION3_BYTES_PROCESSED     (15)
+typedef uint16_t (*InsCodeHandlerFunc)(uint8_t *Buffer, uint16_t ByteCount);
 
-typedef union DESFIRE_FIRMWARE_PACKING {
-    struct DESFIRE_FIRMWARE_PACKING {
-        uint8_t KeyId;
-        uint8_t RndB[CRYPTO_MAX_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    } Authenticate;
-    struct DESFIRE_FIRMWARE_PACKING {
-        uint8_t NextIndex;
-    } GetApplicationIds;
-    uint8_t CryptoMethodType;
-    uint8_t ActiveCommMode;
-} DesfireSavedCommandStateType;
-extern DesfireSavedCommandStateType DesfireCommandState;
+typedef struct {
+     DESFireCommandType  insCode;
+     InsCodeHandlerFunc  insFunc;
+     const __flash char *insDesc;
+} DESFireCommand;
+
+extern const __flash DESFireCommand DESFireCommandSet[];
+
+/* Helper and batch process functions */
+uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t DefaultReturnValue);
+uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount);
 
 /*
  * The following section implements:
  * DESFire EV0 / D40 specific commands
  */
-
-uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount);
 
 /* General commands */
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);

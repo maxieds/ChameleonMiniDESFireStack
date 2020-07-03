@@ -34,7 +34,7 @@ void SystemInit(void)
         CCP = CCP_IOREG_gc;
         WDT.CTRL = WDT_CEN_bm;
 
-        asm volatile ("jmp %0"::"i" (BOOT_SECTION_START + 0x1FC));
+        __asm__ volatile ("jmp %0"::"i" (BOOT_SECTION_START + 0x1FC));
     }
 
     /* XTAL x 2 as SysCLK */

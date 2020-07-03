@@ -146,8 +146,8 @@ INLINE void FRAMWrite(const void* Buffer, uint16_t Address, uint16_t ByteCount)
     SPITransferByte(0x06); /* Write Enable */
     FRAM_PORT.OUTSET = FRAM_CS;
 
-    asm volatile ("nop");
-    asm volatile ("nop");
+    __asm__ volatile ("nop");
+    __asm__ volatile ("nop");
 
     FRAM_PORT.OUTCLR = FRAM_CS;
 
@@ -253,8 +253,8 @@ INLINE void FlashToFRAM(uint32_t Address, uint16_t ByteCount)
         SPITransferByte(0x06); /* Write Enable */
         FRAM_PORT.OUTSET = FRAM_CS;
 
-        asm volatile ("nop");
-        asm volatile ("nop");
+        __asm__ volatile ("nop");
+        __asm__ volatile ("nop");
 
         FRAM_PORT.OUTCLR = FRAM_CS;
 

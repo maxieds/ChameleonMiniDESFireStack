@@ -22,7 +22,7 @@ extern const BYTE DefaultDESFireATS[];
 
 #define DESFIRE_UID_SIZE     ISO14443A_UID_SIZE_DOUBLE
 
-#define DESFIRE_MAX_PAYLOAD_SIZE       64 // 59 /* Bytes */
+#define DESFIRE_MAX_PAYLOAD_SIZE       55 // 64 /* Bytes */
 
 /*
  * Definitions pertaining to on-card data

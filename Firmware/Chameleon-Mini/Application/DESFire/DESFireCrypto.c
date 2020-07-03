@@ -126,7 +126,15 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
 }
 
 void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx) {
-     memset_P(cryptoCtx, 0x00, sizeof(DesfireAESCryptoContext));
+     uint8_t ctxBlock[8];
+     uint8_t ctxBlockSize = 8;
+     memcpy(ctxBlock, 0x00, ctxBlockSize);
+     uint8_t ctxOffset = 0;
+     while(ctxOffset < sizeof(DesfireAESCryptoContext)) {
+          uint8_t sizeToCopy = MIN(sizeof(DesfireAESCryptoContext) - ctxOffset, ctxBlockSize);
+          memcpy_P(cryptoCtx + ctxOffset, ctxBlock, sizeToCopy);
+          ctxOffset += ctxBlockSize;
+     }
 }
 
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {

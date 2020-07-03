@@ -232,7 +232,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
          return ISO14443A_APP_NO_RESPONSE;
     }
     else if(BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
-            Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) {
+            Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) { // Wrapped native command structure: 
         DesfireCmdCLA = Buffer[0];
         /* Unwrap the PDU from ISO 7816-4 */
         BitCount = Buffer[4];
@@ -252,6 +252,9 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             BitCount++;
         }
         return BitCount * BITS_PER_BYTE;
+    }
+    else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { // Non-wrapped structure: 
+         return BitCount * BITS_PER_BYTE;
     }
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */

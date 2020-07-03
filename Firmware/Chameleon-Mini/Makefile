@@ -189,15 +189,16 @@ ASRC        += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256m
 			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
-			-DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
-			-DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
-			-D__AVR_ATxmega128A4U__
-LD_FLAGS     = $(CC_FLAGS) \
+CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
+			   -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
+			   -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
+			   -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
+			   -D__AVR_ATxmega128A4U__
+LD_FLAGS     = $(CC_FLAGS) -lc \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-			   #-Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
-			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0 \
+			   -Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
+			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0
 OBJDIR       = Bin
 OBJECT_FILES = 
 
