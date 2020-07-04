@@ -117,7 +117,7 @@ SETTINGS	+= -DDESFIRE_MIN_OUTGOING_LOGSIZE=2
 #there is *a lot* of data space to be saved by minimizing the LogMem 
 #buffer size. Define the following to optimize this space in the event of 
 #live logging sessions:
-SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING
+SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 
 #Support for some randomization in each custom compiled instantiation of the firmware:
 #RANDOMIZED_DATA_SIZE         = 128
@@ -203,7 +203,7 @@ CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 LD_FLAGS     = $(CC_FLAGS) -lc \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-			   -Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
+			   #-Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
 			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0
 OBJDIR       = Bin
 OBJECT_FILES = 

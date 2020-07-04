@@ -235,7 +235,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     uint16_t BitCountCheck = BitCount;
     if(ISO14443AWakeUp(Buffer, &BitCountCheck, ATQA_VALUE, DesfireFromHalt)) {
          DesfireState = DESFIRE_IDLE;
-         eturn ISO14443A_APP_NO_RESPONSE;
+         return ISO14443A_APP_NO_RESPONSE;
     }
     else if(BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
             Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) { // Wrapped native command structure: 

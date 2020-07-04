@@ -15,7 +15,6 @@
 
 #define TERMINAL_VBUS_PORT      PORTD
 #define TERMINAL_VBUS_MASK      PIN5_bm
-
 #define TERMINAL_BUFFER_SIZE	256 //512
 
 typedef enum {
@@ -51,7 +50,6 @@ void EVENT_USB_Device_ControlRequest(void);
 INLINE void TerminalSendChar(char c) { CDC_Device_SendByte(&TerminalHandle, c); }
 INLINE void TerminalSendByte(uint8_t Byte) { CDC_Device_SendByte(&TerminalHandle, Byte); }
 INLINE void TerminalFlushBuffer(void) {
-    //USB_USBTask();
     CDC_Device_Flush(&TerminalHandle);
     TerminalBufferIdx = 0;
     TerminalBuffer[TerminalBufferIdx] = '\0';

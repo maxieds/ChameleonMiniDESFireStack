@@ -3,11 +3,15 @@
 /** @file */
 #include "Common.h"
 
-#ifdef DESFIRE_OPTIMIZE_LIVE_LOGGING
-     #define LOG_SIZE           32
+#ifdef DESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
+     #define LOG_SIZE           48
 #else
      #define LOG_SIZE	        128 // 2048
 #endif
+
+extern uint8_t LogMem[LOG_SIZE];
+extern uint8_t *LogMemPtr;
+extern uint16_t LogMemLeft;
 
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address

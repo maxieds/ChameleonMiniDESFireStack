@@ -1,13 +1,15 @@
 #include "Log.h"
+#include "LiveLogTick.h"
 #include "Settings.h"
 #include "Terminal/Terminal.h"
 #include "System.h"
 #include "Map.h"
 #include "LEDHook.h"
 
-static uint8_t LogMem[LOG_SIZE];
-static uint8_t *LogMemPtr;
-static uint16_t LogMemLeft;
+uint8_t LogMem[LOG_SIZE];
+uint8_t *LogMemPtr;
+uint16_t LogMemLeft;
+
 static uint16_t LogFRAMAddr = FRAM_LOG_START_ADDR;
 static uint8_t EEMEM LogFRAMAddrValid = false;
 static bool EnableLogSRAMtoFRAM = false;
@@ -18,6 +20,9 @@ static const MapEntryType PROGMEM LogModeMap[] = {
     { .Id = LOG_MODE_MEMORY, .Text = "MEMORY" 	},
     { .Id = LOG_MODE_LIVE, 	 .Text = "LIVE" 	}
 };
+
+LogBlockListNode *LogBlockListBegin = NULL;
+LogBlockListNode *LogBlockListEnd = NULL;
 
 static void LogFuncOff(LogEntryEnum Entry, const void* Data, uint8_t Length)
 {
@@ -53,15 +58,12 @@ static void LogFuncMemory(LogEntryEnum Entry, const void* Data, uint8_t Length)
 static void LogFuncLive(LogEntryEnum Entry, const void* Data, uint8_t Length)
 {
     uint16_t SysTick = SystemGetSysTick();
-
-    //TerminalFlushBuffer();
-    TerminalSendByte((uint8_t) Entry);
-    TerminalSendByte((uint8_t) Length);
-    TerminalSendByte((uint8_t) (SysTick >> 8));
-    TerminalSendByte((uint8_t) (SysTick >> 0));
-    TerminalSendBlock(Data, Length);
-    //TerminalFlushBuffer();
-
+    //TerminalSendByte((uint8_t) Entry);
+    //TerminalSendByte((uint8_t) Length);
+    //TerminalSendByte((uint8_t) (SysTick >> 8));
+    //TerminalSendByte((uint8_t) (SysTick >> 0));
+    //TerminalSendBlock(Data, Length);
+    AtomicAppendLogBlock(Entry, SysTick, Data, Length);
 }
 
 void LogInit(void)
