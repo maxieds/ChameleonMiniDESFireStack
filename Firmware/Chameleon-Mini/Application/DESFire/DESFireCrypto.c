@@ -457,3 +457,207 @@ void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPadding
     }
 }
 
+void CryptoEncrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    uint8_t tempBlock[CRYPTO_DES_BLOCK_SIZE]; 
+    des_enc(tempBlock, Plaintext, Keys);
+    des_enc(Ciphertext, tempBlock, Keys + CRYPTO_DES_BLOCK_SIZE);
+}
+
+void CryptoEncryptBuffer2KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_DES_BLOCK_SIZE);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    bool lastBlockPadding = false;
+    if(numBlocks * CRYPTO_DES_BLOCK_SIZE > numBytes) {
+         lastBlockPadding = true;
+    }
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = numBytes - (numBlocks - 1) * CRYPTO_DES_BLOCK_SIZE;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CRYPTO_DES_BLOCK_SIZE, bytesInBuffer, false);
+        }
+        CryptoEncrypt2KTDEA(ptBuf + blockIndex * CRYPTO_DES_BLOCK_SIZE, 
+                            ctBuf + blockIndex * CRYPTO_DES_BLOCK_SIZE, Keys);
+        blockIndex++;
+    }
+}
+
+void CryptoDecrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    uint8_t tempBlock[CRYPTO_DES_BLOCK_SIZE]; 
+    des_dec(tempBlock, Ciphertext, Keys + CRYPTO_DES_BLOCK_SIZE);
+    des_dec(Plaintext, tempBlock, Keys);
+}
+
+void CryptoDecryptBuffer2KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_DES_BLOCK_SIZE);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    while(blockIndex < numBlocks) {
+        CryptoDecrypt2KTDEA(ptBuf + blockIndex * CRYPTO_DES_BLOCK_SIZE, 
+                            ctBuf + blockIndex * CRYPTO_DES_BLOCK_SIZE, Keys);
+        blockIndex++;
+    }
+}
+
+void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    tdes_enc(Ciphertext, Plaintext, Keys);
+}
+
+void CryptoEncryptBuffer3KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_3KTDEA_BLOCK_SIZE);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    bool lastBlockPadding = false;
+    if(numBlocks * CRYPTO_3KTDEA_BLOCK_SIZE > numBytes) {
+         lastBlockPadding = true;
+    }
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = numBytes - (numBlocks - 1) * CRYPTO_3KTDEA_BLOCK_SIZE;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, bytesInBuffer, false);
+        }
+        CryptoEncrypt3KTDEA(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, 
+                            ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
+        blockIndex++;
+    }
+}
+
+void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    tdes_dec(Plaintext, Ciphertext, Keys);
+}
+
+void CryptoDecryptBuffer3KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_3KTDEA_BLOCK_SIZE);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    while(blockIndex < numBlocks) {
+        CryptoDecrypt3KTDEA(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, 
+                            ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
+        blockIndex++;
+    }
+}
+
+// This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
+void CryptoTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
+                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+    bool lastBlockPadding = false;
+    if(numBlocks * CryptoSpec.blockSize > Count) {
+         lastBlockPadding = true;
+    }
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
+        }
+        memcpy(tempBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memcpy(ivBlock, IV + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
+        CryptoSpec.cryptFunc(ivBlock, tempBlock, Keys);
+        memcpy(IV + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        blockIndex++;
+    }
+}
+
+// This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = C
+void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
+                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+    bool lastBlockPadding = false;
+    if(numBlocks * CryptoSpec.blockSize > Count) {
+         lastBlockPadding = true;
+    }
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
+        }
+        memcpy(ivBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        CryptoSpec.cryptFunc(ivBlock, tempBlock, CryptoSpec.blockSize);
+        memcpy(ivBlock, IV + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
+        memcpy(IV + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
+        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
+        blockIndex++;
+    }
+}
+
+void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                 void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncrypt2KTDEA,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCSend(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                 void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt2KTDEA,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCSend(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                    void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncrypt2KTDEA,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCRecv(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                    void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt2KTDEA,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCRecv(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                 void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCSend(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoDecrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                 void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCSend(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoEncrypt3KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                    void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCRecv(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+
+void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext,
+                                    void *IV, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     CryptoTDEA_CBCRecv(Count, Plaintext, Ciphertext, IV, Keys, CryptoSpec);
+}
+

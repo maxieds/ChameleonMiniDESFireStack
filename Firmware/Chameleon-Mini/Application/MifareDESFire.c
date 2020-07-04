@@ -29,7 +29,8 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
          return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     else if(DesfireState == DESFIRE_IDLE || 
-            (DesfireState == DESFIRE_CMD_READY_ACTIVE && DesfireCmdCLA != 0x90)) {
+            (DesfireState == DESFIRE_CMD_READY_ACTIVE && 
+             DesfireCmdCLA != DESFIRE_NATIVE_CLA && DesfireCmdCLA != DESFIRE_ISO7816_CLA)) {
         Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }

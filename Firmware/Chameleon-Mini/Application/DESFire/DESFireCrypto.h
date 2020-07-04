@@ -56,6 +56,9 @@
 #define DESFIRE_SESSION_KEY_SIZE             (CRYPTO_3KTDEA_KEY_SIZE)
 #define CRYPTO_CHALLENGE_RESPONSE_BYTES      (8)
 
+#define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize) \
+     ( ((numBytes) + (blockSize) - 1) / (blockSize) )
+
 typedef BYTE Crypto2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 typedef BYTE Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
@@ -85,7 +88,7 @@ const char * GetCryptoMethodDesc(uint8_t cryptoType);
 const char * GetCommSettingsDesc(uint8_t cryptoType);
 
 #define MAC_LENGTH          4
-#define CMAC_LENGTH         8
+#define CMAC_LENGTH         8    // in bytes
 
 /* Authentication types support */
 #define DESFIRE_2KTDEA_NONCE_SIZE CRYPTO_DES_BLOCK_SIZE
@@ -181,6 +184,14 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count);
 
+/** Applies padding to the data within the buffer
+ *
+ * \param Buffer 		Data buffer to pad
+ * \param BytesInBuffer	How much data there is in the buffer already
+ * \param FirstPaddingBitSet Whether the very first bit (MSB) will be set or not
+ */
+void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet);
+
 /* Notes on cryptography in DESFire cards
 
 The EV0 was the first chip in the DESFire series. It makes use of the TDEA
@@ -197,9 +208,19 @@ PCD's side.
 
 */
 
-/* Prototype the CBC function pointer in case anyone needs it */
 typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void *PlainText, 
                                       void *Ciphertext, void *IV, const uint8_t *Keys);
+typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, const uint8_t *Keys);
+
+typedef struct {
+    CryptoTDEAFuncType cryptFunc;
+    uint16_t           blockSize;
+} CryptoTDEA_CBCSpec;
+
+void CryptoTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec);
+void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,               
+                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec);
 
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *
@@ -207,8 +228,10 @@ typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void *PlainText,
  * \param Ciphertext    Destination buffer to contain ciphertext
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoDecrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoEncrypt2KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoEncryptBuffer2KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
+void CryptoDecrypt2KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoDecryptBuffer2KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
  *
@@ -218,9 +241,9 @@ void CryptoDecrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t*
  * \param IV            Initialization vector buffer, will be updated
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                  void *IV, const uint8_t* Keys);
-void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                  void *IV, const uint8_t* Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "receive" mode (crypt-then-xor)
@@ -231,13 +254,15 @@ void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ci
  * \param IV            Initialization vector buffer, will be updated
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                     void *IV, const uint8_t* Keys);
-void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                     void *IV, const uint8_t* Keys);
 
-void CryptoEncrypt3KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoEncrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoEncryptBuffer3KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
+void CryptoDecrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoDecryptBuffer3KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
 
 /** Performs the 3-key Triple DES en/deciphering in the CBC "send" or "receive" mode
  *
@@ -247,21 +272,13 @@ void CryptoDecrypt3KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t*
  * \param IV            Initialization vector buffer, will be updated
  * \param Keys          Key block pointer (CRYPTO_3KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                  void *IV, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoDecrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                  void *IV, const uint8_t* Keys);
-void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                  void *IV, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, 
+void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                     void *IV, const uint8_t* Keys);
-
-/** Applies padding to the data within the buffer
- *
- * \param Buffer 		Data buffer to pad
- * \param BytesInBuffer	How much data there is in the buffer already
- * \param FirstPaddingBitSet Whether the very first bit (MSB) will be set or not
- */
-void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet);
 
 #endif

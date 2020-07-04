@@ -56,7 +56,7 @@ const __flash DESFireCommand DESFireCommandSet[] = {
      {
           .insCode = CMD_SET_CONFIGURATION, 
           .insDesc = (const __flash char[]) { "Set_Configuration" },
-          .insFunc = NULL
+          .insFunc = &DesfireCmdSetConfiguration
      },
      {
           .insCode = CMD_CHANGE_KEY, 
@@ -66,7 +66,7 @@ const __flash DESFireCommand DESFireCommandSet[] = {
      {
           .insCode = CMD_GET_KEY_VERSION, 
           .insDesc = (const __flash char[]) { "Get_Key_Version" },
-          .insFunc = NULL
+          .insFunc = &DesfireCmdGetKeyVersion
      },
      {
           .insCode = CMD_CREATE_APPLICATION, 
@@ -86,12 +86,12 @@ const __flash DESFireCommand DESFireCommandSet[] = {
      {
           .insCode = CMD_FREE_MEMORY, 
           .insDesc = (const __flash char[]) { "Free_Memory" },
-          .insFunc = NULL
+          .insFunc = &DesfireCmdFreeMemory
      },
      {
           .insCode = CMD_GET_DF_NAMES, 
           .insDesc = (const __flash char[]) { "Get_DF_Names" },
-          .insFunc = NULL
+          .insFunc = &DesfireCmdGetDFNames
      },
      {
           .insCode = CMD_GET_KEY_SETTINGS, 
@@ -101,7 +101,7 @@ const __flash DESFireCommand DESFireCommandSet[] = {
      {
           .insCode = CMD_SELECT_APPLICATION, 
           .insDesc = (const __flash char[]) { "Select_Application" },
-          .insFunc = NULL
+          .insFunc = &EV0CmdSelectApplication
      },
      {
           .insCode = CMD_FORMAT_PICC, 
@@ -226,42 +226,42 @@ const __flash DESFireCommand DESFireCommandSet[] = {
      {
           .insCode = CMD_ISO7816_SELECT, 
           .insDesc = (const __flash char[]) { "ISO7816_Select" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdSelect
      },
      {
           .insCode = CMD_ISO7816_GET_CHALLENGE, 
           .insDesc = (const __flash char[]) { "ISO7816_Get_Challenge" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdGetChallenge
      },
      {
           .insCode = CMD_ISO7816_EXTERNAL_AUTHENTICATE, 
           .insDesc = (const __flash char[]) { "ISO7816_External_Authenticate" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdExternalAuthenticate
      },
      {
           .insCode = CMD_ISO7816_INTERNAL_AUTHENTICATE, 
           .insDesc = (const __flash char[]) { "ISO7816_Internal_Authenticate" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdInternalAuthenticate
      },
      {
           .insCode = CMD_ISO7816_READ_BINARY, 
           .insDesc = (const __flash char[]) { "ISO7816_Read_Binary" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdReadBinary
      },
      {
           .insCode = CMD_ISO7816_UPDATE_BINARY, 
           .insDesc = (const __flash char[]) { "ISO7816_Update_Binary" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdUpdateBinary
      },
      {
           .insCode = CMD_ISO7816_READ_RECORDS, 
           .insDesc = (const __flash char[]) { "ISO7816_Read_Records" },
-          .insFunc = NULL
+          .insFunc = &ISO7816CmdReadRecords
      },
      {
           .insCode = CMD_ISO7816_APPEND_RECORD, 
           .insDesc = (const __flash char[]) { "ISO7816_Append_Record" },
-          .insFunc = NULL 
+          .insFunc = &ISO7816CmdAppendRecord
      }
 };
 
@@ -352,9 +352,40 @@ uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    FormatPicc();
+    uint8_t uidBytes[ISO14443A_UID_SIZE_DOUBLE];
+    memcpy(uidBytes, Picc.Uid, ISO14443A_UID_SIZE_DOUBLE);
+    if(IsPiccEV0(Picc)) {
+        FactoryFormatPiccEV0();
+    }
+    else {
+        FactoryFormatPiccEV1(Picc.StorageSize);
+    }
+    memcpy(&Picc.Uid[0], uidBytes, ISO14443A_UID_SIZE_DOUBLE);
     Buffer[0] = STATUS_OPERATION_OK;
     return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount) {
+     memcpy(&Buffer[0], Picc.Uid, ISO14443A_UID_SIZE_DOUBLE);
+     return ISO14443A_UID_SIZE_DOUBLE;
+}
+
+uint16_t DesfireCmdSetConfiguration(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t DesfireCmdFreeMemory(uint8_t *Buffer, uint16_t ByteCount) {
+    // Returns the amount of free space left on the tag in bytes 
+    // Note that this does not account for overhead needed to store 
+    // file structures, so that if N bytes are reported, the actual 
+    // practical working space is less than N:
+    uint16_t cardCapacityBlocks = GetCardCapacityBlocks();
+    cardCapacityBlocks -= Picc.FirstFreeBlock;
+    uint16_t freeMemoryBytes = cardCapacityBlocks * DESFIRE_EEPROM_BLOCK_SIZE;
+    Buffer[0] = (uint8_t) (freeMemoryBytes >> 8);
+    Buffer[1] = (uint8_t) (freeMemoryBytes >> 0);
+    Buffer[2] = STATUS_OPERATION_OK;
+    return DESFIRE_STATUS_RESPONSE_SIZE + 2;
 }
 
 /*
@@ -611,6 +642,10 @@ uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount) { // TODO:
     return DESFIRE_STATUS_RESPONSE_SIZE + 2;
 }
 
+uint16_t DesfireCmdGetKeyVersion(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
 /*
  * DESFire application management commands
  */
@@ -712,6 +747,18 @@ uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount) {
+    // handle a special case with EV1
+    // docs: https://stackoverflow.com/questions/38232695/m4m-mifare-desfire-ev1-which-mifare-aid-needs-to-be-added-to-nfc-routing-table
+    if(ByteCount == 8) {
+        const uint8_t DesfireEV1SelectPICCAid[] = { 0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 };
+        if(!memcmp(&Buffer[1], DesfireEV1SelectPICCAid, sizeof(DesfireEV1SelectPICCAid))) {
+            SelectPiccApp();
+            SynchronizeAppDir();
+            Buffer[0] = STATUS_OPERATION_OK;
+            return DESFIRE_STATUS_RESPONSE_SIZE;
+        }
+    }
+
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -722,6 +769,10 @@ uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount) {
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     Buffer[0] = SelectApp(Aid);
     return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+uint16_t DesfireCmdGetDFNames(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
 }
 
 /*
@@ -1233,7 +1284,34 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
    
 }
 
-uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount) {
-     memcpy(&Buffer[0], Picc.Uid, ISO14443A_UID_SIZE_DOUBLE);
-     return ISO14443A_UID_SIZE_DOUBLE;
+uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdExternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdInternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+}
+
+uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
 }

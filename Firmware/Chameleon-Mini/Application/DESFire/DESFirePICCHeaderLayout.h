@@ -15,6 +15,9 @@ extern const BYTE DefaultDESFireATS[];
 #define DESFIRE_PICC_APP_SLOT          0x00
 #define DESFIRE_MASTER_KEY_ID          0x00
 
+#define DESFIRE_NATIVE_CLA             0x90
+#define DESFIRE_ISO7816_CLA            0x00
+
 /* Storage allocation constants */
 #define DESFIRE_EEPROM_BLOCK_SIZE      32 /* Bytes */
 #define DESFIRE_BYTES_TO_BLOCKS(x) \
@@ -61,6 +64,9 @@ extern const BYTE DefaultDESFireATS[];
 #define DESFIRE_HW_MINOR_EV0     0x01
 #define DESFIRE_SW_MAJOR_EV0     0x00
 #define DESFIRE_SW_MINOR_EV0     0x01
+
+#define IsPiccEV0(picc)          \
+    (picc.HwVersionMajor == DESFIRE_HW_MAJOR_EV0 && picc.SwVersionMajor == DESFIRE_SW_MAJOR_EV0)
 
 /* DESFire EV1 versions */
 #define DESFIRE_HW_MAJOR_EV1     0x01

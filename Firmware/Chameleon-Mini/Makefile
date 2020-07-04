@@ -191,8 +191,7 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S
-ASRC        += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S \
-			$(DESFIRE_MAINSRC)/DESFireCryptoTDEA.S
+ASRC        += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
