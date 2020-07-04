@@ -92,4 +92,16 @@ void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
     strBuffer;                                                  \
     })
 
+#define LogDebuggingMsg(msg)                                                         ({ \
+    char *strBuffer;                                                                    \
+    do {                                                                                \
+         strncpy_P(__InternalStringBuffer, msg, STRING_BUFFER_SIZE);                    \
+         uint8_t sbufLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE); \
+         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, (void *) __InternalStringBuffer,      \
+                  sbufLength);                                                          \
+    } while(0);                                                                         \
+    strBuffer = __InternalStringBuffer;                                                 \
+    strBuffer;                                                                          \
+    })
+
 #endif

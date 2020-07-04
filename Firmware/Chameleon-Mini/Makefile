@@ -110,8 +110,14 @@ SETTINGS	+= -DDESFIRE_MEMORY_LIMITED_TESTING
 
 #Set a minimum incoming/outgoing log size so we do not spam the 
 #Chameleon Mini logs to much by logging everything:
-SETTINGS	+= -DDESFIRE_MIN_INCOMING_LOGSIZE=10
-SETTINGS	+= -DDESFIRE_MIN_OUTGOING_LOGSIZE=10
+SETTINGS	+= -DDESFIRE_MIN_INCOMING_LOGSIZE=2
+SETTINGS	+= -DDESFIRE_MIN_OUTGOING_LOGSIZE=2
+
+#If we are planning on logging mostly to a live debugging console at runtime, 
+#there is *a lot* of data space to be saved by minimizing the LogMem 
+#buffer size. Define the following to optimize this space in the event of 
+#live logging sessions:
+SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING
 
 #Support for some randomization in each custom compiled instantiation of the firmware:
 #RANDOMIZED_DATA_SIZE         = 128

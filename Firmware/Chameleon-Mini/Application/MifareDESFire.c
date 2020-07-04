@@ -166,11 +166,15 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
          (Buffer[0] == ISO14443A_CMD_WUPA) )){
         DesfireFromHalt = (DesfireState == DESFIRE_HALT);
         if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
+            //const char *logMsg = PSTR("Into STATE1_READY mode");
+            //LogDebuggingMsg(logMsg);   
             DesfireState = DESFIRE_STATE1_READY;
             return BitCount;
         }
     } 
     else if(DesfireState == DESFIRE_HALT || DesfireState == DESFIRE_IDLE) {
+        //const char *logMsg = PSTR("Back in HALT | IDLE state");
+        //LogDebuggingMsg(logMsg);
         DesfireFromHalt = (DesfireState == DESFIRE_HALT);
         if(ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, DesfireFromHalt)) {
             DesfireState = DESFIRE_STATE1_READY;
@@ -189,18 +193,18 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             /* Load UID CL1 and perform anticollision */
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
             /* For Longer UIDs indicate that more UID-Bytes follow (-> CL2) */
-            if(ActiveConfiguration.UidSize == ISO14443A_UID_SIZE_DOUBLE) {
-                memcpy(&UidCL1[1], &Picc.Uid[0], ISO14443A_CL_UID_SIZE - 1);
-                UidCL1[0] = ISO14443A_UID0_CT;
-                if(ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_UID_NOT_FINISHED)) {
-                     DesfireState = DESFIRE_STATE2_READY;
-                }
-            } 
+            memcpy(&UidCL1[1], &Picc.Uid[0], ISO14443A_CL_UID_SIZE - 1);
+            UidCL1[0] = ISO14443A_UID0_CT;
+            if(ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_UID_NOT_FINISHED)) {
+                 DesfireState = DESFIRE_STATE2_READY;
+                 //const char *logMsg = PSTR("Passed from STATE1_READY to STATE2_READY");
+                 //LogDebuggingMsg(logMsg);
+            }
             return BitCount;
         } 
         else {
             /* Unknown command. Enter HALT state. */
-            DesfireState = DESFIRE_HALT;
+            //DesfireState = DESFIRE_HALT;
             return ISO14443A_APP_NO_RESPONSE;
         }
     }
@@ -213,14 +217,16 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             /* Load UID CL2 and perform anticollision */
             uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
             memcpy(UidCL2, Picc.Uid + ISO14443A_CL_UID_SIZE, ISO14443A_CL_UID_SIZE);
-            if(ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
+            if(ISO14443ASelect(&Buffer[1], &BitCount, UidCL2, SAK_CL2_VALUE)) {
                 DesfireState = DESFIRE_CMD_READY_ACTIVE;
+                //const char *logMsg = PSTR("Passed from STATE2_READY to CMD_READY_ACTIVE");
+                //LogDebuggingMsg(logMsg);
             }
             return BitCount;
         } 
         else {
             /* Unknown command. Enter HALT state. */
-            DesfireState = DESFIRE_HALT;
+            //DesfireState = DESFIRE_HALT;
             return ISO14443A_APP_NO_RESPONSE;
         }
     }
@@ -229,7 +235,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     uint16_t BitCountCheck = BitCount;
     if(ISO14443AWakeUp(Buffer, &BitCountCheck, ATQA_VALUE, DesfireFromHalt)) {
          DesfireState = DESFIRE_IDLE;
-         return ISO14443A_APP_NO_RESPONSE;
+         eturn ISO14443A_APP_NO_RESPONSE;
     }
     else if(BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
             Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) { // Wrapped native command structure: 
@@ -253,7 +259,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
         }
         return BitCount * BITS_PER_BYTE;
     }
-    else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { // Non-wrapped structure: 
+    else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { 
          return BitCount * BITS_PER_BYTE;
     }
     else {

@@ -3,7 +3,12 @@
 /** @file */
 #include "Common.h"
 
-#define LOG_SIZE	        384 // 2048
+#ifdef DESFIRE_OPTIMIZE_LIVE_LOGGING
+     #define LOG_SIZE           32
+#else
+     #define LOG_SIZE	        128 // 2048
+#endif
+
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
 #define FRAM_LOG_SIZE		0x3FFE // the whole second half (minus the 2 Bytes of Address)

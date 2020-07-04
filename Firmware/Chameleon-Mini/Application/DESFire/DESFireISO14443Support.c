@@ -17,7 +17,7 @@ Iso144434StateType Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
 uint8_t Iso144434BlockNumber = 0x00;
 uint8_t Iso144434CardID = 0x00;
 uint8_t Iso144434LastBlockLength = 0x00;
-uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+//uint8_t Iso144434LastBlock[ISO144434_LAST_BLOCK_SIZE];
 
 void ISO144434SwitchState(Iso144434StateType NewState) {
     Iso144434State = NewState;
@@ -130,8 +130,9 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
             /* 7.5.4.3, rule 11 */
             if ((PCB & ISO14443_PCB_BLOCK_NUMBER_MASK) == MyBlockNumber) {
                 /* NOTE: This already includes the CRC */
-                memmove(&Buffer[0], &Iso144434LastBlock[0], Iso144434LastBlockLength);
-                return Iso144434LastBlockLength;
+                //memmove(&Buffer[0], &Iso144434LastBlock[0], Iso144434LastBlockLength);
+                //return Iso144434LastBlockLength;
+                return ISO14443A_APP_NO_RESPONSE;
             }
             if (PCB & ISO14443_PCB_R_BLOCK_ACKNAK_MASK) {
                 /* 7.5.4.3, rule 12 */
@@ -161,14 +162,14 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount) {
         }
         break;
     }
-    //return ISO14443A_APP_NO_RESPONSE;
+    return ISO14443A_APP_NO_RESPONSE;
 
     /* Stash the block for possible retransmissions */
-    ISO14443AAppendCRCA(Buffer, ByteCount);
+    /*ISO14443AAppendCRCA(Buffer, ByteCount);
     ByteCount += ISO14443A_CRCA_SIZE;
     Iso144434LastBlockLength = ByteCount;
     memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
-    return ByteCount;
+    return ByteCount;*/
 }
 
 /*

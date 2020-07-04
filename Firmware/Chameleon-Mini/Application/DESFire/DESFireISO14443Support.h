@@ -29,8 +29,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 extern Iso144434StateType Iso144434State;
 extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
+
+#define ISO144434_LAST_BLOCK_SIZE (64)
 extern uint8_t Iso144434LastBlockLength;
-extern uint8_t Iso144434LastBlock[CODEC_BUFFER_SIZE];
+//extern uint8_t Iso144434LastBlock[ISO144434_LAST_BLOCK_SIZE];
 
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);
