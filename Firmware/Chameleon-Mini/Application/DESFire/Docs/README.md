@@ -21,6 +21,13 @@ Additionally, the following weblinks and posts clarify some common reference poi
 * [DESFire EV1 communication examples](https://stackoverflow.com/questions/38283998/desfire-ev1-communication-examples)
 * [Explanation of send/receive padding in encrypted transfer modes (with diagrams)](https://github.com/nceruchalu/easypay/blob/master/mifare/mifare_crypto.c#L707)
 
+## DESFire communication examples
+
+* [AES crypto](https://stackoverflow.com/questions/38283998/desfire-ev1-communication-examples)
+* [AES crypto pitfalls (with detailed examples)](https://hack.cert.pl/files/desfire-9f122c71e0057d4f747d2ee295b0f5f6eef8ac32.html)
+* [DESFire examples in Python Gist](https://gist.github.com/dev-zzo/87e0947f3ca0bb6d6baf78dd4d0ecb9c) 
+* [Proxmark response notes](https://github.com/zhovner/proxmark3-1/blob/master/common/protocols.h)
+
 ## ISO7816 Command set implementation hints:
 
 * [External Authenticate](https://stackoverflow.com/questions/34425494/external-authentication-in-desfire-card-with-iso-7816-4-apdus)
