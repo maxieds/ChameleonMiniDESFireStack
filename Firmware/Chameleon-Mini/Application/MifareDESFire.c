@@ -37,7 +37,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         if(ByteCount >= DESFIRE_MIN_INCOMING_LOGSIZE) {
             LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
         }
-        uint16_t ReturnBytes = ProcessNativeDESFireCommand(Buffer, ByteCount);
+        uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
         if(ReturnBytes >= DESFIRE_MIN_OUTGOING_LOGSIZE) {
             LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
         }
@@ -45,7 +45,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Expecting further data here */
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         AbortTransaction();
         DesfireState = DESFIRE_IDLE;

@@ -108,8 +108,6 @@ extern const __flash DESFireCommand DESFireCommandSet[];
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t DefaultReturnValue);
 uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ProcessNativeDESFireCommand(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ProcessISO7816Command(uint8_t *Buffer, uint16_t ByteCount);
 
 /*
  * The following section implements:

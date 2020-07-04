@@ -6,3 +6,11 @@
 /Chameleon-Mini.lss
 /Chameleon-Mini.sym
 /Bin/
+*.d
+*.o
+*.eep
+*.hex
+*.elf
+*.map
+*.lss
+*.sym
