@@ -109,7 +109,7 @@ INLINE bool
 LiveLogTick(void) {
      bool status = LogBlockListBegin == NULL;
      ATOMIC_BLOCK(ATOMIC_FORCEON) {
-          Endpoint_ClearIN();
+          //Endpoint_ClearIN();
           TerminalFlushBuffer();
           LogBlockListNode *logBlockCurrent = LogBlockListBegin;
           while(logBlockCurrent != NULL) {
@@ -117,7 +117,7 @@ LiveLogTick(void) {
               TerminalFlushBuffer();
               logBlockCurrent = logBlockCurrent->nextBlock;
           }
-          Endpoint_ClearOUT();
+          //Endpoint_ClearOUT();
           FreeLogBlocks();
      }
      return status;

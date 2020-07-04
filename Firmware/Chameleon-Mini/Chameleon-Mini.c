@@ -23,6 +23,9 @@ int main(void)
             TerminalTick();
             ButtonTick();
             LogTick();
+            if(GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE) {
+                AtomicLiveLogTick();
+            }
             ApplicationTick();
             CommandLineTick();
             AntennaLevelTick();
