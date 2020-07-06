@@ -1145,6 +1145,8 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+    
     BYTE KeyId, Status;
     BYTE keySize;
     BYTE **Key, **IVBuffer;
@@ -1228,6 +1230,8 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
 
 // TODO: Check the procedure with one of the example links ... 
 uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
+    return CmdNotImplemented(Buffer, ByteCount);
+    
     BYTE KeyId;
     BYTE cryptoKeyType, keySize;
     BYTE **Key, **IVBuffer;

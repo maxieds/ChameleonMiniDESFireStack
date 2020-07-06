@@ -120,7 +120,7 @@ SETTINGS	+= -DDESFIRE_MIN_OUTGOING_LOGSIZE=2
 SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
-SETTINGS	+= -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+#SETTINGS	+= -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
@@ -176,7 +176,6 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
 			$(DESFIRE_MAINSRC)/DESFireCrypto.c \
-			$(DESFIRE_MAINSRC)/DESFireCryptoTests.h \
 			$(DESFIRE_MAINSRC)/DESFireFile.c \
 			$(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
 			$(DESFIRE_MAINSRC)/DESFireInstructions.c \
@@ -195,12 +194,10 @@ CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 			   -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			   -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 			   -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
-			   -D__AVR_ATxmega128A4U__ -fno-jump-tables \
-			   -DFIXED_CONTROL_ENDPOINT_SIZE=8
+			   -D__AVR_ATxmega128A4U__ 
 LD_FLAGS     = $(CC_FLAGS) -lc \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-			   -fno-jump-tables 
 				#-Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
 			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0
 OBJDIR       = Bin

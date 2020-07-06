@@ -32,32 +32,27 @@
 #include <avr/eeprom.h>
 
 #define AES_ROUNDKEY_SIZE      (16)
+#define AES_BLOCK_SIZE         (16)
 
-typedef struct {
+/*typedef struct {
 	uint8_t ks[AES_ROUNDKEY_SIZE];
-} aes_roundkey_t;
-
-typedef struct EEMEM __attribute__((packed)) {
-    aes_roundkey_t key[14+1];
-    /*struct {
-	    aes_roundkey_t EEMEM key[10+1];
-    } aes128_ctx_t;
-    struct {
-	    aes_roundkey_t EEMEM key[12+1];
-    } aes192_ctx_t;
-    struct {
-	    aes_roundkey_t EEMEM key[14+1];
-    } aes256_ctx_t;*/
-} aes_ctx_t;
-
+} aes_roundkey_t;*/
+typedef uint8_t aes_roundkey_t[AES_ROUNDKEY_SIZE];
 extern aes_roundkey_t active_key;
 
-typedef struct EEMEM {
-	aes_roundkey_t key[1]; /* just to avoid the warning */
-} aes_genctx_t;
+/*typedef struct EEMEM __attribute__((packed)) {
+    aes_roundkey_t key[14+1];
+} aes_ctx_t;
+*/
+typedef uint8_t aes_ctx_t[(14+1) * AES_ROUNDKEY_SIZE];
+
+/*typedef struct EEMEM {
+	aes_roundkey_t key[1]; just to avoid the warning
+} aes_genctx_t;*/
+typedef uint8_t aes_genctx_t[AES_ROUNDKEY_SIZE];
 
 typedef struct{
-	uint8_t s[16];
+	uint8_t s[AES_BLOCK_SIZE];
 } aes_cipher_state_t;
 
 #endif

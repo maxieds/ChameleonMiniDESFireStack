@@ -176,25 +176,18 @@ uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize,
           return STATUS_PARAMETER_ERROR;
      }
      uint8_t keySize;
-     uint8_t *paddedKeyBuf;
      DesfireAESCryptoKey cryptoKeyBuf = { 0 };
      if(bufSize > 24 && bufSize <= 32) {
           keySize = 32;
-          paddedKeyBuf = (uint8_t *) cryptoKeyBuf.aes256Key;
-          memcpy(paddedKeyBuf, initKeyBuffer, bufSize);
-          aes256_init(paddedKeyBuf, cryptoCtx);
+          aes256_init(initKeyBuffer, cryptoCtx);
      }
      else if(bufSize > 16 && bufSize <= 24) {
           keySize = 24;
-          paddedKeyBuf = (uint8_t *) cryptoKeyBuf.aes192Key;
-          memcpy(paddedKeyBuf, initKeyBuffer, bufSize);
-          aes192_init(paddedKeyBuf, cryptoCtx);
+          aes192_init(initKeyBuffer, cryptoCtx);
      }
      else {
           keySize = 16;
-          paddedKeyBuf = (uint8_t *) cryptoKeyBuf.aes128Key;
-          memcpy(paddedKeyBuf, initKeyBuffer, bufSize);
-          aes128_init(paddedKeyBuf, cryptoCtx);
+          aes128_init(initKeyBuffer, cryptoCtx);
      }
      AESCryptoKeySizeBytes = keySize;
      return STATUS_OPERATION_OK;
@@ -219,38 +212,6 @@ void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSr
      memcpy(encDestBuf, inputBlock, CRYPTO_AES_BLOCK_SIZE);
 }
 
-uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
-                                uint8_t *encDestBuf, uint16_t bufSize) {
-     if(cryptoCtx == NULL || plainSrcBuf == NULL || encDestBuf == NULL) {
-          return STATUS_PARAMETER_ERROR;
-     }
-     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(bufSize, CRYPTO_AES_BLOCK_SIZE);
-     uint16_t blockIndex = 0;
-     uint8_t *ptBuf = (uint8_t *) plainSrcBuf, *ctBuf = (uint8_t *) encDestBuf;
-     uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
-     bool lastBlockPadding = false;
-     if(numBlocks * CRYPTO_AES_BLOCK_SIZE > bufSize) {
-          lastBlockPadding = true;
-     }
-     while(blockIndex < numBlocks) {
-         if(blockIndex + 1 == numBlocks && lastBlockPadding) {
-             uint8_t bytesInBuffer = bufSize - (numBlocks - 1) * CRYPTO_AES_BLOCK_SIZE;
-             CryptoPaddingTDEA(ptBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, bytesInBuffer, false);
-         }
-         if(blockIndex) {
-              memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
-              memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_AES_BLOCK_SIZE);
-         }
-         else {
-              memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
-         }
-         DesfireAESEncryptBlock(cryptoCtx, plainSrcBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, 
-                                encDestBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE);
-         blockIndex++;
-     }
-     return STATUS_OPERATION_OK;
-}
-
 void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf) {
      uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
      memcpy(inputBlock, encSrcBuf, CRYPTO_AES_BLOCK_SIZE);
@@ -268,30 +229,6 @@ void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcB
                break;
      }
      memcpy(plainDestBuf, inputBlock, CRYPTO_AES_BLOCK_SIZE);
-}
-
-uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, 
-                                uint8_t *encSrcBuf, uint8_t *plainDestBuf, uint16_t bufSize) {
-          if(cryptoCtx == NULL || encSrcBuf == NULL || plainDestBuf == NULL) {
-          return STATUS_PARAMETER_ERROR;
-     }
-     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(bufSize, CRYPTO_AES_BLOCK_SIZE);
-     uint16_t blockIndex = 0;
-     uint8_t *ptBuf = (uint8_t *) plainDestBuf, *ctBuf = (uint8_t *) encSrcBuf;
-     uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
-     while(blockIndex < numBlocks) {
-         if(blockIndex) {
-              memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
-              memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_AES_BLOCK_SIZE);
-         }
-         else {
-              memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
-         }
-         DesfireAESDecryptBlock(cryptoCtx, encSrcBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, 
-                                plainDestBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE);
-         blockIndex++;
-     }
-     return STATUS_OPERATION_OK;
 }
 
 uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
@@ -575,32 +512,6 @@ void CryptoEncrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys)
     des_enc(Ciphertext, tempBlock, Keys);
 }
 
-void CryptoEncryptBuffer2KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
-    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_DES_BLOCK_SIZE);
-    uint16_t blockIndex = 0;
-    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-    uint8_t inputBlock[CRYPTO_3KTDEA_BLOCK_SIZE];
-    bool lastBlockPadding = false;
-    if(numBlocks * CRYPTO_DES_BLOCK_SIZE > numBytes) {
-         lastBlockPadding = true;
-    }
-    while(blockIndex < numBlocks) {
-        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
-            uint8_t bytesInBuffer = numBytes - (numBlocks - 1) * CRYPTO_DES_BLOCK_SIZE;
-            CryptoPaddingTDEA(ptBuf + blockIndex * CRYPTO_DES_BLOCK_SIZE, bytesInBuffer, false);
-        }
-        if(blockIndex) {
-             memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
-             memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_2KTDEA_BLOCK_SIZE);
-        }
-        else {
-             memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
-        }
-        CryptoEncrypt2KTDEA(inputBlock, ctBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, Keys);
-        blockIndex++;
-    }
-}
-
 void CryptoDecrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
     uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
     des_dec(tempBlock, Ciphertext, Keys);
@@ -609,71 +520,12 @@ void CryptoDecrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys)
     des_dec(Plaintext, tempBlock, Keys);
 }
 
-void CryptoDecryptBuffer2KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
-    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_DES_BLOCK_SIZE);
-    uint16_t blockIndex = 0;
-    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-    uint8_t inputBlock[CRYPTO_2KTDEA_BLOCK_SIZE];
-    while(blockIndex < numBlocks) {
-        if(blockIndex) {
-            memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
-            memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_2KTDEA_BLOCK_SIZE);
-        }
-        else {
-            memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
-        }
-        CryptoDecrypt2KTDEA(ptBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, inputBlock, Keys);
-        blockIndex++;
-    }
-}
-
 void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
     tdes_enc(Ciphertext, Plaintext, Keys);
 }
 
-void CryptoEncryptBuffer3KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
-    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_3KTDEA_BLOCK_SIZE);
-    uint16_t blockIndex = 0;
-    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-    uint8_t inputBlock[CRYPTO_3KTDEA_BLOCK_SIZE];
-    bool lastBlockPadding = false;
-    if(numBlocks * CRYPTO_3KTDEA_BLOCK_SIZE > numBytes) {
-         lastBlockPadding = true;
-    }
-    while(blockIndex < numBlocks) {
-        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
-            uint8_t bytesInBuffer = numBytes - (numBlocks - 1) * CRYPTO_3KTDEA_BLOCK_SIZE;
-            CryptoPaddingTDEA(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, bytesInBuffer, false);
-        }
-        if(blockIndex) {
-             memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
-             memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE);
-        }
-        else {
-             memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
-        }
-        CryptoEncrypt3KTDEA(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
-        blockIndex++;
-    }
-}
-
 void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
     tdes_dec(Plaintext, Ciphertext, Keys);
-}
-
-void CryptoDecryptBuffer3KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBytes, const uint8_t *Keys) {
-    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(numBytes, CRYPTO_3KTDEA_BLOCK_SIZE);
-    uint16_t blockIndex = 0;
-    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-    uint8_t inputBlock[CRYPTO_3KTDEA_BLOCK_SIZE];
-    while(blockIndex < numBlocks) {
-        CryptoDecrypt3KTDEA(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
-        if(blockIndex) {
-            memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE);
-        }
-        memcpy(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
-        blockIndex++;
-    }
 }
 
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C

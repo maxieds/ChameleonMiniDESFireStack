@@ -136,11 +136,7 @@ uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, BYTE keySizeBytes)
 uint16_t GetPaddedBufferSize(uint16_t bufSize);
 uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
 void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
-uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
-                                uint8_t *encDestBuf, uint16_t bufSize);
 void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
-uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
-                                uint8_t *plainDestBuf, uint16_t bufSize);
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 
@@ -245,9 +241,7 @@ void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
 void CryptoEncrypt2KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoEncryptBuffer2KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
 void CryptoDecrypt2KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoDecryptBuffer2KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
  *
@@ -276,9 +270,7 @@ void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphe
                                     void *IV, const uint8_t* Keys);
 
 void CryptoEncrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoEncryptBuffer3KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
 void CryptoDecrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoDecryptBuffer3KTDEA(void* Plaintext, void* Ciphertext, uint16_t numBytes, const uint8_t* Keys);
 
 /** Performs the 3-key Triple DES en/deciphering in the CBC "send" or "receive" mode
  *

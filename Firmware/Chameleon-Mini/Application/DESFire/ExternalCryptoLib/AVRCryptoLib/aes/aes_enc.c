@@ -85,7 +85,7 @@ void aes_enc_round(aes_cipher_state_t *state, const aes_roundkey_t *k){
 
 	/* addKey */
 	for(i=0; i<16; ++i){
-		state->s[i] ^= k->ks[i];
+		state->s[i] ^= (*k)[i];
 	}
 }
 
@@ -103,25 +103,22 @@ void aes_enc_lastround(aes_cipher_state_t *state,const aes_roundkey_t *k){
 	aes_shiftcol(state->s+3, 3);
 	/* keyAdd */
 	for(i=0; i<16; ++i){
-		state->s[i] ^= k->ks[i];
+		state->s[i] ^= (*k)[i];
 	}
 }
 
 void aes_encrypt_core(aes_cipher_state_t *state, aes_genctx_t *ks, uint8_t rounds){
 	uint8_t i;
-	eeprom_read_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
+	eeprom_read_block(active_key, *ks, AES_ROUNDKEY_SIZE);
     for(i=0; i<16; ++i){
-		state->s[i] ^= active_key.ks[i];
+		state->s[i] ^= active_key[i];
 	}
-    eeprom_write_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
 	i=1;
 	for(;rounds>1;--rounds){
-		eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+		eeprom_read_block(active_key, &(*ks)[i * AES_ROUNDKEY_SIZE], AES_ROUNDKEY_SIZE);
         aes_enc_round(state, &active_key);
-		eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
         ++i;
 	}
-    eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+    eeprom_read_block(active_key, &(*ks)[i * AES_ROUNDKEY_SIZE], AES_ROUNDKEY_SIZE);
 	aes_enc_lastround(state, &active_key);
-    eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 }

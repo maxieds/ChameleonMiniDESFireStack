@@ -52,7 +52,7 @@ void aes_dec_round(aes_cipher_state_t *state, const aes_roundkey_t *k){
 	uint8_t t,u,v,w;
 	/* keyAdd */
 	for(i=0; i<16; ++i){
-		tmp[i] = state->s[i] ^ k->ks[i];
+		tmp[i] = state->s[i] ^ (*k)[i];
 	}
 	/* mixColums */
 	for(i=0; i<4; ++i){
@@ -106,7 +106,7 @@ void aes_dec_firstround(aes_cipher_state_t *state, const aes_roundkey_t *k){
 	uint8_t i;
 	/* keyAdd */
 	for(i=0; i<16; ++i){
-		state->s[i] ^= k->ks[i];
+		state->s[i] ^= (*k)[i];
 	}
 	/* shiftRows */
 	aes_invshiftcol(state->s+1, 1);
@@ -120,18 +120,15 @@ void aes_dec_firstround(aes_cipher_state_t *state, const aes_roundkey_t *k){
 
 void aes_decrypt_core(aes_cipher_state_t *state, aes_genctx_t *ks, uint8_t rounds){
 	uint8_t i;
-	eeprom_read_block(&active_key, &(ks->key[i=rounds]), AES_ROUNDKEY_SIZE);
+	eeprom_read_block(active_key, (*ks)[i=rounds], AES_ROUNDKEY_SIZE);
     aes_dec_firstround(state, &active_key);
-	eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
     for(;rounds>1;--rounds){
 		--i;
-		eeprom_read_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
+		eeprom_read_block(active_key, (*ks)[i], AES_ROUNDKEY_SIZE);
         aes_dec_round(state, &active_key);
-        eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 	}
-	eeprom_read_block(&active_key, &(ks->key[0]), AES_ROUNDKEY_SIZE);
+	eeprom_read_block(active_key, *ks, AES_ROUNDKEY_SIZE);
 	for(i=0; i<16; ++i){
-        state->s[i] ^= active_key.ks[i];
+        state->s[i] ^= active_key[i];
 	}
-    eeprom_write_block(&active_key, &(ks->key[i]), AES_ROUNDKEY_SIZE);
 }
