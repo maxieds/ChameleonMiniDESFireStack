@@ -15,10 +15,7 @@
 #include "DESFireMemoryOperations.h"
 #include "DESFireUtils.h"
 #include "DESFireCrypto.h"
-
-const BYTE DefaultDESFireATS[] = { 
-     0x06, 0x75, 0x77, 0x81, 0x02, 0x80 
-};
+#include "DESFireCryptoTests.h"
 
 BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(sizeof(SelectedAppCacheType));
 BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
@@ -170,7 +167,10 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
  */
 
 void InitialisePiccBackendEV0(uint8_t StorageSize) {
-    /* Init backend junk */
+    #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+        RunCryptoUnitTests();
+    #endif
+    /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
@@ -186,7 +186,10 @@ void InitialisePiccBackendEV0(uint8_t StorageSize) {
 }
 
 void InitialisePiccBackendEV1(uint8_t StorageSize) {
-    /* Init backend junk */
+    #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+        RunCryptoUnitTests();
+    #endif
+    /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));

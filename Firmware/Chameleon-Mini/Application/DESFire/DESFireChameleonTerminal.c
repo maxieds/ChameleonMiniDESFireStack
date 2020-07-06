@@ -110,7 +110,10 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
                 PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
                      "based on %s from "
                      "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.git.\n"
-                     "Revision: %s\nLicense: GPLv3"), 
+                     "Revision: %s\nLicense: GPLv3\n" 
+                     "This is free software; see the source for copying conditions. "
+                     "There is NO warranty; not even for MERCHANTABILITY nor "
+                     "FITNESS FOR A PARTICULAR PURPOSE."), 
                 DESFIRE_FIRMWARE_BUILD_TIMESTAMP, 
                 DESFIRE_FIRMWARE_GIT_COMMIT_ID, 
                 DESFIRE_FIRMWARE_REVISION);

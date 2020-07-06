@@ -21,7 +21,7 @@ typedef bool (*UnitTestResultFunc)(uint8_t *errorResultBuf, uint8_t *bufSize);
 
 INLINE bool DiffCryptoResult(const uint8_t *bufData, const uint8_t *cmpBuf, uint8_t bufSize);
 INLINE bool RunUnitTest(const char *pstrTestDesc, UnitTestResultFunc unitTestRunnerFunc);
-INLINE bool RunUnitTests(void);
+INLINE bool RunCryptoUnitTests(void);
 
 INLINE bool TestDesfire2KTDEA(uint8_t *errorResultBuf, uint8_t *bufSize);
 INLINE bool TestDesfire3K3DES(uint8_t *errorResultBuf, uint8_t *bufSize);
@@ -46,22 +46,22 @@ RunUnitTest(const char *pstrTestDesc, UnitTestResultFunc unitTestRunnerFunc) {
         strcat_P(__InternalStringBuffer, PSTR("[TEST] "));
         strncat_P(__InternalStringBuffer, pstrTestDesc, STRING_BUFFER_SIZE - 7);
         printResultLogSize = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);
-        strncat_P(__InternalStringBuffer, PSTR("... "), STRING_BUFFER_SIZE - printResultSize);
+        strncat_P(__InternalStringBuffer, PSTR("... "), STRING_BUFFER_SIZE - printResultLogSize);
         printResultLogSize = MIN(printResultLogSize + 4, STRING_BUFFER_SIZE);
         if(errorBufSize) {
-            uint16_t numBytesAppended = BufferToHexString(__InternalStringBuffer + printResultSize, 
-                                                          STRING_BUFFER_SIZE - printResultSize, 
+            uint16_t numBytesAppended = BufferToHexString(__InternalStringBuffer + printResultLogSize, 
+                                                          STRING_BUFFER_SIZE - printResultLogSize, 
                                                           errorResultBuf, errorBufSize);
-            printResultSize = MIN(printResultSize + numBytesAppended, STRING_BUFFER_SIZE);
+            printResultLogSize = MIN(printResultLogSize + numBytesAppended, STRING_BUFFER_SIZE);
         }
-        DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, printResultSize);
+        DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, printResultLogSize);
     }
     return unitTestPassed;
 
 }
 
 INLINE bool
-RunUnitTests(void) {
+RunCryptoUnitTests(void) {
      UnitTestResultFunc unitTestRunnerFuncs[] = {
          &TestDesfire2KTDEA, 
          &TestDesfire3K3DES, 
@@ -75,7 +75,7 @@ RunUnitTests(void) {
      uint8_t numUnitTests = sizeof(unitTestRunnerFuncs) / sizeof(UnitTestResultFunc);
      uint8_t utIndex = 0x00;
      while(utIndex < numUnitTests) {
-          if(!RunUnitTest(unitTestDescs[utIndex], unitTestRunnerFunc[utIndex])) {
+          if(!RunUnitTest(unitTestDescs[utIndex], unitTestRunnerFuncs[utIndex])) {
               return false;
           }
           utIndex++;
@@ -113,7 +113,7 @@ INLINE bool TestDesfire2KTDEA(uint8_t *errorResultBuf, uint8_t *bufSize) {
               *bufSize = 0;
           }
           else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
+              memcpy(errorResultBuf, cryptoResult, cryptoDataByteCount);
               *bufSize = cryptoDataByteCount;
           }
           return false;
@@ -124,7 +124,7 @@ INLINE bool TestDesfire2KTDEA(uint8_t *errorResultBuf, uint8_t *bufSize) {
               *bufSize = 0;
           }
           else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
+              memcpy(errorResultBuf, cryptoResult, cryptoDataByteCount);
               *bufSize = cryptoDataByteCount;
           }
           return false;
@@ -162,7 +162,7 @@ INLINE bool TestDesfire3K3DES(uint8_t *errorResultBuf, uint8_t *bufSize) {
               *bufSize = 0;
           }
           else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
+              memcpy(errorResultBuf, cryptoResult, cryptoDataByteCount);
               *bufSize = cryptoDataByteCount;
           }
           return false;
@@ -173,7 +173,7 @@ INLINE bool TestDesfire3K3DES(uint8_t *errorResultBuf, uint8_t *bufSize) {
               *bufSize = 0;
           }
           else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
+              memcpy(errorResultBuf, cryptoResult, cryptoDataByteCount);
               *bufSize = cryptoDataByteCount;
           }
           return false;
@@ -210,7 +210,7 @@ INLINE bool TestDesfireAES128(uint8_t *errorResultBuf, uint8_t *bufSize) {
               *bufSize = 0;
           }
           else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
+              memcpy(errorResultBuf, cryptoResult, cryptoDataByteCount);
               *bufSize = cryptoDataByteCount;
           }
           return false;
@@ -221,83 +221,7 @@ INLINE bool TestDesfireAES128(uint8_t *errorResultBuf, uint8_t *bufSize) {
               *bufSize = 0;
           }
           else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
-              *bufSize = cryptoDataByteCount;
-          }
-          return false;
-     }
-     *bufSize = 0;
-     return true;
-
-}
-
-INLINE bool TestDesfireAES192(uint8_t *errorResultBuf, uint8_t *bufSize) {
-
-     const uint8_t cryptoDataByteCount = 3 * CRYPTO_DES_BLOCK_SIZE;
-     const uint8_t keyData[CRYPTO_2KTDEA_KEY_SIZE] = { 
-     };
-     const uint8_t cryptoGramData[] = {
-     };
-     const uint8_t cryptoGramEncData[] = {
-     };
-     uint8_t cryptoResult[cryptoDataByteCount];
-
-     CryptoEncryptBuffer2KTDEA(cryptoGramData, cryptoResult, cryptoDataByteCount, keyData);
-     if(!DiffCryptoResult(cryptoGramEncData, cryptoResult, cryptoDataByteCount)) {
-          if(*bufSize < cryptoDataByteCount) {
-              *bufSize = 0;
-          }
-          else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
-              *bufSize = cryptoDataByteCount;
-          }
-          return false;
-     }
-     CryptoDecryptBuffer2KTDEA(cryptoResult, cryptoGramEncData, cryptoDataByteCount, keyData);
-     if(!DiffCryptoResult(cryptoGramData, cryptoResult, cryptoDataByteCount)) {
-          if(*bufSize < cryptoDataByteCount) {
-              *bufSize = 0;
-          }
-          else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
-              *bufSize = cryptoDataByteCount;
-          }
-          return false;
-     }
-     *bufSize = 0;
-     return true;
-
-}
-
-INLINE bool TestDesfireAES256(uint8_t *errorResultBuf, uint8_t *bufSize) {
-
-     const uint8_t cryptoDataByteCount = 3 * CRYPTO_DES_BLOCK_SIZE;
-     const uint8_t keyData[CRYPTO_2KTDEA_KEY_SIZE] = { 
-     };
-     const uint8_t cryptoGramData[] = {
-     };
-     const uint8_t cryptoGramEncData[] = {
-     };
-     uint8_t cryptoResult[cryptoDataByteCount];
-
-     CryptoEncryptBuffer2KTDEA(cryptoGramData, cryptoResult, cryptoDataByteCount, keyData);
-     if(!DiffCryptoResult(cryptoGramEncData, cryptoResult, cryptoDataByteCount)) {
-          if(*bufSize < cryptoDataByteCount) {
-              *bufSize = 0;
-          }
-          else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
-              *bufSize = cryptoDataByteCount;
-          }
-          return false;
-     }
-     CryptoDecryptBuffer2KTDEA(cryptoResult, cryptoGramEncData, cryptoDataByteCount, keyData);
-     if(!DiffCryptoResult(cryptoGramData, cryptoResult, cryptoDataByteCount)) {
-          if(*bufSize < cryptoDataByteCount) {
-              *bufSize = 0;
-          }
-          else {
-              memcpy(errorResultBuffer, cryptoResult, cryptoDataByteCount);
+              memcpy(errorResultBuf, cryptoResult, cryptoDataByteCount);
               *bufSize = cryptoDataByteCount;
           }
           return false;

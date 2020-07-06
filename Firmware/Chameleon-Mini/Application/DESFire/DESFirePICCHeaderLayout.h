@@ -92,6 +92,9 @@ extern const BYTE DefaultDESFireATS[];
 //     HCE_MIFARE_2GO                     = 0xa1, 
 // } DESFireHWProductCodes;
 //
+// const BYTE DefaultDESFireATS[] = { 
+//     0x06, 0x75, 0x77, 0x81, 0x02, 0x80
+// };
 // const BYTE DefaultJCOPDESFireATS[] = {
 //     0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80
 // };
