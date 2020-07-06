@@ -135,8 +135,10 @@ void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
 uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, BYTE keySizeBytes);
 uint16_t GetPaddedBufferSize(uint16_t bufSize);
 uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
+void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
 uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
                                 uint8_t *encDestBuf, uint16_t bufSize);
+void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
 uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
                                 uint8_t *plainDestBuf, uint16_t bufSize);
 
@@ -149,6 +151,17 @@ uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
 
 typedef void (*CryptoAESCBCFuncType)(uint16_t, const void*, void*, void*, DesfireAESCryptoContext*);
+typedef void (*CryptoAESFuncType)(DesfireAESCryptoContext*, const void *PlainText, void *Ciphertext);
+
+typedef struct {
+    CryptoAESFuncType cryptFunc;
+    uint16_t           blockSize;
+} CryptoAES_CBCSpec;
+
+void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                        void *IV, DesfireAESCryptoContext *cryptoContext, CryptoAES_CBCSpec CryptoSpec);
+void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,               
+                        void *IV, DesfireAESCryptoContext *cryptoContext, CryptoAES_CBCSpec CryptoSpec);
 
 void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
                               void *IV, DesfireAESCryptoContext *AESCryptoContextData);

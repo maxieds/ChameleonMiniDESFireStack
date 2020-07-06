@@ -200,60 +200,96 @@ uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize,
      return STATUS_OPERATION_OK;
 }
 
+void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf) {
+     uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
+     memcpy(inputBlock, plainSrcBuf, CRYPTO_AES_BLOCK_SIZE);
+     switch(AESCryptoKeySizeBytes) {
+          case 16:
+               aes128_enc(inputBlock, cryptoCtx);
+               break;
+          case 24:
+               aes192_enc(inputBlock, cryptoCtx);
+               break;
+          case 32:
+               aes256_enc(inputBlock, cryptoCtx);
+               break;
+          default:
+               break;
+     }
+     memcpy(encDestBuf, inputBlock, CRYPTO_AES_BLOCK_SIZE);
+}
+
 uint8_t DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
                                 uint8_t *encDestBuf, uint16_t bufSize) {
      if(cryptoCtx == NULL || plainSrcBuf == NULL || encDestBuf == NULL) {
           return STATUS_PARAMETER_ERROR;
      }
-     else if((bufSize % CRYPTO_AES_BLOCK_SIZE) != 0) {
-          return STATUS_PARAMETER_ERROR;
+     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(bufSize, CRYPTO_AES_BLOCK_SIZE);
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) plainSrcBuf, *ctBuf = (uint8_t *) encDestBuf;
+     uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
+     bool lastBlockPadding = false;
+     if(numBlocks * CRYPTO_AES_BLOCK_SIZE > bufSize) {
+          lastBlockPadding = true;
      }
-     uint8_t encBlockData[CRYPTO_AES_BLOCK_SIZE];
-     for(int blockOffset = 0; blockOffset < bufSize / CRYPTO_AES_BLOCK_SIZE; blockOffset += CRYPTO_AES_BLOCK_SIZE) {
-          memcpy(encBlockData, plainSrcBuf + blockOffset, CRYPTO_AES_BLOCK_SIZE);
-          switch(AESCryptoKeySizeBytes) {
-               case 16:
-                    aes128_enc(encBlockData, cryptoCtx);
-                    break;
-               case 24:
-                    aes192_enc(encBlockData, cryptoCtx);
-                    break;
-               case 32:
-                    aes256_enc(encBlockData, cryptoCtx);
-                    break;
-               default:
-                    return STATUS_NO_SUCH_KEY;
-          }
-          memcpy(encDestBuf + blockOffset, encBlockData, CRYPTO_AES_BLOCK_SIZE);
+     while(blockIndex < numBlocks) {
+         if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+             uint8_t bytesInBuffer = bufSize - (numBlocks - 1) * CRYPTO_AES_BLOCK_SIZE;
+             CryptoPaddingTDEA(ptBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, bytesInBuffer, false);
+         }
+         if(blockIndex) {
+              memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
+              memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_AES_BLOCK_SIZE);
+         }
+         else {
+              memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
+         }
+         DesfireAESEncryptBlock(cryptoCtx, plainSrcBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, 
+                                encDestBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE);
+         blockIndex++;
      }
      return STATUS_OPERATION_OK;
 }
 
+void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf) {
+     uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
+     memcpy(inputBlock, encSrcBuf, CRYPTO_AES_BLOCK_SIZE);
+     switch(AESCryptoKeySizeBytes) {
+          case 16:
+               aes128_dec(inputBlock, cryptoCtx);
+               break;
+          case 24:
+               aes192_dec(inputBlock, cryptoCtx);
+               break;
+          case 32:
+               aes256_dec(inputBlock, cryptoCtx);
+               break;
+          default:
+               break;
+     }
+     memcpy(plainDestBuf, inputBlock, CRYPTO_AES_BLOCK_SIZE);
+}
+
 uint8_t DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, 
                                 uint8_t *encSrcBuf, uint8_t *plainDestBuf, uint16_t bufSize) {
-     if(cryptoCtx == NULL || encSrcBuf == NULL || plainDestBuf == NULL) {
+          if(cryptoCtx == NULL || encSrcBuf == NULL || plainDestBuf == NULL) {
           return STATUS_PARAMETER_ERROR;
      }
-     else if((bufSize % CRYPTO_AES_BLOCK_SIZE) != 0) {
-          return STATUS_PARAMETER_ERROR;
-     }
-     uint8_t decBlockData[CRYPTO_AES_BLOCK_SIZE];
-     for(int blockOffset = 0; blockOffset < bufSize / CRYPTO_AES_BLOCK_SIZE; blockOffset += CRYPTO_AES_BLOCK_SIZE) {
-          memcpy(decBlockData, encSrcBuf + blockOffset, CRYPTO_AES_BLOCK_SIZE);
-          switch(AESCryptoKeySizeBytes) {
-               case 16:
-                    aes128_dec(decBlockData, cryptoCtx);
-                    break;
-               case 24:
-                    aes192_dec(decBlockData, cryptoCtx);
-                    break;
-               case 32:
-                    aes256_dec(decBlockData, cryptoCtx);
-                    break;
-               default:
-                    return STATUS_NO_SUCH_KEY;
-          }
-          memcpy(plainDestBuf + blockOffset, decBlockData, CRYPTO_AES_BLOCK_SIZE);
+     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(bufSize, CRYPTO_AES_BLOCK_SIZE);
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) plainDestBuf, *ctBuf = (uint8_t *) encSrcBuf;
+     uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
+     while(blockIndex < numBlocks) {
+         if(blockIndex) {
+              memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
+              memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_AES_BLOCK_SIZE);
+         }
+         else {
+              memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
+         }
+         DesfireAESDecryptBlock(cryptoCtx, encSrcBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE, 
+                                plainDestBuf + blockIndex * CRYPTO_AES_BLOCK_SIZE);
+         blockIndex++;
      }
      return STATUS_OPERATION_OK;
 }
@@ -297,20 +333,94 @@ uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
      return STATUS_OPERATION_OK;
 }
 
+// This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
+void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
+                       void *IV, DesfireAESCryptoContext *AESCryptoContextData, 
+                       CryptoAES_CBCSpec CryptoSpec) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+    bool lastBlockPadding = false;
+    if(numBlocks * CryptoSpec.blockSize > Count) {
+         lastBlockPadding = true;
+    }
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
+        }
+        memcpy(tempBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memcpy(ivBlock, IV, CryptoSpec.blockSize);
+        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
+        CryptoSpec.cryptFunc(AESCryptoContextData, ivBlock, tempBlock);
+        memcpy(IV + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        blockIndex++;
+    }
+}
+
+// This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
+void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
+                       void *IV, DesfireAESCryptoContext *AESCryptoContextData, 
+                       CryptoAES_CBCSpec CryptoSpec) {
+    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+    bool lastBlockPadding = false;
+    if(numBlocks * CryptoSpec.blockSize > Count) {
+         lastBlockPadding = true;
+    }
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
+        }
+        memcpy(ivBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        CryptoSpec.cryptFunc(AESCryptoContextData, ivBlock, tempBlock);
+        memcpy(ivBlock, IV, CryptoSpec.blockSize);
+        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
+        memcpy(IV, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
+        blockIndex++;
+    }
+}
+
 void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
                               void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
+     CryptoAES_CBCSpec CryptoSpec = {
+         .cryptFunc   = &DesfireAESEncryptBlock,
+         .blockSize   = CRYPTO_AES_BLOCK_SIZE
+     };
+     CryptoAES_CBCSend(Count, PlainText, CipherText, IV, AESCryptoContextData, CryptoSpec);
 }
 
 void CryptoDecryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
                               void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
+     CryptoAES_CBCSpec CryptoSpec = {
+         .cryptFunc   = &DesfireAESDecryptBlock,
+         .blockSize   = CRYPTO_AES_BLOCK_SIZE
+     };
+     CryptoAES_CBCSend(Count, CipherText, PlainText, IV, AESCryptoContextData, CryptoSpec);
 }
 
 void CryptoEncryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
                                  void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
+     CryptoAES_CBCSpec CryptoSpec = {
+         .cryptFunc   = &DesfireAESEncryptBlock,
+         .blockSize   = CRYPTO_AES_BLOCK_SIZE
+     };
+     CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, AESCryptoContextData, CryptoSpec);
 }
 
 void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
                                  void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
+     CryptoAES_CBCSpec CryptoSpec = {
+         .cryptFunc   = &DesfireAESDecryptBlock,
+         .blockSize   = CRYPTO_AES_BLOCK_SIZE
+     };
+     CryptoAES_CBCRecv(Count, CipherText, PlainText, IV, AESCryptoContextData, CryptoSpec);
 }
 
 BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx) {
@@ -481,10 +591,10 @@ void CryptoEncryptBuffer2KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBy
         }
         if(blockIndex) {
              memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
-             memxor(inputBlock, ptBuf + (blockIndex - 1) * CRYPTO_2KTDEA_BLOCK_SIZE);
+             memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_2KTDEA_BLOCK_SIZE);
         }
         else {
-             memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
+             memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, CRYPTO_2KTDEA_BLOCK_SIZE);
         }
         CryptoEncrypt2KTDEA(inputBlock, ctBuf + blockIndex * CRYPTO_2KTDEA_BLOCK_SIZE, Keys);
         blockIndex++;
@@ -537,10 +647,10 @@ void CryptoEncryptBuffer3KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBy
         }
         if(blockIndex) {
              memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
-             memxor(inputBlock, ptBuf + (blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE);
+             memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE);
         }
         else {
-             memcpy(inputBlock, ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
+             memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
         }
         CryptoEncrypt3KTDEA(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
         blockIndex++;
@@ -557,14 +667,11 @@ void CryptoDecryptBuffer3KTDEA(void *Plaintext, void *Ciphertext, uint16_t numBy
     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
     uint8_t inputBlock[CRYPTO_3KTDEA_BLOCK_SIZE];
     while(blockIndex < numBlocks) {
+        CryptoDecrypt3KTDEA(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
         if(blockIndex) {
-            memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
             memxor(inputBlock, ctBuf + (blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE);
         }
-        else {
-            memcpy(inputBlock, ctBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
-        }
-        CryptoDecrypt3KTDEA(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, inputBlock, Keys);
+        memcpy(ptBuf + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
         blockIndex++;
     }
 }
@@ -586,16 +693,16 @@ void CryptoTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
             CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
         }
         memcpy(tempBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
-        memcpy(ivBlock, IV + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memcpy(ivBlock, IV, CryptoSpec.blockSize);
         memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
         CryptoSpec.cryptFunc(ivBlock, tempBlock, Keys);
-        memcpy(IV + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        memcpy(IV, tempBlock, CryptoSpec.blockSize);
         memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
         blockIndex++;
     }
 }
 
-// This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = C
+// This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
 void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
                         void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
@@ -613,9 +720,9 @@ void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
         }
         memcpy(ivBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
         CryptoSpec.cryptFunc(ivBlock, tempBlock, CryptoSpec.blockSize);
-        memcpy(ivBlock, IV + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memcpy(ivBlock, IV, CryptoSpec.blockSize);
         memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
-        memcpy(IV + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
+        memcpy(IV, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
         memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
         blockIndex++;
     }

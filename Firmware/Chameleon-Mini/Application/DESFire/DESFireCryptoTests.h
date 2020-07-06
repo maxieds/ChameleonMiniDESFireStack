@@ -67,19 +67,19 @@ RunCryptoUnitTests(void) {
 #if 0
 INLINE bool TestDesfire2KTDEA(uint8_t *errorResultBuf, uint8_t *bufSize) {
 
-     uint8_t cryptoDataByteCount = CRYPTO_DES_BLOCK_SIZE;
+     uint8_t cryptoDataByteCount = 2 * CRYPTO_DES_BLOCK_SIZE;
      uint8_t keyData[CRYPTO_2KTDEA_KEY_SIZE] = { 
          0xB4, 0x28, 0x2E, 0xFA, 0x9E, 0xB8, 0x2C, 0xAE, 
          0xB4, 0x28, 0x2E, 0xFA, 0x9E, 0xB8, 0x2C, 0xAE
      };
      uint8_t cryptoGramData[] = {
          0x00, 0x10, 0x20, 0x31, 0x40, 0x50, 0x60, 0x70, 
-         //0x80, 0x90, 0xA0, 0xB0, 0xB0, 0xA0, 0x90, 0x80, 
+         0x80, 0x90, 0xA0, 0xB0, 0xB0, 0xA0, 0x90, 0x80, 
          //0xC5, 0xFF, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00
      };
      uint8_t cryptoGramEncData[] = {
          0x87, 0x99, 0x59, 0x11, 0x8B, 0xD7, 0x7C, 0x70, 
-         //0x10, 0x7B, 0xCD, 0xB0, 0xC0, 0x9C, 0xC7, 0xDA, 
+         0x10, 0x7B, 0xCD, 0xB0, 0xC0, 0x9C, 0xC7, 0xDA, 
          //0x82, 0x15, 0x04, 0xAA, 0x1E, 0x36, 0x04, 0x9C
      };
      uint8_t cryptoResult[cryptoDataByteCount];
@@ -92,21 +92,15 @@ INLINE bool TestDesfire2KTDEA(uint8_t *errorResultBuf, uint8_t *bufSize) {
           DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, 2 * cryptoDataByteCount);
           return false;
      }
-     CryptoDecrypt2KTDEA_CBCReceive(cryptoDataByteCount, cryptoResult, cryptoGramEncData, ivBuf, keyData);
-     CryptoDecryptBuffer2KTDEA(cryptoGramEncData, cryptoResult, cryptoDataByteCount, keyData);
-     if(!DiffCryptoResult(cryptoGramData, cryptoGramEncData, cryptoDataByteCount)) {
-          __InternalStringBuffer[0] = '-';
-          BufferToHexString(__InternalStringBuffer + 1, STRING_BUFFER_SIZE - 1, cryptoResult, cryptoDataByteCount);
-          DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, 2 * cryptoDataByteCount);
-          return false;
-     }
      return true;
 
 }
+#endif
 
+#if 0
 INLINE bool TestDesfire3K3DES(uint8_t *errorResultBuf, uint8_t *bufSize) {
 
-     const uint8_t cryptoDataByteCount = CRYPTO_3KTDEA_BLOCK_SIZE;
+     const uint8_t cryptoDataByteCount = 2 * CRYPTO_3KTDEA_BLOCK_SIZE;
      const uint8_t keyData[CRYPTO_3KTDEA_KEY_SIZE] = { 
          0xF4, 0x68, 0x6E, 0x3A, 0xBA, 0x90, 0x36, 0xBA, 
          0xD2, 0x8E, 0xBC, 0x10, 0x32, 0xE6, 0x38, 0xF0, 
@@ -134,22 +128,15 @@ INLINE bool TestDesfire3K3DES(uint8_t *errorResultBuf, uint8_t *bufSize) {
           DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, 2 * cryptoDataByteCount);
           return false;
      }
-     CryptoDecrypt3KTDEA_CBCReceive(cryptoDataByteCount, cryptoResult, cryptoGramEncData, ivBuf, keyData);
-     CryptoDecryptBuffer3KTDEA(cryptoGramEncData, cryptoResult, cryptoDataByteCount, keyData);
-     if(!DiffCryptoResult(cryptoGramData, cryptoGramEncData, cryptoDataByteCount)) {
-          __InternalStringBuffer[0] = '-';
-          BufferToHexString(__InternalStringBuffer + 1, STRING_BUFFER_SIZE - 1, cryptoResult, cryptoDataByteCount);
-          DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, 2 * cryptoDataByteCount);
-          return false;
-     }
      return true;
 
 }
 #endif
 
+#if 1
 INLINE bool TestDesfireAES128(uint8_t *errorResultBuf, uint8_t *bufSize) {
 
-     const uint8_t cryptoDataByteCount = CRYPTO_AES_BLOCK_SIZE;
+     const uint8_t cryptoDataByteCount = 2 * CRYPTO_AES_BLOCK_SIZE;
      const uint8_t keyData[CRYPTO_AES_KEY_SIZE] = { 
          0x73, 0xAE, 0x5D, 0x30, 0x1F, 0x45, 0x19, 0x27, 
          0x1F, 0x2A, 0x69, 0x8C, 0xEF, 0x69, 0x76, 0x04
@@ -157,36 +144,31 @@ INLINE bool TestDesfireAES128(uint8_t *errorResultBuf, uint8_t *bufSize) {
      const uint8_t cryptoGramData[] = {
          0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 
          0x80, 0x90, 0xA0, 0xB0, 0xB0, 0xA0, 0x90, 0x80, 
-         //0x10, 0xD2, 0xC6, 0xE6, 0x6B, 0x00, 0x00, 0x00, 
-         //0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+         0x10, 0xD2, 0xC6, 0xE6, 0x6B, 0x00, 0x00, 0x00, 
+         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
      };
      const uint8_t cryptoGramEncData[] = {
          0x97, 0x41, 0x8E, 0x6C, 0xC0, 0x1C, 0x4E, 0x6F, 
          0xAD, 0x4D, 0x87, 0x4D, 0x8D, 0x42, 0x5C, 0xEA, 
-         //0x32, 0x51, 0x36, 0x11, 0x47, 0x2C, 0xDA, 0x04, 
-         //0xE3, 0x5E, 0xFB, 0x77, 0x9A, 0x7D, 0xA0, 0xE4
+         0x32, 0x51, 0x36, 0x11, 0x47, 0x2C, 0xDA, 0x04, 
+         0xE3, 0x5E, 0xFB, 0x77, 0x9A, 0x7D, 0xA0, 0xE4
      };
      uint8_t cryptoResult[cryptoDataByteCount];
-
-     DesfireAESCryptoInit(keyData, 16, &AESCryptoContext);
-     DesfireAESEncryptBuffer(&AESCryptoContext, cryptoGramData, cryptoResult, cryptoDataByteCount);
+     uint8_t ivBuf[CRYPTO_AES_BLOCK_SIZE];
+     
+     AESCryptoKeySizeBytes = 16;
+     DesfireAESCryptoInit(keyData, AESCryptoKeySizeBytes, &AESCryptoContext);
+     memset(ivBuf, 0x00, CRYPTO_AES_BLOCK_SIZE);
+     CryptoEncryptAES_CBCSend(cryptoDataByteCount, cryptoGramData, cryptoResult, ivBuf, &AESCryptoContext);
      if(!DiffCryptoResult(cryptoGramEncData, cryptoResult, cryptoDataByteCount)) {
-          uint8_t bytesCopied = MIN(cryptoDataByteCount, *bufSize);
-          memcpy(errorResultBuf, cryptoResult, bytesCopied);
-          *bufSize = bytesCopied;
+          BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE, cryptoResult, cryptoDataByteCount);
+          DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, 2 * cryptoDataByteCount);
           return false;
      }
-     DesfireAESDecryptBuffer(&AESCryptoContext, cryptoResult, cryptoGramEncData, cryptoDataByteCount);
-     if(!DiffCryptoResult(cryptoGramData, cryptoResult, cryptoDataByteCount)) {
-          uint8_t bytesCopied = MIN(cryptoDataByteCount, *bufSize);
-          memcpy(errorResultBuf, cryptoResult, bytesCopied);
-          *bufSize = bytesCopied;
-          return false;
-     }
-     *bufSize = 0;
      return true;
 
 }
+#endif
 
 #endif
 
