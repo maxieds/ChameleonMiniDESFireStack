@@ -59,7 +59,7 @@
         #undef NO_INTERNAL_SERIAL
         #define FIXED_CONTROL_ENDPOINT_SIZE      8
         #define FIXED_NUM_CONFIGURATIONS         1
-        #define MAX_ENDPOINT_INDEX               5
+        #define MAX_ENDPOINT_INDEX               4 // 5
         #undef NO_DEVICE_SELF_POWER
 
 #endif

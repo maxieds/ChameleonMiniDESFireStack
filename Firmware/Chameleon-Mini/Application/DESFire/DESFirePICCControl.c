@@ -122,8 +122,6 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
            SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
            break;
        case DESFIRE_COMMS_CIPHERTEXT_AES128: // TODO
-       case DESFIRE_COMMS_CIPHERTEXT_AES192: // TODO
-       case DESFIRE_COMMS_CIPHERTEXT_AES256: // TODO
        default:
            return STATUS_PARAMETER_ERROR;
     }
@@ -153,8 +151,6 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
            break;
        // TODO: AES communication ... 
        case DESFIRE_COMMS_CIPHERTEXT_AES128:
-       case DESFIRE_COMMS_CIPHERTEXT_AES192:
-       case DESFIRE_COMMS_CIPHERTEXT_AES256:
        default:
            return STATUS_PARAMETER_ERROR;
     }
