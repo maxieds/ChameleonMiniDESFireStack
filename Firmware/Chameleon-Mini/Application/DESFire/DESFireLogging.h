@@ -72,9 +72,8 @@ void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
 #define GetSymbolNameString(symbolName)                          ({ \
         char *strBuffer;                                            \
         do {                                                        \
-        snprintf_P(__InternalStringBuffer2, DATA_BUFFER_SIZE_SMALL, \
-                   PSTR("%s"),                                      \
-                   PSTR(#symbolName));                              \
+        strncpy_P(__InternalStringBuffer2, PSTR(#symbolName),       \
+                  DATA_BUFFER_SIZE_SMALL);                          \
         } while(0);                                                 \
         strBuffer = __InternalStringBuffer2;                        \
         strBuffer;                                                  \

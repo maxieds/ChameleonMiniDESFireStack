@@ -30,7 +30,7 @@ const __flash DESFireCommand DESFireCommandSet[] = {
      },
      {
           .insCode = CMD_AUTHENTICATE_ISO, 
-          .insDesc = (const __flash char[]) { "Authenticate_ISO_TDES)" },
+          .insDesc = (const __flash char[]) { "Authenticate_ISO" },
           .insFunc = &DesfireCmdAuthenticate3KTDEA1
      },
      {

@@ -119,12 +119,8 @@ SETTINGS	+= -DDESFIRE_MIN_OUTGOING_LOGSIZE=2
 #live logging sessions:
 SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 
-#Support for some randomization in each custom compiled instantiation of the firmware:
-#RANDOMIZED_DATA_SIZE         = 128
-#RAW_RANDOMIZED_DATA         := $(shell openssl rand -rand /dev/urandom $(RANDOMIZED_DATA_SIZE) 2> /dev/null)
-#RANDOMIZED_DATA_HEXFMTBYTES := $(shell echo $(RAW_RANDOMIZED_DATA) | xxd -p | sed 's/.\{2\}/0x&, /g' | sed 's/, 0x0//g')
-#RANDOMIZED_DATA             := $(shell echo $(RANDOMIZED_DATA_HEXFMTBYTES) | sed 's/..$$//')
-#SETTINGS	+= -DENABLE_RANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA_SIZE) -DRANDOMIZED_EEPROM_BYTES=$(RANDOMIZED_DATA)
+#Enable printing of crypto tests when a new DESFire emulation instance is started:
+SETTINGS	+= -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x01000 #Start of data section in flash

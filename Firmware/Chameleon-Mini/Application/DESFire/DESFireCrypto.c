@@ -42,7 +42,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
      switch(cryptoType) {
-          case CRYPTO_TYPE_2K3DES:
+          case CRYPTO_TYPE_2KTDEA:
                return CRYPTO_2KTDEA_KEY_SIZE;
           case CRYPTO_TYPE_3K3DES:
                return CRYPTO_3KTDEA_KEY_SIZE;
@@ -59,8 +59,8 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
 
 const char * GetCryptoMethodDesc(uint8_t cryptoType) {
      switch(cryptoType) {
-          case CRYPTO_TYPE_2K3DES:
-               return PSTR("2K3DES");
+          case CRYPTO_TYPE_2KTDEA:
+               return PSTR("2KTDEA");
           case CRYPTO_TYPE_3K3DES:
                return PSTR("3K3DES");
           case CRYPTO_TYPE_AES128:
@@ -76,7 +76,7 @@ const char * GetCryptoMethodDesc(uint8_t cryptoType) {
 
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType) {
      switch(cryptoType) {
-          case CRYPTO_TYPE_2K3DES:
+          case CRYPTO_TYPE_2KTDEA:
                return DESFIRE_COMMS_PLAINTEXT_MAC;
           case CRYPTO_TYPE_3K3DES:
                return DESFIRE_COMMS_CIPHERTEXT_DES;
@@ -93,7 +93,7 @@ BYTE GetCryptoMethodCommSettings(uint8_t cryptoType) {
 
 const char * GetCommSettingsDesc(uint8_t cryptoType) {
      switch(cryptoType) {
-          case CRYPTO_TYPE_2K3DES:
+          case CRYPTO_TYPE_2KTDEA:
                return PSTR("PTEXT-MAC");
           case CRYPTO_TYPE_3K3DES:
                return PSTR("CTEXT-DES");
@@ -121,7 +121,7 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
           case CMD_ISO7816_EXTERNAL_AUTHENTICATE:
           case CMD_ISO7816_INTERNAL_AUTHENTICATE:
           default:
-               return CRYPTO_TYPE_2K3DES;
+               return CRYPTO_TYPE_2KTDEA;
      }
 }
 
@@ -344,7 +344,7 @@ void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSi
      if(cmacDestBytes == NULL || srcBuf == NULL || cmacCtx == NULL) {
           return;
      }
-     bcal_cmac(cmacDestBytes, CMAC_LENGTH, srcBuf, bufSize, cmacCtx);
+     bcal_cmac(cmacDestBytes, DESFIRE_CMAC_LENGTH, srcBuf, bufSize, cmacCtx);
 }
 
 /* Checksum routines */

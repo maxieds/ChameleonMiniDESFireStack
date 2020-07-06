@@ -8,7 +8,7 @@
 #include "DESFirePICCControl.h"
 #include "DESFireFile.h"
 
-BYTE __InternalDataBuffer[MAX_DATA_BUFFER_SIZE] = { 0 };
+BYTE __InternalDataBuffer[DATA_BUFFER_SIZE] = { 0 };
 char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
 char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
@@ -22,14 +22,14 @@ void WriteBlockBytes(const void* Buffer, SIZET StartBlock, SIZET Count) {
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
     uint8_t Buffer[DESFIRE_EEPROM_BLOCK_SIZE];
-    uint16_t SrcOffset = SrcBlock; //* DESFIRE_EEPROM_BLOCK_SIZE;
-    uint16_t DestOffset = DestBlock; //* DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t SrcOffset = SrcBlock; 
+    uint16_t DestOffset = DestBlock; 
     while(Count > 0) {
         SIZET bytesToWrite = MIN(Count, DESFIRE_EEPROM_BLOCK_SIZE);
         MemoryReadBlock(Buffer, SrcOffset, bytesToWrite);
         MemoryWriteBlock(Buffer, DestOffset, bytesToWrite);
-        SrcOffset += 1; //DESFIRE_EEPROM_BLOCK_SIZE;
-        DestOffset += 1; //DESFIRE_EEPROM_BLOCK_SIZE;
+        SrcOffset += 1; 
+        DestOffset += 1; 
         Count -= DESFIRE_EEPROM_BLOCK_SIZE;
     }
 }

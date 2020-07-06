@@ -53,7 +53,7 @@ typedef union DESFIRE_FIRMWARE_PACKING {
             union {
                  SIZET CRCA;
                  UINT  CRC32;
-                 BYTE  CMAC[CMAC_LENGTH];
+                 BYTE  CMAC[DESFIRE_CMAC_LENGTH];
             };
         } MACData;
     } Checksums;

@@ -32,12 +32,16 @@
 
 #define CRYPTO_TYPE_ANY         (0x00)
 #define CRYPTO_TYPE_DES         (0x01)
-#define CRYPTO_TYPE_2K3DES      (0x0A)
+#define CRYPTO_TYPE_2KTDEA      (0x0A)
 #define CRYPTO_TYPE_3K3DES      (0x1A)
 #define CRYPTO_TYPE_AES128      (0x4A) /* AES key size determined by the initial auth buffer size */
 #define CRYPTO_TYPE_AES192      (0x5A)
 #define CRYPTO_TYPE_AES256      (0x6A)
 
+#define CryptoType2KTDEA(ct) \
+    (ct == CRYPTO_TYPE_2KTDEA)
+#define CryptoType3KTDEA(ct) \
+    (ct == CRYPTO_TYPE_3K3DES)
 #define CryptoTypeAES(ct) \
     ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_AES192) || (ct == CRYPTO_TYPE_AES256))
 
@@ -48,6 +52,8 @@
 #define CRYPTO_AES_KEY_SIZE                  (16)
 #define CRYPTO_MAX_KEY_SIZE                  (32)
 #define CRYPTO_DES_BLOCK_SIZE                (8) 
+#define CRYPTO_2KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
+#define DESFIRE_2KTDEA_NONCE_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_3KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_AES_BLOCK_SIZE                (16)
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
@@ -87,11 +93,8 @@ BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
 const char * GetCryptoMethodDesc(uint8_t cryptoType);
 const char * GetCommSettingsDesc(uint8_t cryptoType);
 
-#define MAC_LENGTH          4
-#define CMAC_LENGTH         8    // in bytes
-
-/* Authentication types support */
-#define DESFIRE_2KTDEA_NONCE_SIZE CRYPTO_DES_BLOCK_SIZE
+#define DESFIRE_MAC_LENGTH          4
+#define DESFIRE_CMAC_LENGTH         8    // in bytes
 
 /* Authentication status */
 #define DESFIRE_NOT_AUTHENTICATED 0xFF

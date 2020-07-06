@@ -30,10 +30,10 @@ void DESFireLogErrorMessage(char *fmtMsg, ...) {
 }
 
 void DESFireLogSourceCodeTODO(char *implNoteMsg, char *srcFileLoggingData) {
-     char *bigDataBuffer = (char *) __InternalDataBuffer;
-     snprintf_P(bigDataBuffer, MAX_DATA_BUFFER_SIZE, PSTR("%s: %s"), 
+     char *bigDataBuffer = (char *) __InternalStringBuffer;
+     snprintf_P(bigDataBuffer, STRING_BUFFER_SIZE, PSTR("%s: %s"), 
                 implNoteMsg, srcFileLoggingData);
-     SIZET logMsgBufferSize = StringLength(bigDataBuffer, MAX_DATA_BUFFER_SIZE);
+     SIZET logMsgBufferSize = StringLength(bigDataBuffer, STRING_BUFFER_SIZE);
      LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, bigDataBuffer, logMsgBufferSize + 1);
 }
 

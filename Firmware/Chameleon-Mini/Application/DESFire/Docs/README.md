@@ -76,17 +76,4 @@ Additionally, the following weblinks and posts clarify some common reference poi
   unique serial number that should get reprogrammed everytime the firmware is re-compiled ... 
   1. ``#define EEPROM_ATTR __attribute__ ((section (".eeprom")))``
 
-## List of (mostly) checked / cleaned new source files: 
-* :white_check_mark: ``DESFireApplicationDirectory.c``
-* :white_check_mark: ``DESFireChameleonTerminal.c``
-* :large_orange_diamond: ``DESFireCrypto.c``
-* :white_check_mark: ``DESFireFile.c``
-* :interrobang: ``DESFireISO14443Support.c``
-* :interrobang: ``DESFireInstructions.c``
-* :large_orange_diamond: ``DESFireLogging.c``
-* :white_check_mark: ``DESFireMemoryOperations.c``
-* :white_check_mark: ``DESFirePICCControl.c`` 
-* :white_check_mark: ``DESFireStatusCodes.c``
-* :large_orange_diamond: ``DESFireUtils.c``
-* :white_check_mark: ``../MifareDESFire.c``
-
+## Instructions implementation and testing table (TODO)
