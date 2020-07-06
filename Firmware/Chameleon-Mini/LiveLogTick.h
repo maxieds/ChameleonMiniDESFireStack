@@ -45,29 +45,35 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, uint8_t *logDat
      cli();
      cli_memory();
      ATOMIC_BLOCK(ATOMIC_FORCEON) {
-          if(logDataSize + 4 > LogMemLeft) { 
+          if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
               if(FLUSH_LOGS_ON_SPACE_ERROR) {
                   LiveLogTick();
+                  FreeLogBlocks();
               }
               status = false;
           }
-          LogBlockListNode *logBlock = (LogBlockListNode *) malloc(sizeof(LogBlockListNode));
-          logBlock->logBlockStart = LogMemPtr;
-          logBlock->logBlockSize = logDataSize + 4;
-          logBlock->nextBlock = NULL;
-          *(LogMemPtr++) = logCode;
-          *(LogMemPtr++) = logDataSize;
-          *(LogMemPtr++) = (uint8_t) (sysTickTime >> 8);
-          *(LogMemPtr++) = (uint8_t) (sysTickTime >> 0);
-          memcpy(LogMemPtr, logData, logDataSize);
-          LogMemPtr += logDataSize;
-          LogMemLeft -= logDataSize + 4;
-          if(LogBlockListBegin != NULL && LogBlockListEnd != NULL) {
-               LogBlockListEnd->nextBlock = logBlock;
-               LogBlockListEnd = logBlock;
+          else if(logDataSize + 4 <= LogMemLeft) {
+              LogBlockListNode *logBlock = (LogBlockListNode *) malloc(sizeof(LogBlockListNode));
+              logBlock->logBlockStart = LogMemPtr;
+              logBlock->logBlockSize = logDataSize + 4;
+              logBlock->nextBlock = NULL;
+              *(LogMemPtr++) = logCode;
+              *(LogMemPtr++) = logDataSize;
+              *(LogMemPtr++) = (uint8_t) (sysTickTime >> 8);
+              *(LogMemPtr++) = (uint8_t) (sysTickTime >> 0);
+              memcpy(LogMemPtr, logData, logDataSize);
+              LogMemPtr += logDataSize;
+              LogMemLeft -= logDataSize + 4;
+              if(LogBlockListBegin != NULL && LogBlockListEnd != NULL) {
+                   LogBlockListEnd->nextBlock = logBlock;
+                   LogBlockListEnd = logBlock;
+              }
+              else {
+                  LogBlockListBegin = LogBlockListEnd = logBlock;
+              }
           }
           else {
-              LogBlockListBegin = LogBlockListEnd = logBlock;
+              status = false;
           }
      }
      sei_memory();
@@ -77,12 +83,7 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, uint8_t *logDat
 
 INLINE void
 FreeLogBlocks(void) {
-      if(LogBlockListBegin != NULL) {
-          LogMemPtr = LogBlockListBegin->logBlockStart;
-      }
-      else {
-          LogMemPtr = &LogMem[0];
-      }
+      LogMemPtr = &LogMem[0];
       LogBlockListNode *logBlockCurrent = LogBlockListBegin;
       LogBlockListNode *logBlockNext = NULL;
       while(logBlockCurrent != NULL) {

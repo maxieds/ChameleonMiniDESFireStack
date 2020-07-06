@@ -13,12 +13,12 @@ to the mutifaceted Mifare DESFire tag specifications:
 * [LibFreeFare DESFire crypto source](https://github.com/nfc-tools/libfreefare/blob/5459806659d5f6aa0e7705b88c48775ea6c861a6/libfreefare/mifare_desfire_crypto.c)
 * [LibFreeFare Crypto Key Source](https://github.com/nfc-tools/libfreefare/blob/5459806659d5f6aa0e7705b88c48775ea6c861a6/libfreefare/mifare_desfire_key.c)
 * [Random UIDs](https://stackoverflow.com/questions/29819356/apdu-for-getting-uid-from-mifare-desfire)
-* [More crypto exchange explanation on StackOverflow](https://stackoverflow.com/questions/38283998/desfire-ev1-communication-examples) 
+
 Additionally, the following weblinks and posts clarify some common reference points:
+
 * [StackOverflow post on emulating DESFire on Android](https://stackoverflow.com/a/20068329)
 * [StackOverflow post on Android NFC support for DESFire](https://stackoverflow.com/a/26775311)
 * [Helpful source examples and hints on AES authenticate](https://www.linkedin.com/pulse/mifare-desfire-introduction-david-coelho)
-* [DESFire EV1 communication examples](https://stackoverflow.com/questions/38283998/desfire-ev1-communication-examples)
 * [Explanation of send/receive padding in encrypted transfer modes (with diagrams)](https://github.com/nceruchalu/easypay/blob/master/mifare/mifare_crypto.c#L707)
 
 ## DESFire communication examples

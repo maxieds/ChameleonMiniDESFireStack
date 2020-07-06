@@ -8,8 +8,7 @@
 #include "DESFirePICCControl.h"
 #include "DESFireFile.h"
 
-BYTE __InternalDataBuffer[DATA_BUFFER_SIZE] = { 0 };
-char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
+volatile char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
 char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {

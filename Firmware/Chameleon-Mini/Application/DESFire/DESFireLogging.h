@@ -18,7 +18,7 @@
 #endif
 
 INLINE void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {
-     if(DESFIRE_MIN_OUTGOING_LOGSIZE >= BufSize) {
+     if(DESFIRE_MIN_OUTGOING_LOGSIZE <= BufSize) {
           LogEntry(LogCode, LogDataBuffer, BufSize);
      }
 }

@@ -371,13 +371,13 @@ void des_dec(void *out, const void *in, const uint8_t *key){
 void tdes_enc(void *out, const void *in, const uint8_t *key){
 	des_enc(out,  in, (uint8_t*)key + 0);
 	des_dec(out, out, (uint8_t*)key + 8);
-	des_enc(out, out, (uint8_t*)key +16);
+	des_enc(out, out, (uint8_t*)key + 16);
 }
 
 /******************************************************************************/
 
 void tdes_dec(void *out, const void *in, const uint8_t *key){
-	des_dec(out,  in, (uint8_t*)key +16);
+	des_dec(out,  in, (uint8_t*)key + 16);
 	des_enc(out, out, (uint8_t*)key + 8);
 	des_dec(out, out, (uint8_t*)key + 0);
 }

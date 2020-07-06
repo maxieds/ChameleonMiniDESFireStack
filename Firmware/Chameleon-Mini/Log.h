@@ -4,7 +4,7 @@
 #include "Common.h"
 
 #ifdef DESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
-     #define LOG_SIZE           48
+     #define LOG_SIZE           40
 #else
      #define LOG_SIZE	        128 // 2048
 #endif

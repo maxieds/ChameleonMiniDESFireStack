@@ -121,10 +121,9 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
            memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
            SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
            break;
-       // TODO: AES communication ... 
-       case DESFIRE_COMMS_CIPHERTEXT_AES128:
-       case DESFIRE_COMMS_CIPHERTEXT_AES192:
-       case DESFIRE_COMMS_CIPHERTEXT_AES256:
+       case DESFIRE_COMMS_CIPHERTEXT_AES128: // TODO
+       case DESFIRE_COMMS_CIPHERTEXT_AES192: // TODO
+       case DESFIRE_COMMS_CIPHERTEXT_AES256: // TODO
        default:
            return STATUS_PARAMETER_ERROR;
     }
@@ -176,8 +175,8 @@ void InitialisePiccBackendEV0(uint8_t StorageSize) {
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if(Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
         Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
-        const char *logMsg = "\r\nFactory resetting the device\r\n";
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
+        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory resetting the device"));
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer, StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
         FactoryFormatPiccEV0();
     }
     else {
@@ -195,8 +194,8 @@ void InitialisePiccBackendEV1(uint8_t StorageSize) {
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if(Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
         Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
-        const char *logMsg = "\r\nFactory resetting the device\r\n";
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) logMsg, strlen(logMsg));
+        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory resetting the device"));
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer, StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
         FactoryFormatPiccEV1(StorageSize);
     }
     else {
