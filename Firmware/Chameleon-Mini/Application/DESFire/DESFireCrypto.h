@@ -117,7 +117,7 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 
 typedef aes_ctx_t DesfireAESCryptoContext;
 
-extern DesfireAESCryptoContext EEMEM AESCryptoContext;
+extern DesfireAESCryptoContext AESCryptoContext;
 extern uint16_t AESCryptoKeySizeBytes;
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
@@ -130,13 +130,13 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 extern DesfireAESCryptoKey AESCryptoSessionKey;
 extern DesfireAESCryptoKey AESCryptoIVBuffer;
 
-void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx);
+void InitAESCryptoContext(DesfireAESCryptoContext cryptoCtx);
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
 uint8_t * ExtractAESKeyBuffer(DesfireAESCryptoKey *cryptoKey, BYTE keySizeBytes);
 uint16_t GetPaddedBufferSize(uint16_t bufSize);
-uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
-void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
-void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
+uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext cryptoCtx);
+void DesfireAESEncryptBlock(DesfireAESCryptoContext cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
+void DesfireAESDecryptBlock(DesfireAESCryptoContext cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 
@@ -146,8 +146,8 @@ typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
 
-typedef void (*CryptoAESCBCFuncType)(uint16_t, const void*, void*, void*, DesfireAESCryptoContext*);
-typedef void (*CryptoAESFuncType)(DesfireAESCryptoContext*, const void *PlainText, void *Ciphertext);
+typedef void (*CryptoAESCBCFuncType)(uint16_t, const void*, void*, void*, DesfireAESCryptoContext);
+typedef void (*CryptoAESFuncType)(DesfireAESCryptoContext, const void *PlainText, void *Ciphertext);
 
 typedef struct {
     CryptoAESFuncType cryptFunc;
@@ -155,24 +155,24 @@ typedef struct {
 } CryptoAES_CBCSpec;
 
 void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
-                        void *IV, DesfireAESCryptoContext *cryptoContext, CryptoAES_CBCSpec CryptoSpec);
+                        void *IV, DesfireAESCryptoContext cryptoContext, CryptoAES_CBCSpec CryptoSpec);
 void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,               
-                        void *IV, DesfireAESCryptoContext *cryptoContext, CryptoAES_CBCSpec CryptoSpec);
+                        void *IV, DesfireAESCryptoContext cryptoContext, CryptoAES_CBCSpec CryptoSpec);
 
 void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
-                              void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+                              void *IV, DesfireAESCryptoContext AESCryptoContextData);
 void CryptoDecryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
-                              void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+                              void *IV, DesfireAESCryptoContext AESCryptoContextData);
 void CryptoEncryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
-                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+                                 void *IV, DesfireAESCryptoContext AESCryptoContextData);
 void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
-                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData);
+                                 void *IV, DesfireAESCryptoContext AESCryptoContextData);
 
 /* CMAC local implementation */
 typedef bcal_cmac_ctx_t DesfireAESCryptoCMACContext;
 extern DesfireAESCryptoCMACContext AESCryptoChecksumContext;
 
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx);
+BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext cryptoCtx);
 void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
                             DesfireAESCryptoCMACContext *cmacCtx);
 

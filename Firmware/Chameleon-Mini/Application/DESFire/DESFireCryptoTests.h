@@ -157,10 +157,10 @@ INLINE bool TestDesfireAES128(uint8_t *errorResultBuf, uint8_t *bufSize) {
      uint8_t ivBuf[CRYPTO_AES_BLOCK_SIZE];
      
      AESCryptoKeySizeBytes = 16;
-     DesfireAESCryptoInit(keyData, AESCryptoKeySizeBytes, &AESCryptoContext);
+     DesfireAESCryptoInit(keyData, AESCryptoKeySizeBytes, AESCryptoContext);
      memset(ivBuf, 0x00, CRYPTO_AES_BLOCK_SIZE);
      return false; // TODO
-     CryptoEncryptAES_CBCSend(cryptoDataByteCount, cryptoGramData, cryptoResult, ivBuf, &AESCryptoContext);
+     CryptoEncryptAES_CBCSend(cryptoDataByteCount, cryptoGramData, cryptoResult, ivBuf, AESCryptoContext);
      if(!DiffCryptoResult(cryptoGramEncData, cryptoResult, cryptoDataByteCount)) {
           BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE, cryptoResult, cryptoDataByteCount);
           DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, (void *) __InternalStringBuffer, 2 * cryptoDataByteCount);
