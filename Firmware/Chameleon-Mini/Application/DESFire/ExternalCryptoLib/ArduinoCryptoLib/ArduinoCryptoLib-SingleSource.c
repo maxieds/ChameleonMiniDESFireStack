@@ -10,6 +10,7 @@
 #include "aes/aes-common.c"
 #include "aes/aes128.c"
 
+#include "../AVRCryptoLib/memxor/memxor.h"
 #include "aes/aes-cmac.h"
 #include "aes/aes-cmac.c"
 

@@ -158,12 +158,12 @@ void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *Ci
                                  void *IV, DesfireAESCryptoContext *AESCryptoContextData);
 
 /* CMAC local implementation */
-/*typedef bcal_cmac_ctx_t DesfireAESCryptoCMACContext;
+typedef bcal_cmac_ctx_t DesfireAESCryptoCMACContext;
 extern DesfireAESCryptoCMACContext AESCryptoChecksumContext;
 
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext cryptoCtx);
+BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx);
 void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
-                            DesfireAESCryptoCMACContext *cmacCtx);*/
+                            DesfireAESCryptoCMACContext *cmacCtx);
 
 /* Public checksum routines: */
 void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);

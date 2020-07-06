@@ -22,7 +22,7 @@ DesfireAESCryptoContext AESCryptoContext = { 0 };
 uint16_t AESCryptoKeySizeBytes = 0;
 DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
-//DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
+DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
 
 uint8_t Authenticated = 0x00;
 uint8_t AuthenticatedWithKey = 0x00;
@@ -275,31 +275,12 @@ void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *Ci
      CryptoAES_CBCRecv(Count, CipherText, PlainText, IV, AESCryptoContextData, CryptoSpec);
 }
 
-/*
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext cryptoCtx) {
+
+BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx) {
      if(cmacCtx == NULL || cryptoCtx == NULL) {
           return STATUS_PARAMETER_ERROR;
      }
-     switch(AESCryptoKeySizeBytes) {
-          case 16:
-               cmacCtx->desc = &aes128_desc;
-               cmacCtx->cctx.keysize = 16;
-               cmacCtx->cctx.ctx = cryptoCtx;
-               break;
-          case 24:
-               cmacCtx->desc = &aes192_desc;
-               cmacCtx->cctx.keysize = 24;
-               cmacCtx->cctx.ctx = cryptoCtx;
-               break;
-          case 32:
-               cmacCtx->desc = &aes256_desc;
-               cmacCtx->cctx.keysize = 32;
-               cmacCtx->cctx.ctx = cryptoCtx;
-               break;
-          default:
-               return STATUS_PARAMETER_ERROR;
-     }
-     return bcal_cmac_init(cmacCtx->desc, NULL, AESCryptoKeySizeBytes, cmacCtx);
+     return bcal_cmac_init(cmacCtx, cryptoCtx);
 }
 
 void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
@@ -308,7 +289,7 @@ void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSi
           return;
      }
      bcal_cmac(cmacDestBytes, DESFIRE_CMAC_LENGTH, srcBuf, bufSize, cmacCtx);
-}*/
+}
 
 /* Checksum routines */
 
