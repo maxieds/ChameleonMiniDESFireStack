@@ -27,14 +27,14 @@ bool aes128SetKey(AES128Context *ctx, const uint8_t *keyData, size_t keySize)
     // Expand the key schedule up to the last round which gives
     // us the round keys to use for the final two rounds.  We can
     // then work backwards from there in decryptBlock().
-    schedule = ctx->reverse;
+    /*schedule = ctx->reverse;
     memcpy(schedule, keyData, AES128_CRYPTO_SCHEDULE_SIZE);
     for (round = 1; round <= AES128_CRYPTO_ROUNDS; ++round) {
         KCORE(round);
         KXOR(1, 0);
         KXOR(2, 1);
         KXOR(3, 2);
-    }
+    }*/
 
     // Key is ready to go.
     memcpy(ctx->schedule, schedule, 16);
@@ -97,7 +97,8 @@ void aes128DecryptBlock(AES128Context *ctx, uint8_t *output, const uint8_t *inpu
     uint8_t temp[4];
 
     // Start with the end of the decryption schedule.
-    memcpy(schedule, ctx->reverse, 16);
+    //memcpy(schedule, ctx->reverse, 16);
+    memcpy(schedule, ctx->schedule, 16);
 
     // Copy the input into the state and reverse the final round.
     for (posn = 0; posn < 16; ++posn)
