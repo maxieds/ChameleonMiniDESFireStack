@@ -8,9 +8,41 @@
 
 #include "DESFireFirmwareSettings.h"
 
-#include "../ISO1443-4.h"
 #include "../ISO14443-3A.h"
 #include "../../Codec/ISO14443-2A.h"
+
+/* General structure of a ISO 14443-4 block:
+ * PCB (protocol control byte)
+ * CID (card identifier byte; presence controlled by PCB)
+ * NAD (node address byte; presence controlled by PCB)
+ * Payload (arbitrary bytes)
+ * CRC-16
+ */
+
+#define ISO14443A_CMD_RATS          0xE0
+#define ISO14443A_RATS_FRAME_SIZE   (4 * 8) /* Bit */
+
+#define ISO14443_PCB_BLOCK_TYPE_MASK 0xC0
+#define ISO14443_PCB_I_BLOCK 0x00
+#define ISO14443_PCB_R_BLOCK 0x80
+#define ISO14443_PCB_S_BLOCK 0xC0
+
+#define ISO14443_PCB_I_BLOCK_STATIC 0x02
+#define ISO14443_PCB_R_BLOCK_STATIC 0xA2
+#define ISO14443_PCB_S_BLOCK_STATIC 0xC2
+
+#define ISO14443_PCB_BLOCK_NUMBER_MASK      0x01
+#define ISO14443_PCB_HAS_NAD_MASK           0x04
+#define ISO14443_PCB_HAS_CID_MASK           0x08
+#define ISO14443_PCB_I_BLOCK_CHAINING_MASK  0x10
+#define ISO14443_PCB_R_BLOCK_ACKNAK_MASK    0x10
+#define ISO14443_PCB_R_BLOCK_ACK            0x00
+#define ISO14443_PCB_R_BLOCK_NAK            0x10
+
+#define ISO14443_R_BLOCK_SIZE 1 /* Bytes */
+
+#define ISO14443_PCB_S_DESELECT     (ISO14443_PCB_S_BLOCK_STATIC)
+#define ISO14443_PCB_S_WTX          (ISO14443_PCB_S_BLOCK_STATIC | 0x30)
 
 /*
  * ISO/IEC 14443-4 implementation
@@ -24,20 +56,24 @@
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     ISO14443_4_STATE_EXPECT_RATS,
     ISO14443_4_STATE_ACTIVE,
+    ISO14443_4_STATE_LAST,
 } Iso144434StateType;
 
 extern Iso144434StateType Iso144434State;
 extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
-#define ISO144434_LAST_BLOCK_SIZE (64)
-extern uint8_t Iso144434LastBlockLength;
-//extern uint8_t Iso144434LastBlock[ISO144434_LAST_BLOCK_SIZE];
+/* Setup some fuzzy response handling for problematic readers like the ACR122U */
+#define MAX_STATE_RETRY_COUNT        (2)
+extern uint8_t StateRetryCount;
+bool CheckStateRetryCount(void); 
+
+#define IGNORE_ACK_BYTE               (0x92)
 
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);
 void ISO144434Reset(void);
-uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount);
+uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t BitCount);
 
 /*
  * ISO/IEC 14443-3A implementation
@@ -49,7 +85,7 @@ uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* The card is powered up but not selected */
-    ISO14443_3A_STATE_IDLE,
+    ISO14443_3A_STATE_IDLE = ISO14443_4_STATE_LAST,
     /* Entered on REQA or WUPA; anticollision is being performed */
     ISO14443_3A_STATE_READY1,
     ISO14443_3A_STATE_READY2,

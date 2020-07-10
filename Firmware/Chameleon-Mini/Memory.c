@@ -5,6 +5,8 @@
  *      Author: skuser
  */
 
+#include <string.h>
+
 #include "Memory.h"
 #include "Configuration.h"
 #include "Common.h"

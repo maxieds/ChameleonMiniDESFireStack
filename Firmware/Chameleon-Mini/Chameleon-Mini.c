@@ -18,7 +18,6 @@ int main(void)
     while(1) {
         if (SystemTick100ms()) {
             LEDTick(); // this has to be the first function called here, since it is time-critical - the functions below may have non-negligible runtimes!
-
             RandomTick();
             TerminalTick();
             ButtonTick();
@@ -26,10 +25,9 @@ int main(void)
             if(GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE) {
                 AtomicLiveLogTick();
             }
-            ApplicationTick();
             CommandLineTick();
             AntennaLevelTick();
-
+	    ApplicationTick();
             LEDHook(LED_POWERED, LED_ON);
         }
 

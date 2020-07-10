@@ -10,7 +10,7 @@
 #include "DESFireFirmwareSettings.h"
 
 #include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes128.h"
-#include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes-cmac.h""
+#include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes-cmac.h"
 #include "ExternalCryptoLib/AVRCryptoLib/des/des.h"
 
 /* Communication modes: 

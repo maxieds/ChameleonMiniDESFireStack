@@ -8,6 +8,7 @@
 #define __LIVE_LOG_TICK_H__
 
 #include <inttypes.h>
+#include <stdlib.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <util/atomic.h>
@@ -33,18 +34,18 @@ typedef struct LogBlockListNode {
 extern LogBlockListNode *LogBlockListBegin;
 extern LogBlockListNode *LogBlockListEnd;
 
-INLINE bool AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, uint8_t *logData, uint8_t logDataSize);
+INLINE bool AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize);
 INLINE void FreeLogBlocks(void);
 
 INLINE bool AtomicLiveLogTick(void);
 INLINE bool LiveLogTick(void);
 
 INLINE bool 
-AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, uint8_t *logData, uint8_t logDataSize) {
+AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize) {
      bool status = true;
      cli();
      cli_memory();
-     ATOMIC_BLOCK(ATOMIC_FORCEON) {
+     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
           if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
               if(FLUSH_LOGS_ON_SPACE_ERROR) {
                   LiveLogTick();
@@ -109,7 +110,7 @@ AtomicLiveLogTick(void) {
 INLINE bool 
 LiveLogTick(void) {
      bool status = LogBlockListBegin == NULL;
-     ATOMIC_BLOCK(ATOMIC_FORCEON) {
+     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
           //Endpoint_ClearIN();
           TerminalFlushBuffer();
           LogBlockListNode *logBlockCurrent = LogBlockListBegin;

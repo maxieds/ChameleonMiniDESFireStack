@@ -7,6 +7,7 @@
 #define __DESFIRE_LOGGING_UTILS_H__
 
 #include "../../Log.h"
+#include "../../Common.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFireMemoryOperations.h"
 
@@ -54,19 +55,28 @@ void DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
 void DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
 void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
 
-#define DEBUG_PRINT(fmtStr, ...) \
-        DESFireLogErrorMessage(fmtStr, ##__VA_ARGS__)
+#define DEBUG_PRINT_P(fmtStr, ...)                           ({ \
+    uint8_t logLength = 0;                                      \
+    do {                                                        \
+        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
+		   fmtStr, ##__VA_ARGS__);                      \
+	logLength = StringLength(__InternalStringBuffer,        \
+			         STRING_BUFFER_SIZE);           \
+	DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR,          \
+			__InternalStringBuffer, logLength);     \
+    } while(0);                                                 \
+    })
 
-#define GetSourceFileLoggingData()                           ({ \
-        char *strBuffer;                                        \
-        do {                                                    \
-		snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
-                   PSTR("@@ LINE #%d in *%s @@"),               \
-			       __LINE__, __FILE__);                         \
+#define GetSourceFileLoggingData()                               ({ \
+        char *strBuffer;                                            \
+        do {                                                        \
+	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
+                       PSTR("@@ LINE #%d in *%s @@"),               \
+			    __LINE__, __FILE__);                    \
 	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';  \
-        } while(0);                                             \
-        strBuffer = __InternalStringBuffer;                     \
-        strBuffer;                                              \
+        } while(0);                                                 \
+        strBuffer = __InternalStringBuffer;                         \
+        strBuffer;                                                  \
         })
 
 #define GetSymbolNameString(symbolName)                          ({ \
@@ -101,6 +111,67 @@ void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
     } while(0);                                                                         \
     strBuffer = __InternalStringBuffer;                                                 \
     strBuffer;                                                                          \
+    })
+
+#define DesfireLogIncoming(incBuf, bitCount)                                             ({ \
+    uint8_t logLength = 0;                                                                  \
+    do {                                                                                    \
+        logLength = BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE,           \
+			              incBuf, (bitCount + 7) / 8);                          \
+        snprintf_P(__InternalStringBuffer + logLength, PSTR(" [#=%d] <-- IN"),              \
+		   bitCount);                                                               \
+	logLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);               \
+	DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, __InternalStringBuffer, logLength); \
+    } while(0);                                                                             \
+    })
+
+#define DesfireLogOutgoing(incBuf, bitCount)                                             ({ \
+    uint8_t logLength = 0;                                                                  \
+    do {                                                                                    \
+        logLength = BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE,           \
+			              incBuf, (bitCount + 7) / 8);                          \
+        snprintf_P(__InternalStringBuffer + logLength, PSTR(" [#=%d] --> OUT"),             \
+		   bitCount);                                                               \
+	logLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);               \
+	DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, __InternalStringBuffer, logLength); \
+    } while(0);                                                                             \
+    })
+
+#define DesfireLogISOStateChange(state, logCode)                                         ({ \
+    const char *stateSymbName = NULL;                                                       \
+    uint8_t logLength = 0x00;                                                               \
+    do {                                                                                    \
+        switch(state) {                                                                     \
+            case ISO14443_3A_STATE_IDLE:                                                    \
+	        stateSymbName = PSTR("ISO14443_3A_STATE_IDLE");                             \
+		break;                                                                      \
+	    case ISO14443_3A_STATE_READY1:                                                  \
+	        stateSymbName = PSTR("ISO14443_3A_STATE_READY1");                           \
+		break;                                                                      \
+	    case ISO14443_3A_STATE_READY2:                                                  \
+	        stateSymbName = PSTR("ISO14443_3A_STATE_READY2");                           \
+		break;                                                                      \
+	    case ISO14443_3A_STATE_ACTIVE:                                                  \
+	        stateSymbName = PSTR("ISO14443_3A_STATE_ACTIVE");                           \
+		break;                                                                      \
+	    case ISO14443_3A_STATE_HALT:                                                    \
+	        stateSymbName = PSTR("ISO14443_3A_STATE_HALT");                             \
+		break;                                                                      \
+	    case ISO14443_4_STATE_EXPECT_RATS:                                              \
+		stateSymbName = PSTR("ISO14443_4_STATE_EXPECT_RATS");                       \
+		break;                                                                      \
+	    case ISO14443_4_STATE_ACTIVE:                                                   \
+		stateSymbName = PSTR("ISO14443_4_STATE_ACTIVE");                            \
+		break;                                                                      \
+	    default:                                                                        \
+	        stateSymbName = PSTR("UNKNOWN_STATE");                                      \
+		break;                                                                      \
+        }                                                                                   \
+        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR(" => "));               \
+	strcat_P(__InternalStringBuffer, stateSymbName);                                    \
+        logLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);               \
+	DesfireLogEntry(logCode, __InternalStringBuffer, logLength);                        \
+    } while(0);                                                                             \
     })
 
 #endif

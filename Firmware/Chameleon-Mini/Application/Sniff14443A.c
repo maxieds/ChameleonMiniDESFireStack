@@ -170,4 +170,5 @@ uint16_t Sniff14443AAppProcess(uint8_t* Buffer, uint16_t BitCount){
         default:
             return 0;
     }
+    return 0;
 }

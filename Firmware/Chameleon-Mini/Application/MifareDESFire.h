@@ -11,6 +11,10 @@
 
 #include "Application.h"
 #include "DESFire/DESFireFirmwareSettings.h"
+#include "DESFire/DESFireISO14443Support.h"
+
+//#define IS_ISO14443A_4_COMPLIANT(buf) (buf[0] & 0x20)
+#define MAKE_ISO14443A_4_COMPLIANT(buf) (buf[0] |= 0x20)
 
 /* The core functions used outside of this implementation 
  * to describe the DESFire emulation to the Chameleon firmware: 
@@ -22,6 +26,8 @@ void MifareDesfire8kEV1AppInit(void);
 void MifareDesfireAppReset(void);
 void MifareDesfireAppTask(void);
 
+uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount);
 
 void MifareDesfireGetUid(ConfigurationUidType Uid);
@@ -35,9 +41,6 @@ void MifareDesfireSetUid(ConfigurationUidType Uid);
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_HALT,
     DESFIRE_IDLE,
-    DESFIRE_STATE1_READY, 
-    DESFIRE_STATE2_READY,
-    DESFIRE_CMD_READY_ACTIVE,
     DESFIRE_GET_VERSION2,
     DESFIRE_GET_VERSION3,
     DESFIRE_GET_APPLICATION_IDS2,
@@ -56,7 +59,6 @@ extern bool DesfireFromHalt;
 extern BYTE DesfireCmdCLA;
 
 void ResetLocalStructureData(void);
-uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount);
 void MifareDesfireReset(void);
 
 #endif /* MIFAREDESFIRE_H_ */

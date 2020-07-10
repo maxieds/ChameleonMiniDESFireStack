@@ -20,7 +20,7 @@
     ( (uint16_t) ( (double) F_RTC * x / 1E3 + 0.5) )
 
 #define SYSTEM_TICK_WIDTH	7 /* Bits */
-#define SYSTEM_TICK_PERIOD  (1<<7)
+#define SYSTEM_TICK_PERIOD      (1<<6) //(1<<7)
 #define SYSTEM_TICK_MS		(SYSTEM_TICK_PERIOD)
 #define SYSTEM_TICK_FREQ	(1000 / SYSTEM_TICK_PERIOD)
 
@@ -43,7 +43,6 @@ INLINE bool SystemTick100ms(void)
     if (RTC.INTFLAGS & RTC_COMPIF_bm) {
         while(RTC.STATUS & RTC_SYNCBUSY_bm)
             ;
-
         RTC.INTFLAGS = RTC_COMPIF_bm;
         return true;
     }
