@@ -41,7 +41,7 @@ extern const BYTE DefaultDESFireATS[];
 
 #define DESFIRE_EV0_ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
 #define DESFIRE_EV0_ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
-#define DESFIRE_EV0_ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported */
+#define DESFIRE_EV0_ATS_TA_BYTE 0x77 /* TA: Only the lowest bit rate is supported */
 #define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
 #define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 

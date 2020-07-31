@@ -26,15 +26,14 @@ int main(void)
                 AtomicLiveLogTick();
             }
             CommandLineTick();
+	        ApplicationTick();
             AntennaLevelTick();
-	    ApplicationTick();
             LEDHook(LED_POWERED, LED_ON);
         }
-
-        TerminalTask();
-        LogTask();
         ApplicationTask();
         CodecTask();
+        LogTask();
+        TerminalTask();
     }
 }
 

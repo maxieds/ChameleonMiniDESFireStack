@@ -98,7 +98,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     }
    
     /* Expecting further data here */
-    if(Buffer[0] != STATUS_ADDITIONAL_FRAME && !CheckStateRetryCount()) {
+    if(Buffer[0] != STATUS_ADDITIONAL_FRAME && !CheckStateRetryCount(false)) {
         AbortTransaction();
         DesfireState = DESFIRE_IDLE;
         Buffer[0] = STATUS_COMMAND_ABORTED;
@@ -162,9 +162,9 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
         }
         return BitCount;
     }
-    else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { 
-         return BitCount;
-    }
+    //else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { 
+    //     return BitCount;
+    //}
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
         return MifareDesfireProcessCommand(Buffer, BitCount);

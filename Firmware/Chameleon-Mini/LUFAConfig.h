@@ -50,12 +50,10 @@
             (USB_OPT_BUSEVENT_PRIMED | USB_DEVICE_OPT_FULLSPEED | \
              /*USB_OPT_PLLCLKSRC*/ USB_OPT_RC32MCLKSRC)
         #define USB_DEVICE_ONLY
-        #define USB_STREAM_TIMEOUT_MS            70
+        //#define USB_STREAM_TIMEOUT_MS            70
 
         /* USB Device Mode Driver Related Tokens: */
-        //#define USE_RAM_DESCRIPTORS
         #define USE_FLASH_DESCRIPTORS
-        //#define USE_EEPROM_DESCRIPTORS
         #undef NO_INTERNAL_SERIAL
         #define FIXED_CONTROL_ENDPOINT_SIZE      8
         #define FIXED_NUM_CONFIGURATIONS         1

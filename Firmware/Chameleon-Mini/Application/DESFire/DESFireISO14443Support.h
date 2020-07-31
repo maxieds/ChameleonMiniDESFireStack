@@ -20,7 +20,7 @@
  */
 
 #define ISO14443A_CMD_RATS          0xE0
-#define ISO14443A_RATS_FRAME_SIZE   (4 * 8) /* Bit */
+#define ISO14443A_RATS_FRAME_SIZE   (6 * 8) //(4 * 8) /* Bit */
 
 #define ISO14443_PCB_BLOCK_TYPE_MASK 0xC0
 #define ISO14443_PCB_I_BLOCK 0x00
@@ -64,9 +64,9 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT        (2)
+#define MAX_STATE_RETRY_COUNT        (1)
 extern uint8_t StateRetryCount;
-bool CheckStateRetryCount(void); 
+bool CheckStateRetryCount(bool resetByDefault); 
 
 #define IGNORE_ACK_BYTE               (0x92)
 
@@ -79,7 +79,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t Bit
  * ISO/IEC 14443-3A implementation
  */
 
-#define ISO14443A_CRCA_INIT      ((uint16_t) 0x0000)
+#define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
 
 uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
 

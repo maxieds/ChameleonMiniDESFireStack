@@ -71,33 +71,44 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
         DataPtr[1] = UidCL[1];
         DataPtr[2] = UidCL[2];
         DataPtr[3] = UidCL[3];
-        DataPtr[4] = ISO14443A_CALC_BCC(DataPtr);
-        memcpy(FirstUidCL, UidCL, ISO14443A_CL_UID_SIZE);
+        DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
+        //memcpy(FirstUidCL, UidCL, ISO14443A_CL_UID_SIZE);
         *BitCount = ISO14443A_CL_FRAME_SIZE;
         return true;
 
     case ISO14443A_NVB_AC_END:
         /* End of anticollision procedure.
         * Send SAK CLn if we are selected. */
-        if (    (DataPtr[2] == FirstUidCL[0]) &&
+        /*if (    (DataPtr[2] == FirstUidCL[0]) &&
                 (DataPtr[3] == FirstUidCL[1]) &&
                 (DataPtr[4] == FirstUidCL[2]) &&
                 (DataPtr[5] == FirstUidCL[3]) ) { // TODO
 
-	    DataPtr[0] = UidCL[0];
+	        DataPtr[0] = UidCL[0];
             DataPtr[1] = UidCL[1];
             DataPtr[2] = UidCL[2];
             DataPtr[3] = UidCL[3];
             DataPtr[4] = SAKValue;
             ISO14443AAppendCRCA(Buffer, 5);
             *BitCount = 7 * BITS_PER_BYTE;
-
-	    //DataPtr[0] = SAKValue;
-            //ISO14443AAppendCRCA(Buffer, 1);
-            //*BitCount = ISO14443A_SAK_FRAME_SIZE;
-            
-	    return true;
-        } else {
+	        return true;
+        }*/
+        if (    (DataPtr[2] == UidCL[0]) &&
+                (DataPtr[3] == UidCL[1]) &&
+                (DataPtr[4] == UidCL[2]) &&
+                (DataPtr[5] == UidCL[3]) ) {
+	        DataPtr[0] = SAKValue;
+            *BitCount = ISO14443A_SAK_FRAME_SIZE;
+	        //DataPtr[0] = UidCL[0];
+            //DataPtr[1] = UidCL[1];
+            //DataPtr[2] = UidCL[2];
+            //DataPtr[3] = UidCL[3];
+            //DataPtr[4] = SAKValue;
+            ISO14443AAppendCRCA(DataPtr, 1);
+            //*BitCount = 7 * BITS_PER_BYTE;
+            return true;
+        }
+        else {
             /* We have not been selected. Don't send anything. */
             *BitCount = 0;
             return false;
@@ -145,7 +156,7 @@ bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool 
          (DataPtr[0] == ISO14443A_CMD_WUPA) ){
         DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
         DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
-	*BitCount = ISO14443A_ATQA_FRAME_SIZE;
+	    *BitCount = ISO14443A_ATQA_FRAME_SIZE;
         return true;
     } else {
         *BitCount = 0;
