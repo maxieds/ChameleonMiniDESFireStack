@@ -5,7 +5,7 @@ CC=g++
 CFLAGS= -O0 --std=posix --std=gnu++98 -DDRIVER_PN53X_USB_ENABLED -I/usr/local/include \
 		-stdlib=libc++
 LD=g++
-LDFLAGS= $(CFLAGS) -L/usr/local/lib -lnfc -lusb -lc++
+LDFLAGS= $(CFLAGS) -L/usr/local/lib /usr/local/lib/libnfc.a -lnfc -lusb -lc++
 
 BINDIR=./Bin
 BINEXT=exe
@@ -19,12 +19,12 @@ all: default
 
 default: $(BINOUTS)
 
-clean:
-	@rm -f $(OBJDIR)/* $(BINDIR)/*
-
 $(OBJDIR)/%.$(OBJEXT): %.cpp
 	$(CC) $(CFLAGS) $< -c -o $@
 
 $(BINDIR)/%.$(BINEXT): $(OBJDIR)/%.o
 	$(LD) $(LDFLAGS) $< -o $@
+
+clean:
+	@rm -f $(OBJDIR)/* $(BINDIR)/*
 

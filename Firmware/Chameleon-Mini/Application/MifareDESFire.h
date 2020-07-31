@@ -24,6 +24,7 @@ void MifareDesfire2kEV1AppInit(void);
 void MifareDesfire4kEV1AppInit(void);
 void MifareDesfire8kEV1AppInit(void);
 void MifareDesfireAppReset(void);
+void MifareDesfireAppTick(void);
 void MifareDesfireAppTask(void);
 
 uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount);

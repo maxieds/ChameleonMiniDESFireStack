@@ -64,14 +64,17 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT        (1)
+#define MAX_STATE_RETRY_COUNT        (3)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault); 
+bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 
 
 #define IGNORE_ACK_BYTE               (0x92)
 
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);
+void ISO144434SwitchState2(Iso144434StateType NewState, bool performLogging);
+
 void ISO144434Reset(void);
 uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t BitCount);
 

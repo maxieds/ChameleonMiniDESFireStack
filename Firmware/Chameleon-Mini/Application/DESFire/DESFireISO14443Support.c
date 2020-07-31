@@ -20,19 +20,29 @@ uint8_t Iso144434CardID = 0x00;
 uint8_t Iso144434LastBlockLength = 0x00;
 uint8_t StateRetryCount = 0x00;
 
-bool CheckStateRetryCount(bool resetByDefault) {
+bool CheckStateRetryCount2(bool resetByDefault, bool performLogging) {
     if(resetByDefault || StateRetryCount >= MAX_STATE_RETRY_COUNT) {
-        ISO144433ASwitchState(Iso144433AIdleState);
+        ISO144434SwitchState2(Iso144433AIdleState, performLogging);
         StateRetryCount = 0x00;
         return false;
     }
     StateRetryCount++;
     return true;
 }
+bool CheckStateRetryCount(bool resetByDefault) {
+    return CheckStateRetryCount2(resetByDefault, true);
+}
+
+void ISO144434SwitchState2(Iso144434StateType NewState, bool performLogging) {
+    Iso144434State = NewState;
+    StateRetryCount = 0x00;
+    if(performLogging) {
+        DesfireLogISOStateChange(Iso144434State, LOG_ISO14443_4_STATE);
+    }
+}
 
 void ISO144434SwitchState(Iso144434StateType NewState) {
-    Iso144434State = NewState;
-    DesfireLogISOStateChange(Iso144434State, LOG_ISO14443_4_STATE);
+    ISO144434SwitchState2(NewState, true);
 }
 
 void ISO144434Reset(void) {
@@ -242,6 +252,7 @@ void ISO144433AReset(void) {
 void ISO144433AHalt(void) {
     ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
     Iso144433AIdleState = ISO14443_3A_STATE_HALT;
+    StateRetryCount = 0x00;
 }
 
 bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount) {
@@ -252,6 +263,10 @@ bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount) {
 }
 
 uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
+   
+    if(BitCount == 0) {
+        return ISO14443A_APP_NO_RESPONSE;
+    }
     
     uint8_t Cmd = Buffer[0];
     
@@ -260,9 +275,18 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE); 
     }
     else if(Cmd == IGNORE_ACK_BYTE) {
-        return ISO14443A_APP_NO_RESPONSE;
-        ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
+        //ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
         //return BitCount;
+        ISO144433AReset();
+        ISO144434Reset();
+        return ISO14443A_APP_NO_RESPONSE;
+    }
+    else if(ISO144433AIsHalt(Buffer, BitCount)) {
+        LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
+        ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
+        const char *logMsg = PSTR("ISO14443-3: HALTING");
+        LogDebuggingMsg(logMsg);
+	    return ISO14443A_APP_NO_RESPONSE;
     }
 
     /* This implements ISO 14443-3A state machine */
@@ -350,9 +374,9 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         }
         /* Forward to ISO/IEC 14443-4 processing code */
         uint8_t ReturnBits = ISO144434ProcessBlock(Buffer, (BitCount + 7) / 8, BitCount);
-	    if(ReturnBits == ISO14443A_APP_NO_RESPONSE) {
-	         CheckStateRetryCount(true);
-	    }
+	    //if(ReturnBits == ISO14443A_APP_NO_RESPONSE) {
+	    //     CheckStateRetryCount(true);
+	    //}
 	    const char *debugPrintStr2 = PSTR("ISO14443-4: ACTIVE RET");
 	    LogDebuggingMsg(debugPrintStr2);
         return ReturnBits;

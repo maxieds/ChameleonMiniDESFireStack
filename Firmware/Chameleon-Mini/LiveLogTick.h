@@ -34,26 +34,29 @@ typedef struct LogBlockListNode {
 extern LogBlockListNode *LogBlockListBegin;
 extern LogBlockListNode *LogBlockListEnd;
 
+#define LIVE_LOGGER_POST_TICKS               (3)
+extern uint8_t LiveLogModePostTickCount;
+
 INLINE bool AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize);
 INLINE void FreeLogBlocks(void);
-
 INLINE bool AtomicLiveLogTick(void);
 INLINE bool LiveLogTick(void);
 
 INLINE bool 
 AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize) {
      bool status = true;
-     cli();
-     cli_memory();
-     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-          if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
+     //cli();
+     //cli_memory();
+     //ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+     //ATOMIC_BLOCK(ATOMIC_FORCEON) {
+         if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
               if(FLUSH_LOGS_ON_SPACE_ERROR) {
                   LiveLogTick();
                   FreeLogBlocks();
               }
               status = false;
-          }
-          else if(logDataSize + 4 <= LogMemLeft) {
+         }
+         else if(logDataSize + 4 <= LogMemLeft) {
               LogBlockListNode *logBlock = (LogBlockListNode *) malloc(sizeof(LogBlockListNode));
               logBlock->logBlockStart = LogMemPtr;
               logBlock->logBlockSize = logDataSize + 4;
@@ -76,9 +79,9 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
           else {
               status = false;
           }
-     }
-     sei_memory();
-     sei();
+     //}
+     //sei_memory();
+     //sei();
      return status;
 }
 
@@ -99,18 +102,19 @@ FreeLogBlocks(void) {
 INLINE bool 
 AtomicLiveLogTick(void) {
      bool status;
-     cli();
-     cli_memory();
+     //cli();
+     //cli_memory();
      status = LiveLogTick();
-     sei_memory();
-     sei();
+     //sei_memory();
+     //sei();
      return status;
 }
 
 INLINE bool 
 LiveLogTick(void) {
      bool status = LogBlockListBegin == NULL;
-     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+     //ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+     //ATOMIC_BLOCK(ATOMIC_FORCEON) {
           //Endpoint_ClearIN();
           TerminalFlushBuffer();
           LogBlockListNode *logBlockCurrent = LogBlockListBegin;
@@ -121,7 +125,8 @@ LiveLogTick(void) {
           }
           //Endpoint_ClearOUT();
           FreeLogBlocks();
-     }
+          LiveLogModePostTickCount = 0x00;
+     //}
      return status;
 }
 

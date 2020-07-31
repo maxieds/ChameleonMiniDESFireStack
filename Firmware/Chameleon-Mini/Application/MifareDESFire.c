@@ -75,6 +75,14 @@ void MifareDesfireAppReset(void) {
     MifareDesfireReset();
 }
 
+void MifareDesfireAppTick(void)
+{
+    if(!CheckStateRetryCount2(false, false)) {
+        MifareDesfireAppReset();
+    }
+    /* Empty */
+}
+
 void MifareDesfireAppTask(void)
 {
     /* Empty */
@@ -160,14 +168,14 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
             Buffer[BitCount - 1] = 0x91;
             BitCount++;
         }
-        return BitCount;
+        return BitCount * BITS_PER_BYTE;
     }
     //else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { 
     //     return BitCount;
     //}
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
-        return MifareDesfireProcessCommand(Buffer, BitCount);
+        return MifareDesfireProcessCommand(Buffer, BitCount) * BITS_PER_BYTE;
     }
 
 }

@@ -52,7 +52,7 @@
 
 #include <nfc/nfc.h>
 
-#include "NFCUtils.h"
+#include "LibNFCUtils.h"
 
 #define SAK_FLAG_ATS_SUPPORTED 0x20
 
@@ -93,8 +93,10 @@ transmit_bits(const uint8_t *pbtTx, const size_t szTxBits)
   }
   // Transmit the bit frame command, we don't use the arbitrary parity feature
   if (timed) {
-    if ((szRxBits = nfc_initiator_transceive_bits_timed(pnd, pbtTx, szTxBits, NULL, abtRx, sizeof(abtRx), NULL, &cycles)) < 0)
+    if ((szRxBits = nfc_initiator_transceive_bits_timed(pnd, pbtTx, szTxBits, NULL, abtRx, sizeof(abtRx), NULL, &cycles)) < 0) {
+      fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
       return false;
+    }
     if ((!quiet_output) && (szRxBits > 0)) {
       printf("Response after %u cycles\n", cycles);
     }
@@ -125,8 +127,10 @@ transmit_bytes(const uint8_t *pbtTx, const size_t szTx)
   int res;
   // Transmit the command bytes
   if (timed) {
-    if ((res = nfc_initiator_transceive_bytes_timed(pnd, pbtTx, szTx, abtRx, sizeof(abtRx), &cycles)) < 0)
+    if ((res = nfc_initiator_transceive_bytes_timed(pnd, pbtTx, szTx, abtRx, sizeof(abtRx), &cycles)) < 0) {
+      fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
       return false;
+  }
     if ((!quiet_output) && (res > 0)) {
       printf("Response after %u cycles\n", cycles);
     }
@@ -224,15 +228,21 @@ main(int argc, char *argv[])
     nfc_exit(context);
     exit(EXIT_FAILURE);
   }
+  /*if (nfc_device_set_property_bool(pnd, NP_ACTIVATE_FIELD, true) < 0) {
+    nfc_perror(pnd, "nfc_device_set_property_bool");
+    nfc_close(pnd);
+    nfc_exit(context);
+    exit(EXIT_FAILURE);
+  }*/
   // The device should handle parity
   /*if (nfc_device_set_property_bool(pnd, NP_HANDLE_PARITY, true) < 0) {
      nfc_perror(pnd, "nfc_device_set_property_bool");
      nfc_close(pnd);
      nfc_exit(context);
      exit(EXIT_FAILURE);
-  }
-  if (nfc_device_set_property_int(pnd, NP_TIMEOUT_ATR, 200) < 0 || 
-      nfc_device_set_property_int(pnd, NP_TIMEOUT_COM, 125) < 0) {
+  }*/
+  /*if (nfc_device_set_property_int(pnd, NP_TIMEOUT_ATR, 0) < 0 || 
+      nfc_device_set_property_int(pnd, NP_TIMEOUT_COM, 250) < 0) {
      nfc_perror(pnd, "nfc_device_set_property_int");
      nfc_close(pnd);
      nfc_exit(context);
@@ -260,6 +270,7 @@ main(int argc, char *argv[])
 
   // Save the UID CL1
   memcpy(abtRawUid, abtRx, 4);
+  print_hex(abtRawUid, 4);
 
   //Prepare and send CL1 Select-Command
   memcpy(abtSelectTag + 2, abtRx, 5);

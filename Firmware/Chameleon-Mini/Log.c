@@ -23,6 +23,7 @@ static const MapEntryType PROGMEM LogModeMap[] = {
 
 LogBlockListNode *LogBlockListBegin = NULL;
 LogBlockListNode *LogBlockListEnd = NULL;
+uint8_t LiveLogModePostTickCount = 0x00;
 
 static void LogFuncOff(LogEntryEnum Entry, const void* Data, uint8_t Length)
 {
