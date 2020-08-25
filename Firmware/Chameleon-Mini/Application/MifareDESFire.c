@@ -116,13 +116,11 @@ void MifareDesfireAppTask(void)
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     
     if(ByteCount == 0) {
-         Buffer[0] = STATUS_PARAMETER_ERROR;
-         return DESFIRE_STATUS_RESPONSE_SIZE;
+         return ISO14443A_APP_NO_RESPONSE;
     } 
     else if((DesfireState == DESFIRE_IDLE) && (DesfireCmdCLA != DESFIRE_NATIVE_CLA) && 
             (DesfireCmdCLA != DESFIRE_ISO7816_CLA)) {
-        Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
+        return ISO14443A_APP_NO_RESPONSE;
     }
     else if(DesfireState == DESFIRE_IDLE) {
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
@@ -133,9 +131,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     /* Expecting further data here */
     if(Buffer[0] != STATUS_ADDITIONAL_FRAME && !CheckStateRetryCount(false)) {
         AbortTransaction();
-        DesfireState = DESFIRE_IDLE;
-        Buffer[0] = STATUS_COMMAND_ABORTED;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
+        return ISO14443A_APP_NO_RESPONSE;
     }
 
     uint16_t ReturnBytes = 0;
