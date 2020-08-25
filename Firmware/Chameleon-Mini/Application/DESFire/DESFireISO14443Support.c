@@ -1,3 +1,21 @@
+/*
+The DESFire stack portion of this firmware source 
+is free software written by Maxie Dion Schmidt: 
+you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by the Free Software Foundation, 
+either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+The complete license provided with source distributions of this library is available at the following link:
+https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
+
+This notice must be retained at the top of all source files in the repository. 
+*/
+
 /* 
  * DESFireISO14443Support.c
  * Maxie D. Schmidt (github.com/maxieds)
@@ -275,8 +293,6 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE); 
     }
     else if(Cmd == IGNORE_ACK_BYTE) {
-        //ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
-        //return BitCount;
         ISO144433AReset();
         ISO144434Reset();
         return ISO14443A_APP_NO_RESPONSE;
@@ -374,9 +390,6 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         }
         /* Forward to ISO/IEC 14443-4 processing code */
         uint8_t ReturnBits = ISO144434ProcessBlock(Buffer, (BitCount + 7) / 8, BitCount);
-	    //if(ReturnBits == ISO14443A_APP_NO_RESPONSE) {
-	    //     CheckStateRetryCount(true);
-	    //}
 	    const char *debugPrintStr2 = PSTR("ISO14443-4: ACTIVE RET");
 	    LogDebuggingMsg(debugPrintStr2);
         return ReturnBits;
@@ -384,7 +397,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     }
 
     /* Unknown command. Reset back to idle/halt state. */
-    bool defaultReset = false; //Iso144433AState != ISO14443_3A_STATE_IDLE;
+    bool defaultReset = true; //Iso144433AState != ISO14443_3A_STATE_IDLE;
     if(!CheckStateRetryCount(defaultReset)) {
         const char *logMsg = PSTR("ISO14443-3: RESET TO IDLE");
         LogDebuggingMsg(logMsg);

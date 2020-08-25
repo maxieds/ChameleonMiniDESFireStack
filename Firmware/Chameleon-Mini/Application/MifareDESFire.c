@@ -1,4 +1,22 @@
 /*
+The DESFire stack portion of this firmware source 
+is free software written by Maxie Dion Schmidt: 
+you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by the Free Software Foundation, 
+either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+The complete license provided with source distributions of this library is available at the following link:
+https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
+
+This notice must be retained at the top of all source files in the repository. 
+*/
+
+/*
  * MifareDesfire.c
  * MIFARE DESFire frontend
  *
@@ -170,9 +188,6 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
         }
         return BitCount * BITS_PER_BYTE;
     }
-    //else if((BitCount = CallInstructionHandler(Buffer, BitCount)) != ISO14443A_APP_NO_RESPONSE) { 
-    //     return BitCount;
-    //}
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
         return MifareDesfireProcessCommand(Buffer, BitCount) * BITS_PER_BYTE;
@@ -181,10 +196,14 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
-    //DesfireLogIncoming(Buffer, BitCount);
+    uint16_t BitCount2 = BitCount;
     BitCount = ISO144433APiccProcess(Buffer, BitCount);
-    //DesfireLogOutgoing(Buffer, BitCount);
-    return BitCount;
+    if(BitCount != ISO14443A_APP_NO_RESPONSE) {
+         return BitCount;
+    }
+    else {
+        return MifareDesfireProcess(Buffer, BitCount2);
+    }
 }
 
 void ResetLocalStructureData(void) {

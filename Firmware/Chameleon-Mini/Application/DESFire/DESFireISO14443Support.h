@@ -1,3 +1,21 @@
+/*
+The DESFire stack portion of this firmware source 
+is free software written by Maxie Dion Schmidt: 
+you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by the Free Software Foundation, 
+either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+The complete license provided with source distributions of this library is available at the following link:
+https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
+
+This notice must be retained at the top of all source files in the repository. 
+*/
+
 /* 
  * DESFireISO14443Support.h 
  * Maxie D. Schmidt (github.com/maxieds)
@@ -64,7 +82,7 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT        (3)
+#define MAX_STATE_RETRY_COUNT        (6)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault); 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 
