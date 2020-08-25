@@ -14,6 +14,13 @@ The complete license provided with source distributions of this library is avail
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
 
 This notice must be retained at the top of all source files in the repository. 
+
+This source code is only licensed for 
+redistribution under the above GPL clause for 
+non-commercial users. All commerical use or inclusion of this 
+software requires express written consent of the author (MDS). 
+This restriction pertains to any binary distributions which 
+are derivative works of this software.
 */
 
 /* DESFireCryptoTests.h : Since we cannot easily compile the crypto sources as a standalone unit, 
