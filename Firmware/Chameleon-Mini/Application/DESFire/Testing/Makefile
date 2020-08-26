@@ -1,11 +1,11 @@
 #### Makefile for the libnfc-based tests in C
 #### These tests are compiled for the local host system, not for AVR platforms
 
-CC=g++
-CFLAGS= -O0 --std=posix --std=gnu++98 -DDRIVER_PN53X_USB_ENABLED -I/usr/local/include \
-		-stdlib=libc++
-LD=g++
-LDFLAGS= $(CFLAGS) -L/usr/local/lib /usr/local/lib/libnfc.a -lnfc -lusb -lc++
+CC=gcc
+CFLAGS= -DDRIVER_PN53X_USB_ENABLED \
+		-g -O2 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t
+LD=ld
+LDFLAGS= -lnfc -lusb -lc
 
 BINDIR=./Bin
 BINEXT=exe
@@ -19,7 +19,7 @@ all: default
 
 default: $(BINOUTS)
 
-$(OBJDIR)/%.$(OBJEXT): %.cpp
+$(OBJDIR)/%.$(OBJEXT): %.c
 	$(CC) $(CFLAGS) $< -c -o $@
 
 $(BINDIR)/%.$(BINEXT): $(OBJDIR)/%.o

@@ -175,7 +175,6 @@ uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Data manipulation commands */
-
 // TODO: Page 57: Read file functions ... 
 uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);

@@ -66,7 +66,7 @@ static uint8_t abtAtqa[2];
 static uint8_t abtSak;
 static uint8_t abtAts[MAX_FRAME_LEN];
 static uint8_t szAts = 0;
-static size_t szCL = 1;//Always start with Cascade Level 1 (CL1)
+static size_t szCL = 1; //Always start with Cascade Level 1 (CL1)
 static nfc_device *pnd;
 
 bool    quiet_output = false;
@@ -228,6 +228,16 @@ main(int argc, char *argv[])
     nfc_exit(context);
     exit(EXIT_FAILURE);
   }
+  /*if(nfc_device_set_property_bool(pnd, NP_FORCE_ISO14443_A, true) < 0 || 
+     nfc_device_set_property_bool(pnd, NP_FORCE_SPEED_106, true) < 0 || 
+     nfc_device_set_property_bool(pnd, NP_ACCEPT_INVALID_FRAMES, false) < 0 || 
+     nfc_device_set_property_bool(pnd, NP_ACCEPT_MULTIPLE_FRAMES, false) < 0 || 
+     nfc_device_set_property_bool(pnd, NP_FORCE_SPEED_106, true) < 0) {
+    nfc_perror(pnd, "nfc_device_set_property_bool");
+    nfc_close(pnd);
+    nfc_exit(context);
+    exit(EXIT_FAILURE);
+  }*/
   /*if (nfc_device_set_property_bool(pnd, NP_ACTIVATE_FIELD, true) < 0) {
     nfc_perror(pnd, "nfc_device_set_property_bool");
     nfc_close(pnd);
@@ -248,7 +258,31 @@ main(int argc, char *argv[])
      nfc_exit(context);
      exit(EXIT_FAILURE);
   }*/
-
+  /*if (nfc_device_set_property_int(pnd, NP_TIMEOUT_ATR, 185) < 0) {
+     nfc_perror(pnd, "nfc_device_set_property_int");
+     nfc_close(pnd);
+     nfc_exit(context);
+     exit(EXIT_FAILURE);
+  }
+  if (nfc_device_set_property_int(pnd, NP_TIMEOUT_COM, 115)) {
+     nfc_perror(pnd, "nfc_device_set_property_int");
+     nfc_close(pnd);
+     nfc_exit(context);
+     exit(EXIT_FAILURE);
+  }*/
+  /*if(nfc_device_set_property_bool(pnd, NP_TIMEOUT_COMMAND, false)) {
+     nfc_perror(pnd, "nfc_device_set_property_int");
+     nfc_close(pnd);
+     nfc_exit(context);
+     exit(EXIT_FAILURE);
+  }
+  if(nfc_device_set_property_bool(pnd, NP_INFINITE_SELECT, true) < 0) {
+     nfc_perror(pnd, "nfc_device_set_property_bool");
+     nfc_close(pnd);
+     nfc_exit(context);
+     exit(EXIT_FAILURE);
+  }*/
+  
   printf("NFC reader: %s opened\n\n", nfc_device_get_name(pnd));
 
   // Send the 7 bits request command specified in ISO 14443A (0x26)
@@ -280,7 +314,7 @@ main(int argc, char *argv[])
 
   // Test if we are dealing with a CL2
   if (abtSak & CASCADE_BIT) {
-    szCL = 2;//or more
+    szCL = 2; //or more
     // Check answer
     if (abtRawUid[0] != 0x88) {
       printf("WARNING: Cascade bit set but CT != 0x88!\n");
