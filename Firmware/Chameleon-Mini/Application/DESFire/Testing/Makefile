@@ -1,20 +1,26 @@
 #### Makefile for the libnfc-based tests in C
 #### These tests are compiled for the local host system, not for AVR platforms
 
-CC=gcc
+CC=gcc-10
 CFLAGS= -DDRIVER_PN53X_USB_ENABLED \
-		-g -O2 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
-		`pkg-config libnfc --cflags --static`
-LD=gcc
-LDFLAGS= -lnfc -lusb -lc `pkg-config libnfc --libs --static`
+		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
+		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include
+LD=gcc-10
+LDFLAGS= -lc `pkg-config libnfc --libs` \
+		 -L/usr/local/opt/openssl/lib -lssl -lcrypto
 
 BINDIR=./Bin
 BINEXT=exe
 OBJDIR=./Obj
 OBJEXT=o
 
-FILE_BASENAMES=NFCAntiCollisionMod
+FILE_BASENAMES=NFCAntiCollisionMod TestAuthenticateAES
+OBJFILES=$(addprefix $(OBJDIR)/, $(addsuffix .$(OBJEXT), $(basename $(FILE_BASENAMES))))
 BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENAMES))))
+
+
+.SECONDARY: $(OBJFILES)
+.PRECIOUS: $(OBJFILES)
 
 all: default
 
@@ -22,8 +28,9 @@ default: $(BINOUTS)
 
 $(OBJDIR)/%.$(OBJEXT): %.c
 	$(CC) $(CFLAGS) $< -c -o $@
+	@/bin/bash ./MakeScripts/LibNFCObjectDefsRename.sh $@
 
-$(BINDIR)/%.$(BINEXT): $(OBJDIR)/%.o
+$(BINDIR)/%.$(BINEXT): $(OBJDIR)/%.$(OBJEXT)
 	$(LD) $(LDFLAGS) $< -o $@
 
 clean:
