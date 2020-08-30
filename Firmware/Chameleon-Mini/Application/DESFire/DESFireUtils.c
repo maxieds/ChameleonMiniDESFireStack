@@ -72,11 +72,6 @@ SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize) {
      if(blockSize == 0) {
           return 0;
      }
-     //SIZET baseBlockSize = byteSize / blockSize;
-     //if((byteSize % blockSize) != 0) {
-     //     baseBlockSize += 1;
-     //}
-     //return baseBlockSize;
      return DESFIRE_BYTES_TO_BLOCKS(byteSize);
 }
 

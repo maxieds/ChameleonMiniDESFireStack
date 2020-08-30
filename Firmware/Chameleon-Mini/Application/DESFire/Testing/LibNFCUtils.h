@@ -178,19 +178,47 @@ typedef struct {
      size_t  maxRxDataSize;
 } RxData_t;
 
+static inline RxData_t * InitRxDataStruct(size_t bufSize) {
+     RxData_t *rxData = malloc(sizeof(RxData_t));
+     if(rxData == NULL) {
+          return NULL;
+     }
+     rxData->recvSzRx = 0;
+     rxData->rxDataBuf = malloc(bufSize);
+     if(rxData->rxDataBuf == NULL) {
+          free(rxData);
+          return NULL;
+     }
+     rxData->maxRxDataSize = bufSize;
+}
+
+static inline void FreeRxDataStruct(RxData_t *rxData, bool freeInputPtr) {
+     if(rxData != NULL) {
+          free(rxData->rxDataBuf);
+          if(freeInputPtr) {
+              free(rxData);
+          }
+          else {
+              rxData->recvSzRx = 0;
+              rxData->maxRxDataSize = 0;
+              rxData->rxDataBuf = NULL;
+          }
+     }
+}
+
 static  bool
 liibnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData)
 {
   uint32_t cycles = 0;
-  printf("Sent bits:     ");
-  print_hex_bits(pbtTx, szTxBits);
+  //printf("Sent bits:     ");
+  //print_hex_bits(pbtTx, szTxBits);
   if ((rxData->recvSzRx = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, 
                              rxData->rxDataBuf, rxData->maxRxDataSize, NULL)) < 0) {
       fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
       return false;
   }
-  printf("Received bits: ");
-  print_hex_bits(rxData->rxDataBuf, rxData->recvSzRx);
+  //printf("Received bits: ");
+  //print_hex_bits(rxData->rxDataBuf, rxData->recvSzRx);
   return true;
 }
 
@@ -198,18 +226,17 @@ static  bool
 libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData)
 {
   uint32_t cycles = 0;
-  printf("Sent bits:     ");
-  print_hex(pbtTx, szTx);
+  //printf("Sent bits:     ");
+  //print_hex(pbtTx, szTx);
   int res;
   if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
       fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
       return false;
   }
   rxData->recvSzRx = res;
-  printf("Received bits: ");
-  print_hex(rxData->rxDataBuf, rxData->recvSzRx);
+  //printf("Received bits: ");
+  //print_hex(rxData->rxDataBuf, rxData->recvSzRx);
   return true;
 }
-
 
 #endif
