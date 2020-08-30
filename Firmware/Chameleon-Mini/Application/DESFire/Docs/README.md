@@ -66,6 +66,7 @@ Additionally, the following weblinks and posts clarify some common reference poi
 * Try to add extended support for the ``CLONE`` command when DESFire emulation is on the 
   active slot.
 * See all the example functionality in [libfreefare](https://github.com/nfc-tools/libfreefare/tree/master/examples).
+* Currently always factory resets the device when turning on the device, or choosing a new config ... 
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 

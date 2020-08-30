@@ -55,7 +55,7 @@
 #include "LibNFCUtils.h"
 
 #define SAK_FLAG_ATS_SUPPORTED 0x20
-
+#define CASCADE_BIT 0x04
 #define MAX_FRAME_LEN 264
 
 static uint8_t abtRx[MAX_FRAME_LEN];
@@ -80,53 +80,45 @@ uint8_t  abtSelectAll[2] = { 0x93, 0x20 };
 uint8_t  abtSelectTag[9] = { 0x93, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 uint8_t  abtRats[4] = { 0xe0, 0x50, 0x00, 0x00 };
 uint8_t  abtHalt[4] = { 0x50, 0x00, 0x00, 0x00 };
-#define CASCADE_BIT 0x04
 
 static  bool
 transmit_bits(const uint8_t *pbtTx, const size_t szTxBits)
 {
   uint32_t cycles = 0;
-  // Show transmitted command
   if (!quiet_output) {
     printf("Sent bits:     ");
     print_hex_bits(pbtTx, szTxBits);
   }
-  // Transmit the bit frame command, we don't use the arbitrary parity feature
   if (timed) {
     if ((szRxBits = nfc_initiator_transceive_bits_timed(pnd, pbtTx, szTxBits, NULL, abtRx, sizeof(abtRx), NULL, &cycles)) < 0) {
       fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
       return false;
-    }
+    }   
     if ((!quiet_output) && (szRxBits > 0)) {
       printf("Response after %u cycles\n", cycles);
-    }
+    }   
   } else {
     if ((szRxBits = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, abtRx, sizeof(abtRx), NULL)) < 0) {
       fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
       return false;
-    }
+    }   
   }
-  // Show received answer
   if (!quiet_output) {
     printf("Received bits: ");
     print_hex_bits(abtRx, szRxBits);
   }
-  // Succesful transfer
   return true;
 }
-
 
 static  bool
 transmit_bytes(const uint8_t *pbtTx, const size_t szTx)
 {
   uint32_t cycles = 0;
-  // Show transmitted command
   if (!quiet_output) {
     printf("Sent bits:     ");
-    print_hex(pbtTx, szTx);
+   print_hex(pbtTx, szTx);
   }
   int res;
-  // Transmit the command bytes
   if (timed) {
     if ((res = nfc_initiator_transceive_bytes_timed(pnd, pbtTx, szTx, abtRx, sizeof(abtRx), &cycles)) < 0) {
       fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
@@ -136,17 +128,16 @@ transmit_bytes(const uint8_t *pbtTx, const size_t szTx)
       printf("Response after %u cycles\n", cycles);
     }
   } else {
-    if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, abtRx, sizeof(abtRx), 0)) < 0)
+    if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, abtRx, sizeof(abtRx), 0)) < 0) {
       fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
       return false;
+    }
   }
   szRx = res;
-  // Show received answer
   if (!quiet_output) {
     printf("Received bits: ");
     print_hex(abtRx, szRx);
   }
-  // Succesful transfer
   return true;
 }
 

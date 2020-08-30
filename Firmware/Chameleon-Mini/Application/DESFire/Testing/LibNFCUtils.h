@@ -46,10 +46,16 @@
 #ifndef _EXAMPLES_NFC_UTILS_H_
 #define _EXAMPLES_NFC_UTILS_H_
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <string.h>
 #include <err.h>
+
+#include <nfc/nfc.h>
 
 /**
  * @macro DBG
@@ -165,5 +171,45 @@ static inline void print_nfc_target(const nfc_target *pnt, bool verbose) {
   printf("%s", s);
   nfc_free(s);
 }
+
+typedef struct {
+     size_t  recvSzRx;
+     uint8_t *rxDataBuf;
+     size_t  maxRxDataSize;
+} RxData_t;
+
+static  bool
+liibnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData)
+{
+  uint32_t cycles = 0;
+  printf("Sent bits:     ");
+  print_hex_bits(pbtTx, szTxBits);
+  if ((rxData->recvSzRx = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, 
+                             rxData->rxDataBuf, rxData->maxRxDataSize, NULL)) < 0) {
+      fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
+      return false;
+  }
+  printf("Received bits: ");
+  print_hex_bits(rxData->rxDataBuf, rxData->recvSzRx);
+  return true;
+}
+
+static  bool
+libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData)
+{
+  uint32_t cycles = 0;
+  printf("Sent bits:     ");
+  print_hex(pbtTx, szTx);
+  int res;
+  if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
+      fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
+      return false;
+  }
+  rxData->recvSzRx = res;
+  printf("Received bits: ");
+  print_hex(rxData->rxDataBuf, rxData->recvSzRx);
+  return true;
+}
+
 
 #endif
