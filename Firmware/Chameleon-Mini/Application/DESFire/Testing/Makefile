@@ -3,9 +3,10 @@
 
 CC=gcc
 CFLAGS= -DDRIVER_PN53X_USB_ENABLED \
-		-g -O2 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t
-LD=ld
-LDFLAGS= -lnfc -lusb -lc
+		-g -O2 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
+		`pkg-config libnfc --cflags --static`
+LD=gcc
+LDFLAGS= -lnfc -lusb -lc `pkg-config libnfc --libs --static`
 
 BINDIR=./Bin
 BINEXT=exe

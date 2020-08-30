@@ -2,3 +2,5 @@ Bin/
 Bin/*
 Obj/
 Obj/*
+libnfc/
+libnfc/*

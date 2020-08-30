@@ -101,9 +101,10 @@ transmit_bits(const uint8_t *pbtTx, const size_t szTxBits)
       printf("Response after %u cycles\n", cycles);
     }
   } else {
-    if ((szRxBits = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, abtRx, sizeof(abtRx), NULL)) < 0)
+    if ((szRxBits = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, abtRx, sizeof(abtRx), NULL)) < 0) {
       fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
       return false;
+    }
   }
   // Show received answer
   if (!quiet_output) {
@@ -130,7 +131,7 @@ transmit_bytes(const uint8_t *pbtTx, const size_t szTx)
     if ((res = nfc_initiator_transceive_bytes_timed(pnd, pbtTx, szTx, abtRx, sizeof(abtRx), &cycles)) < 0) {
       fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
       return false;
-  }
+    }
     if ((!quiet_output) && (res > 0)) {
       printf("Response after %u cycles\n", cycles);
     }
@@ -228,6 +229,17 @@ main(int argc, char *argv[])
     nfc_exit(context);
     exit(EXIT_FAILURE);
   }
+  /** 
+   * Extra flags set by user:
+   */
+  /*if(nfc_device_set_property_bool(pnd, NP_FORCE_SPEED_106, true) < 0 || 
+     nfc_device_set_property_int(pnd, NP_TIMEOUT_ATR, 185) < 0 || 
+     nfc_device_set_property_int(pnd, NP_TIMEOUT_COM, 115)) {
+    nfc_perror(pnd, "nfc_device_set_property_bool");
+    nfc_close(pnd);
+    nfc_exit(context);
+    exit(EXIT_FAILURE);
+  }*/
   /*if(nfc_device_set_property_bool(pnd, NP_FORCE_ISO14443_A, true) < 0 || 
      nfc_device_set_property_bool(pnd, NP_FORCE_SPEED_106, true) < 0 || 
      nfc_device_set_property_bool(pnd, NP_ACCEPT_INVALID_FRAMES, false) < 0 || 
@@ -309,7 +321,7 @@ main(int argc, char *argv[])
   //Prepare and send CL1 Select-Command
   memcpy(abtSelectTag + 2, abtRx, 5);
   iso14443a_crc_append(abtSelectTag, 7);
-  transmit_bytes(abtSelectTag, 9);
+  transmit_bytes(abtSelectTag, 9); 
   abtSak = abtRx[0];
 
   // Test if we are dealing with a CL2

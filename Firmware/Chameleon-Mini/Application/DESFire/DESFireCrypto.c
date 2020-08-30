@@ -13,6 +13,10 @@ GNU General Public License for more details.
 The complete license provided with source distributions of this library is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
 
+Based in part on the original DESFire code created by 
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at 
+https://github.com/dev-zzo/ChameleonMini/tree/desfire.
+
 This notice must be retained at the top of all source files in the repository. 
 
 This source code is only licensed for 
