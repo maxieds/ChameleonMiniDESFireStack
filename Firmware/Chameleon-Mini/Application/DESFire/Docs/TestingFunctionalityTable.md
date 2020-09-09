@@ -4,11 +4,11 @@
 
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :question_mark: | |
+| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :question: :grey_question: :interrobang: | |
 | CMD_AUTHENTICATE_ISO | 0x1A | ISO / TDES auth | | |
 | CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :wavy_dash: | |
-| CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :xmark: | |    
-| CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :xmark: | See page 32 of AN12343.pdf | 
+| CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |    
+| CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf | 
 | CMD_CHANGE_KEY_SETTINGS | 0x54 | | | |
 | CMD_SET_CONFIGURATION |  0x5C | | | |
 | CMD_CHANGE_KEY |  0xC4 | | | |
@@ -43,11 +43,17 @@
 | CMD_READ_RECORDS | 0xBB | | | |
 | CMD_CLEAR_RECORD_FILE | 0xEB | | | |
 | CMD_COMMIT_TRANSACTION | 0xC7 | | | |
-| CMD_ABORT_TRANSACTION | 0xA7 | | | |
+| CMD_ABORT_TRANSACTION | 0xA7 | | | |               |
+
+## ISO7816 instruction and subcommands support 
+
+| Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-
-## ISO7816 instruction and subcommands support (TODO)
-
-
-
-
+| CMD_ISO7816_SELECT | 0xa4 | | | |
+| CMD_ISO7816_GET_CHALLENGE | 0x84 | | | |
+| CMD_ISO7816_EXTERNAL_AUTHENTICATE | 0x82 | | | |
+| CMD_ISO7816_INTERNAL_AUTHENTICATE | 0x88 | | | |
+| CMD_ISO7816_READ_BINARY | 0xb0 | | | |
+| CMD_ISO7816_UPDATE_BINARY | 0xd6 | | | |
+| CMD_ISO7816_READ_RECORDS | 0xb2 | | | |
+| CMD_ISO7816_APPEND_RECORD | 0xe2 | | | |
