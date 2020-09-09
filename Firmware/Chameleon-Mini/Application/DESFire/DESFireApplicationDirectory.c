@@ -56,6 +56,7 @@ versions of the code at free will.
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+    MemoryStore();
 }
 
 BYTE PMKConfigurationChangeable(void) {
@@ -652,7 +653,7 @@ TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer) {
              AppDir.AppIds[EntryIndex][2]) == 0)
             continue;
         /* If it won't fit -- remember and return */
-        if (Status.BytesProcessed >= DESFIRE_AID_SIZE * 19) {
+        if (Status.BytesProcessed >= DESFIRE_AID_SIZE * 19) { // TODO ??? 19 / Magic Number ???
             TransferState.GetApplicationIds.NextIndex = EntryIndex;
             Status.IsComplete = false;
             return Status;
@@ -678,6 +679,4 @@ uint16_t GetApplicationIdsIterator(uint8_t* Buffer, uint16_t ByteCount) {
     }
     return DESFIRE_STATUS_RESPONSE_SIZE + Status.BytesProcessed;
 }
-
-
 

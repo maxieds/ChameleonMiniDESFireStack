@@ -177,6 +177,38 @@ void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcB
      aes128DecryptBlock(cryptoCtx, encSrcBuf, plainDestBuf); 
 }
 
+BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
+                             uint8_t *encDestBuf, size_t bufSize) {
+     size_t bufBlocks = (bufSize + CRYPTO_MAX_BLOCK_SIZE - 1) / CRYPTO_MAX_BLOCK_SIZE;
+     bool padLastBlock = (bufSize % CRYPTO_MAX_BLOCK_SIZE) != 0;
+     size_t lastBlockSize = bufSize % CRYPTO_MAX_BLOCK_SIZE;
+     for(int blk = 0; blk < bufBlocks; blk++) {
+          if(padLastBlock && blk + 1 == bufBlocks) {
+               uint8_t lastBlockBuf[CRYPTO_MAX_BLOCK_SIZE];
+               memset(lastBlockBuf, 0x00, CRYPTO_MAX_BLOCK_SIZE);
+               memcpy(lastBlockBuf, plainSrcBuf + blk * CRYPTO_MAX_BLOCK_SIZE, lastBlockSize);
+               DesfireAESEncryptBlock(cryptoCtx, lastBlockBuf, 
+                                      encDestBuf + blk * CRYPTO_MAX_BLOCK_SIZE);
+          }
+          else {
+               DesfireAESEncryptBlock(cryptoCtx, plainSrcBuf + blk * CRYPTO_MAX_BLOCK_SIZE, 
+                                      encDestBuf + blk * CRYPTO_MAX_BLOCK_SIZE);
+          }
+     }
+     return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
+}
+
+BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
+                             uint8_t *plainDestBuf, size_t bufSize) {
+     size_t bufBlocks = (bufSize + CRYPTO_MAX_BLOCK_SIZE - 1) / CRYPTO_MAX_BLOCK_SIZE;
+     bool padLastBlock = (bufSize % CRYPTO_MAX_BLOCK_SIZE) != 0;
+     for(int blk = 0; blk < bufBlocks; blk++) {
+          DesfireAESEncryptBlock(cryptoCtx, encSrcBuf + blk * CRYPTO_MAX_BLOCK_SIZE, 
+                                 plainDestBuf + blk * CRYPTO_MAX_BLOCK_SIZE);
+     }
+     return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
+}
+
 uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_AES_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];

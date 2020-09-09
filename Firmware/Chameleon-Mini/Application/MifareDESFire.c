@@ -1,26 +1,32 @@
 /*
 The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt: 
-you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by the Free Software Foundation, 
-either version 3 of the License, or (at your option) any later version.
+is free software written by Maxie Dion Schmidt (@maxieds): 
+You can redistribute it and/or modify
+it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 
-The complete license provided with source distributions of this library is available at the following link:
-https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
+The complete source distribution of  
+this firmware is available at the following link:
+https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-This notice must be retained at the top of all source files in the repository. 
+Based in part on the original DESFire code created by  
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+https://github.com/dev-zzo/ChameleonMini/tree/desfire.
+
+This notice must be retained at the top of all source files where indicated. 
 
 This source code is only licensed for 
-redistribution under the above GPL clause for 
-non-commercial users. All commerical use or inclusion of this 
+redistribution under for non-commercial users. 
+All commerical use or inclusion of this 
 software requires express written consent of the author (MDS). 
 This restriction pertains to any binary distributions which 
 are derivative works of this software.
+
+The author is free to revoke or modify this license for future 
+versions of the code at free will.
 */
 
 /*
@@ -169,18 +175,19 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 
-    if(BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
-            Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) { // Wrapped native command structure: 
+    size_t ByteCount = BitCount / BITS_PER_BYTE;
+    if(ByteCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
+       Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { // Wrapped native command structure: 
         DesfireCmdCLA = Buffer[0];
         /* Unwrap the PDU from ISO 7816-4 */
         BitCount = Buffer[4];
         Buffer[0] = Buffer[1];
-        memmove(&Buffer[1], &Buffer[5], BitCount - 4);
+        memmove(&Buffer[1], &Buffer[5], ByteCount - 4);
         /* Process the command */
         /* TODO: Where are we deciphering wrapped payload data? 
          *       This should depend on the CommMode standard? 
          */
-        BitCount = MifareDesfireProcessCommand(Buffer, BitCount + 1);
+        BitCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
         /* TODO: Where are we re-wrapping the data according to the CommMode standards? */
         if (BitCount) {
             /* Re-wrap into ISO 7816-4 */
@@ -199,6 +206,10 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
+    if(BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 &&
+       Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) {
+         return MifareDesfireProcess(Buffer, BitCount);
+    }
     uint16_t BitCount2 = BitCount;
     BitCount = ISO144433APiccProcess(Buffer, BitCount);
     if(BitCount != ISO14443A_APP_NO_RESPONSE) {

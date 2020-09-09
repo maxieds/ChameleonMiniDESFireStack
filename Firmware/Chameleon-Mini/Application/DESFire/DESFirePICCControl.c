@@ -87,6 +87,7 @@ TransferStateType TransferState = { 0 };
 
 void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
+    MemoryStore();
 }
 
 TransferStatus PiccToPcdTransfer(uint8_t* Buffer) { // TODO: Check 
@@ -203,7 +204,8 @@ void InitialisePiccBackendEV0(uint8_t StorageSize) {
     if(Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
         Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
         snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory resetting the device"));
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer, StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer, 
+                 StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
         FactoryFormatPiccEV0();
     }
     else {
@@ -222,7 +224,8 @@ void InitialisePiccBackendEV1(uint8_t StorageSize) {
     if(Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE && 
         Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
         snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory resetting the device"));
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer, StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
+        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer, 
+                 StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
         FactoryFormatPiccEV1(StorageSize);
     }
     else {
@@ -322,6 +325,7 @@ void FactoryFormatPiccEV1(uint8_t StorageSize) {
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV1;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV1;
     /* Continue with user data initialization */
+    SynchronizePICCInfo();
     FormatPicc();
 }
 

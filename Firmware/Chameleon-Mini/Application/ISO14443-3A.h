@@ -83,13 +83,13 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
                 (DataPtr[3] == FirstUidCL[1]) &&
                 (DataPtr[4] == FirstUidCL[2]) &&
                 (DataPtr[5] == FirstUidCL[3]) ) { 
-	        DataPtr[1] = UidCL[0];
-            DataPtr[2] = UidCL[1];
-            DataPtr[3] = UidCL[2];
-            DataPtr[4] = UidCL[3];
+	        DataPtr[1] = UidCL[1];
+            DataPtr[2] = UidCL[2];
+            DataPtr[3] = UidCL[3];
+            //DataPtr[4] = UidCL[4];
             DataPtr[0] = SAKValue;
             DataPtr[5] = ISO14443A_CALC_BCC(DataPtr);
-            *BitCount = 6 * BITS_PER_BYTE;
+            *BitCount = 5 * BITS_PER_BYTE;
 	        return true;
         }
         else {

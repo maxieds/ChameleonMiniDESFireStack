@@ -383,7 +383,6 @@ void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
     if (ByteCount == 0)
         return;
     FRAMWrite(Buffer, Address, ByteCount);
-
     LEDHook(LED_MEMORY_CHANGED, LED_ON);
 }
 
@@ -408,10 +407,8 @@ void MemoryStore(void)
 {
     /* Store current memory into permanent flash */
     FRAMToFlash((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
-
     LEDHook(LED_MEMORY_CHANGED, LED_OFF);
     LEDHook(LED_MEMORY_STORED, LED_PULSE);
-
     SystemTickClearFlag();
 }
 

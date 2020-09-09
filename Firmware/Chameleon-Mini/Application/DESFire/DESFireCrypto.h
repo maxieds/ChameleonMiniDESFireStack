@@ -142,14 +142,18 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
      (cryptoBits / BITS_PER_BYTE)
 
 typedef AES128Context DesfireAESCryptoContext;
-
 extern DesfireAESCryptoContext AESCryptoContext;
 extern uint16_t AESCryptoKeySizeBytes;
 
 typedef uint8_t DesfireAESCryptoKey[16];
-
 extern DesfireAESCryptoKey AESCryptoSessionKey;
 extern DesfireAESCryptoKey AESCryptoIVBuffer;
+
+#define ExtractAESKeyBuffer(keyBufPtr, cryptoContext)                                     ({   \
+        DesfireAESCryptoContext *aesCryptoContext = (DesfireAESCryptoContext *) cryptoContext; \
+        memcpy(*keyBufPtr, aesCryptoContext->schedule, AES128_KEY_SIZE);                       \
+        *keyBufPtr;                                                                            \
+        })
 
 void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx);
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
@@ -157,6 +161,10 @@ uint16_t GetPaddedBufferSize(uint16_t bufSize);
 uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
 void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
 void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
+BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
+                             uint8_t *encDestBuf, size_t bufSize);
+BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
+                             uint8_t *plainDestBuf, size_t bufSize);
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 

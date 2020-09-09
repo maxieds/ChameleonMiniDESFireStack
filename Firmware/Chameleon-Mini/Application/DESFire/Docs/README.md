@@ -67,6 +67,10 @@ Additionally, the following weblinks and posts clarify some common reference poi
   active slot.
 * See all the example functionality in [libfreefare](https://github.com/nfc-tools/libfreefare/tree/master/examples).
 * Currently always factory resets the device when turning on the device, or choosing a new config ... 
+* **BIG Q:** Does calling ``MemoryStore()`` to frequently cause problems? This should be rare-ish when 
+  data on the tag changes?
+* Check to figure out where possibly encrypted transfers (AES CMAC) come into play after the initial 
+  authentication procedure?
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 

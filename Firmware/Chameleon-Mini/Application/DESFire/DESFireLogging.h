@@ -90,21 +90,21 @@ void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
     uint8_t logLength = 0;                                      \
     do {                                                        \
         snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
-		   fmtStr, ##__VA_ARGS__);                      \
-	logLength = StringLength(__InternalStringBuffer,        \
-			         STRING_BUFFER_SIZE);           \
-	DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR,          \
-			__InternalStringBuffer, logLength);     \
+		           fmtStr, ##__VA_ARGS__);                      \
+	logLength = StringLength(__InternalStringBuffer,            \
+			                 STRING_BUFFER_SIZE);               \
+	DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR,              \
+			        __InternalStringBuffer, logLength);         \
     } while(0);                                                 \
     })
 
 #define GetSourceFileLoggingData()                               ({ \
         char *strBuffer;                                            \
         do {                                                        \
-	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
-                       PSTR("@@ LINE #%d in *%s @@"),               \
-			    __LINE__, __FILE__);                    \
-	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';  \
+	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,      \
+                   PSTR("@@ LINE #%d in *%s @@"),                   \
+			       __LINE__, __FILE__);                             \
+	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';      \
         } while(0);                                                 \
         strBuffer = __InternalStringBuffer;                         \
         strBuffer;                                                  \

@@ -216,6 +216,13 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
 
+HOST_PLATFORM:=$(shell uname -s)
+DATECMD=`which date`
+ifeq "$(HOST_PLATFORM)" "Darwin"
+	DATECMD=`which gdate`
+endif
+DATECMD=$(shell $(DATECMD) '+%Y.%m.%d-%H%M%S')
+
 # Default target
 all: desfire-dev
 
@@ -280,6 +287,9 @@ desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
+	@git add -f Latest/$(TARGET)-DESFire.hex Latest/$(TARGET)-DESFire.eep
+	@cp $(TARGET)-DESFire-$(DATECMD).hex $(TARGET)-DESFire-$(DATECMD).eep Latest/
+	@git add -f Latest/$(TARGET)-DESFire-$(DATECMD).hex Latest/$(TARGET)-DESFire-$(DATECMD).eep
 
 local-clean:
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{hex,eep}

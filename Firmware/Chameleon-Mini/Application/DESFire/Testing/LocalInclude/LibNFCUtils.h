@@ -227,16 +227,16 @@ static  bool
 libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData)
 {
   uint32_t cycles = 0;
-  printf("Sent bits:     ");
-  print_hex(pbtTx, szTx);
+  //printf("Sent bits:     ");
+  //print_hex(pbtTx, szTx);
   int res;
   if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
       fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
       return false;
   }
   rxData->recvSzRx = res;
-  printf("Received bits: ");
-  print_hex(rxData->rxDataBuf, rxData->recvSzRx);
+  //printf("Received bits: ");
+  //print_hex(rxData->rxDataBuf, rxData->recvSzRx);
   return true;
 }
 
