@@ -2,7 +2,7 @@
 #### These tests are compiled for the local host system, not for AVR platforms
 
 CC=gcc-10
-CFLAGS= -DDRIVER_PN53X_USB_ENABLED \
+CFLAGS= -ILocalInclude -ISource -DDRIVER_PN53X_USB_ENABLED \
 		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
 		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include
 LD=gcc-10
@@ -22,13 +22,13 @@ BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENA
 .SECONDARY: $(OBJFILES)
 .PRECIOUS: $(OBJFILES)
 
-all: default
+all: clean default
 
 default: $(BINOUTS)
 
-$(OBJDIR)/%.$(OBJEXT): %.c
+$(OBJDIR)/%.$(OBJEXT): Source/%.c
 	$(CC) $(CFLAGS) $< -c -o $@
-	@/bin/bash ./MakeScripts/LibNFCObjectDefsRename.sh $@
+	@/bin/bash ./Scripts/LibNFCObjectDefsRename.sh $@
 
 $(BINDIR)/%.$(BINEXT): $(OBJDIR)/%.$(OBJEXT)
 	$(LD) $(LDFLAGS) $< -o $@

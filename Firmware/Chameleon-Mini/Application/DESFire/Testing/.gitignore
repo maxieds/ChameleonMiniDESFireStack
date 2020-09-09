@@ -4,3 +4,6 @@ Obj/
 Obj/*
 libnfc/
 libnfc/*
+*.d
+*.o
+*.exe
