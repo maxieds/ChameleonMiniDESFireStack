@@ -121,6 +121,10 @@ void MifareDesfireAppTask(void)
 
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     
+    const char *loggingErrorMsg = PSTR("MFDesfireProcessCmd: ByteCount -- %d");
+    DEBUG_PRINT_P(loggingErrorMsg, ByteCount);
+    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+
     if(ByteCount == 0) {
          return ISO14443A_APP_NO_RESPONSE;
     } 
@@ -174,15 +178,20 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
-
     size_t ByteCount = BitCount / BITS_PER_BYTE;
     if(ByteCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { // Wrapped native command structure: 
-        DesfireCmdCLA = Buffer[0];
+        // Check CRC bytes appended to the buffer:
+        // -- Actually, just ignore parity problems if they exist (TODO later)
+        //if(!ISO14443ACheckCRCA(Buffer, ByteCount - 2)) {
+        //    Buffer[0] = STATUS_INTEGRITY_ERROR;
+        //    return DESFIRE_STATUS_RESPONSE_SIZE * BITS_PER_BYTE;
+        //}
         /* Unwrap the PDU from ISO 7816-4 */
-        BitCount = Buffer[4];
+        DesfireCmdCLA = Buffer[0];
+        ByteCount = Buffer[4] - 2; // remove the trailing parity bytes
         Buffer[0] = Buffer[1];
-        memmove(&Buffer[1], &Buffer[5], ByteCount - 4);
+        memmove(&Buffer[1], &Buffer[5], ByteCount - 2);
         /* Process the command */
         /* TODO: Where are we deciphering wrapped payload data? 
          *       This should depend on the CommMode standard? 
@@ -194,7 +203,8 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
             Buffer[BitCount] = Buffer[0];
             memmove(&Buffer[0], &Buffer[1], BitCount - 1);
             Buffer[BitCount - 1] = 0x91;
-            BitCount++;
+            ISO14443AAppendCRCA(Buffer, ++BitCount);
+            BitCount += 2;
         }
         return BitCount * BITS_PER_BYTE;
     }
@@ -206,8 +216,10 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
-    if(BitCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 &&
-       Buffer[3] == 0x00 && Buffer[4] == BitCount - 6) {
+    size_t ByteCount = BitCount / BITS_PER_BYTE;
+    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    if(ByteCount >= 6 && Buffer[0] == 0x90 && Buffer[2] == 0x00 &&
+       Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
     uint16_t BitCount2 = BitCount;

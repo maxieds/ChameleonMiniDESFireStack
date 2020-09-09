@@ -1181,7 +1181,9 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE **Key, **IVBuffer;
     
     /* Reset authentication state right away */
+    DESFireLogSourceCodeTODO("Minus One...", GetSourceFileLoggingData());
     InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);    
+    DESFireLogSourceCodeTODO("Zero...", GetSourceFileLoggingData());
     /* Validate command length */
     if(ByteCount != 2) {
         Buffer[0] = STATUS_LENGTH_ERROR;
@@ -1199,11 +1201,15 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
          Buffer[0] = STATUS_NO_SUCH_KEY;
          return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    
+   
+    DESFireLogSourceCodeTODO("One...", GetSourceFileLoggingData());
+
     InitAESCryptoContext(&AESCryptoContext);
     InitAESCryptoKeyData(&AESCryptoSessionKey);
     InitAESCryptoKeyData(&AESCryptoIVBuffer);
     
+    DESFireLogSourceCodeTODO("Two...", GetSourceFileLoggingData());
+
     keySize = GetDefaultCryptoMethodKeySize(cryptoKeyType);
     *Key = AESCryptoSessionKey;
     *IVBuffer = AESCryptoIVBuffer;

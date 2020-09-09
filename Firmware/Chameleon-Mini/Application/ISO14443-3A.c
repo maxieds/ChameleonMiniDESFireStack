@@ -11,7 +11,7 @@ uint8_t FirstUidCL[4] = { 0 };
 
 #define CRC_INIT		0x6363
 #define CRC_INIT_R		0xC6C6 /* Bit reversed */
-#define USE_HW_CRC
+#define USE_HW_CRC      //0
 
 #ifdef USE_HW_CRC
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount)

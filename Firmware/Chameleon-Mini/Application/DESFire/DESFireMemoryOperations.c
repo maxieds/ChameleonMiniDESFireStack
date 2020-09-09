@@ -38,15 +38,26 @@ versions of the code at free will.
 #include "DESFireMemoryOperations.h"
 #include "DESFirePICCControl.h"
 #include "DESFireFile.h"
+#include "DESFireLogging.h"
 
 volatile char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
 char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
+    if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
+        const char *loggingErrorMsg = PSTR("ReadBlockBytes: Block Address to large -- %d");
+        DEBUG_PRINT_P(loggingErrorMsg, StartBlock);
+        return;
+    }
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 
 void WriteBlockBytes(const void* Buffer, SIZET StartBlock, SIZET Count) {
+    if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
+        const char *loggingErrorMsg = PSTR("WriteBlockBytes: Block Address to large -- %d");
+        DEBUG_PRINT_P(loggingErrorMsg, StartBlock);
+        return;
+    }
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 
@@ -56,8 +67,8 @@ void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
     uint16_t DestOffset = DestBlock; 
     while(Count > 0) {
         SIZET bytesToWrite = MIN(Count, DESFIRE_EEPROM_BLOCK_SIZE);
-        MemoryReadBlock(Buffer, SrcOffset, bytesToWrite);
-        MemoryWriteBlock(Buffer, DestOffset, bytesToWrite);
+        ReadBlockBytes(Buffer, SrcOffset, bytesToWrite);
+        WriteBlockBytes(Buffer, DestOffset, bytesToWrite);
         SrcOffset += 1; 
         DestOffset += 1; 
         Count -= DESFIRE_EEPROM_BLOCK_SIZE;
@@ -70,7 +81,7 @@ void SetBlockBytes(SIZET DestBlock, BYTE InitByteValue, SIZET ByteCount) {
      while(ByteCount > 0) {
           SIZET bytesToWrite = MIN(ByteCount, DESFIRE_EEPROM_BLOCK_SIZE);
           WriteBlockBytes(initValueArray, DestBlock, bytesToWrite);
-          DestBlock += DESFIRE_EEPROM_BLOCK_SIZE;
+          DestBlock += 1; //DESFIRE_EEPROM_BLOCK_SIZE;
           ByteCount -= DESFIRE_EEPROM_BLOCK_SIZE;
      }
 }

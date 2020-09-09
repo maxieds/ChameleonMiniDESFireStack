@@ -56,7 +56,7 @@ versions of the code at free will.
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
-    MemoryStore();
+    //MemoryStore();
 }
 
 BYTE PMKConfigurationChangeable(void) {
@@ -485,7 +485,7 @@ uint16_t SelectApp(const DESFireAidType Aid) {
     uint8_t Slot;
     /* Search for the app slot */
     Slot = LookupAppSlot(Aid);
-    if (Slot == DESFIRE_MAX_SLOTS) {
+    if (Slot >= DESFIRE_MAX_SLOTS) {
         return STATUS_APP_NOT_FOUND;
     }
     SelectAppBySlot(Slot);
