@@ -1225,7 +1225,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Generate the nonce B (RndB / Challenge response) */
     if(LocalTestingMode != 0) {
-         RandomGetBuffer(DesfireCommandState.Authenticate.RndB, CRYPTO_AES_KEY_SIZE);
+         RandomGetBuffer(DesfireCommandState.Authenticate.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     }
     else {
          /* Fixed nonce for testing */
@@ -1233,17 +1233,17 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
          DesfireCommandState.Authenticate.RndB[1] = 0xFE;
          DesfireCommandState.Authenticate.RndB[2] = 0xBA;
          DesfireCommandState.Authenticate.RndB[3] = 0xBE;
-         memset(DesfireCommandState.Authenticate.RndB + 4, 0xff, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-         DesfireCommandState.Authenticate.RndB[12] = 0x00;
-         DesfireCommandState.Authenticate.RndB[13] = 0x11;
-         DesfireCommandState.Authenticate.RndB[14] = 0x22;
-         DesfireCommandState.Authenticate.RndB[15] = 0x33;
+         DesfireCommandState.Authenticate.RndB[4] = 0x00;
+         DesfireCommandState.Authenticate.RndB[5] = 0x11;
+         DesfireCommandState.Authenticate.RndB[6] = 0x22;
+         DesfireCommandState.Authenticate.RndB[7] = 0x33;
     }
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.Authenticate.RndB, CRYPTO_AES_KEY_SIZE);
     
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
     Status = DesfireAESEncryptBuffer(&AESCryptoContext, DesfireCommandState.Authenticate.RndB, 
                                      &Buffer[1], 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
+    memcpy(AESCryptoIVBuffer, Buffer, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     if(Status != STATUS_OPERATION_OK) {
          Buffer[0] = Status;
          return DESFIRE_STATUS_RESPONSE_SIZE;
