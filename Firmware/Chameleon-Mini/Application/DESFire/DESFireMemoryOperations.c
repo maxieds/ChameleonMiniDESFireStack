@@ -50,15 +50,19 @@ void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
         return;
     }
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    //MemoryReadBlock(Buffer, StartBlock, Count);
+    //ReadEEPBlock(StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Buffer, Count);
 }
 
-void WriteBlockBytes(const void* Buffer, SIZET StartBlock, SIZET Count) {
+void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
         const char *loggingErrorMsg = PSTR("WriteBlockBytes: Block Address to large -- %d");
         DEBUG_PRINT_P(loggingErrorMsg, StartBlock);
         return;
     }
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    //MemoryWriteBlock(Buffer, StartBlock, Count);
+    //WriteEEPBlock(StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Buffer, Count);
 }
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
@@ -75,18 +79,7 @@ void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
     }
 }
 
-void SetBlockBytes(SIZET DestBlock, BYTE InitByteValue, SIZET ByteCount) {
-     BYTE initValueArray[DESFIRE_EEPROM_BLOCK_SIZE];
-     memset(initValueArray, InitByteValue, DESFIRE_EEPROM_BLOCK_SIZE);
-     while(ByteCount > 0) {
-          SIZET bytesToWrite = MIN(ByteCount, DESFIRE_EEPROM_BLOCK_SIZE);
-          WriteBlockBytes(initValueArray, DestBlock, bytesToWrite);
-          DestBlock += 1; //DESFIRE_EEPROM_BLOCK_SIZE;
-          ByteCount -= DESFIRE_EEPROM_BLOCK_SIZE;
-     }
-}
-
-uint8_t AllocateBlocks(uint8_t BlockCount) {
+uint8_t AllocateBlocksMain(uint8_t BlockCount) {
     uint8_t Block;
     /* Check if we have space */
     Block = Picc.FirstFreeBlock;
@@ -94,8 +87,10 @@ uint8_t AllocateBlocks(uint8_t BlockCount) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
+    DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
     SynchronizePICCInfo();
-    SetBlockBytes(Block, 0x00, BlockCount * DESFIRE_EEPROM_BLOCK_SIZE);
+    const char *loggingDebugMsg = PSTR("AllocateBlocks: Next Free Block -- %d");
+    DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     return Block;
 }
 

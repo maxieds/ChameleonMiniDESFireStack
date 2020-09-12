@@ -110,8 +110,9 @@ typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
  * `DesfireApplicationDataType` structure from above.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
-    BYTE FirstFreeSlot;
-    DESFireAidType AppIds[DESFIRE_MAX_FILES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; 
+    BYTE           FirstFreeSlot;
+    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; 
+    SIZET          AppCacheStructBlockOffset[DESFIRE_MAX_SLOTS];
 } DESFireAppDirType;
 
 #define DESFIRE_APP_DIR_BLOCKS      DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType))

@@ -38,6 +38,7 @@ versions of the code at free will.
 #define __DESFIRE_MEMORY_OPERATIONS_H__
 
 #include "DESFireFirmwareSettings.h"
+#include "DESFireLogging.h"
 
 /* Reserve some space on the stack (text / data segment) for intermediate 
    storage of strings and data we need to write so we do not have to rely 
@@ -48,14 +49,29 @@ extern volatile char __InternalStringBuffer[STRING_BUFFER_SIZE];
 extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
 
 /*
- * EEPROM memory management routines:
+ * EEPROM and FRAM memory management routines:
  */
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count);
-void WriteBlockBytes(const void *Buffer, SIZET StartBlock, SIZET Count);
-void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
-void SetBlockBytes(SIZET DestBlock, BYTE InitByteValue, SIZET Count);
 
-BYTE AllocateBlocks(BYTE BlockCount);
+void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
+//#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
+    const char *logCallingFunc = PSTR("WBB Caller -- %s");         \
+    DEBUG_PRINT_P(logCallingFunc, __func__);                       \
+    const char *logPrevFirstFreeBlock = PSTR("  -> WBB-FFB = %d"); \
+    DEBUG_PRINT_P(logPrevFirstFreeBlock, Picc.FirstFreeBlock);     \
+    WriteBlockBytesMain(Buffer, StartBlock, Count);
+#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
+    WriteBlockBytesMain(Buffer, StartBlock, Count);
+
+void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
+
+BYTE AllocateBlocksMain(BYTE BlockCount);
+#define AllocateBlocks(BlockCount)                              ({ \
+    const char *logCallingFunc2 = PSTR("AB Caller -- %s / %d");    \
+    DEBUG_PRINT_P(logCallingFunc2, __func__, Picc.FirstFreeBlock); \
+    AllocateBlocksMain(BlockCount);                                \
+    })
+
 BYTE GetCardCapacityBlocks(void);
 
 /* File data transfer related routines: */

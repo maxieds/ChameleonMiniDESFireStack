@@ -47,6 +47,7 @@ versions of the code at free will.
 #include "DESFireUtils.h"
 #include "DESFireCrypto.h"
 #include "DESFireCryptoTests.h"
+#include "DESFireLogging.h"
 
 BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(sizeof(SelectedAppCacheType));
 BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
@@ -59,7 +60,7 @@ BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(2 * DESFI
 BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(2 * DESFIRE_MAX_KEYS);
 BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(CRYPTO_MAX_KEY_SIZE);
 
-SIZET DESFIRE_PICC_INFO_BLOCK_ID = 1;
+SIZET DESFIRE_PICC_INFO_BLOCK_ID = 0;
 SIZET DESFIRE_APP_DIR_BLOCK_ID = 0;
 SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = 0;
 SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = 0;
@@ -72,8 +73,7 @@ void InitBlockSizes(void) {
                                 DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFirePICCInfoType));
      DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + 
                                              DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
-     DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID + 
-                                   DESFIRE_MAX_SLOTS * SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
+     DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
      DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = DESFIRE_FIRST_FREE_BLOCK_ID;
 }
 
@@ -87,7 +87,7 @@ TransferStateType TransferState = { 0 };
 
 void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    MemoryStore();
+    //MemoryStore();
 }
 
 TransferStatus PiccToPcdTransfer(uint8_t* Buffer) { // TODO: Check 
@@ -274,7 +274,7 @@ void FormatPicc(void) {
     /* Wipe application directory */
     memset(&AppDir, PICC_EMPTY_BYTE, sizeof(DESFireAppDirType));
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
-    AppDir.FirstFreeSlot = 1;
+    AppDir.FirstFreeSlot = 0;
     /* Flush the new local struct data out to the FRAM: */
     SynchronizeAppDir();
     /* Initialize the root app data */
@@ -285,9 +285,15 @@ void CreatePiccApp(void) {
     CryptoKeyBufferType Key; // TODO: Should default to some AES-based protocol
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
     CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
+    //const char *loggingDebugMsg = PSTR("After CreateApp: -- %d");
+    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     SelectPiccApp();
     memset(&Key, 0, sizeof(CryptoKeyBufferType));
+    //const char *loggingDebugMsg = PSTR("Pre-WAK: -- %d");
+    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
+    const char *loggingDebugMsg = PSTR("Post-WAK: -- %d");
+    DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     SynchronizeAppDir();
 }
 
