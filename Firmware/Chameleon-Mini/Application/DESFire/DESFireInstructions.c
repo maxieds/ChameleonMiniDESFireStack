@@ -1176,6 +1176,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
+    
     BYTE KeyId, Status;
     BYTE keySize;
     BYTE **Key, **IVBuffer;

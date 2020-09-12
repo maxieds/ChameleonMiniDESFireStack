@@ -10,8 +10,8 @@
 /*
  * See Notes: https://stackoverflow.com/questions/52520044/desfire-ev1-communication-how-to-assign-iv
  */
-uint8_t GET_AID_LIST_CMD[] = { 0x90, 0xaa, 0x00, 0x00, 0x03, 0x00, 0x00 };
-uint8_t SELECT_APP_CMD[]   = { 0x90, 0x5a, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00 };
+uint8_t GET_AID_LIST_CMD[] = { 0x90, 0xaa, 0x00, 0x00, 0x01, 0x00, 0x00 };
+uint8_t SELECT_APP_CMD[]   = { 0x90, 0x5a, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00 }; // TODO: Fix length ... 
 uint8_t AUTH_AES_CMD[]     = { 0x90, 0xaa, 0x00, 0x00, 0x01, 0x00, 0x00 };
 
 int main(int argc, char **argv) {
@@ -27,7 +27,6 @@ int main(int argc, char **argv) {
     // Get list of application IDs:
     fprintf(stdout, ">>> Get AID List From Device:\n");
     fprintf(stdout, "    -> [TO CHAM TAG] ");
-    //iso14443a_crc_append(GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD) - 2);
     print_hex(GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD));
     rxDataStatus = libnfcTransmitBytes(nfcPnd, GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD), rxDataStorage);
     if(rxDataStatus) {
