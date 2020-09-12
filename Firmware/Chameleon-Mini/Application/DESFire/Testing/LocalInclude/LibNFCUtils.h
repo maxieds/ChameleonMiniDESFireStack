@@ -208,7 +208,7 @@ static inline void FreeRxDataStruct(RxData_t *rxData, bool freeInputPtr) {
 }
 
 static  bool
-liibnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData)
+libnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData)
 {
   uint32_t cycles = 0;
   //printf("Sent bits:     ");

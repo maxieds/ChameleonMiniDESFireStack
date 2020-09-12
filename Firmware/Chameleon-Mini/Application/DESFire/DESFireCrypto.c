@@ -179,20 +179,20 @@ void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcB
 
 BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
                              uint8_t *encDestBuf, size_t bufSize) {
-     size_t bufBlocks = (bufSize + CRYPTO_MAX_BLOCK_SIZE - 1) / CRYPTO_MAX_BLOCK_SIZE;
-     bool padLastBlock = (bufSize % CRYPTO_MAX_BLOCK_SIZE) != 0;
+     size_t bufBlocks = (bufSize + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
+     bool padLastBlock = (bufSize % CRYPTO_AES_BLOCK_SIZE) != 0;
      size_t lastBlockSize = bufSize % CRYPTO_MAX_BLOCK_SIZE;
      for(int blk = 0; blk < bufBlocks; blk++) {
           if(padLastBlock && blk + 1 == bufBlocks) {
-               uint8_t lastBlockBuf[CRYPTO_MAX_BLOCK_SIZE];
-               memset(lastBlockBuf, 0x00, CRYPTO_MAX_BLOCK_SIZE);
-               memcpy(lastBlockBuf, plainSrcBuf + blk * CRYPTO_MAX_BLOCK_SIZE, lastBlockSize);
+               uint8_t lastBlockBuf[CRYPTO_AES_BLOCK_SIZE];
+               memset(lastBlockBuf, 0x00, CRYPTO_AES_BLOCK_SIZE);
+               memcpy(lastBlockBuf, plainSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, lastBlockSize);
                DesfireAESEncryptBlock(cryptoCtx, lastBlockBuf, 
-                                      encDestBuf + blk * CRYPTO_MAX_BLOCK_SIZE);
+                                      encDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
           }
           else {
-               DesfireAESEncryptBlock(cryptoCtx, plainSrcBuf + blk * CRYPTO_MAX_BLOCK_SIZE, 
-                                      encDestBuf + blk * CRYPTO_MAX_BLOCK_SIZE);
+               DesfireAESEncryptBlock(cryptoCtx, plainSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
+                                      encDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
           }
      }
      return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
@@ -200,11 +200,11 @@ BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainS
 
 BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
                              uint8_t *plainDestBuf, size_t bufSize) {
-     size_t bufBlocks = (bufSize + CRYPTO_MAX_BLOCK_SIZE - 1) / CRYPTO_MAX_BLOCK_SIZE;
-     bool padLastBlock = (bufSize % CRYPTO_MAX_BLOCK_SIZE) != 0;
+     size_t bufBlocks = (bufSize + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
+     bool padLastBlock = (bufSize % CRYPTO_AES_BLOCK_SIZE) != 0;
      for(int blk = 0; blk < bufBlocks; blk++) {
-          DesfireAESEncryptBlock(cryptoCtx, encSrcBuf + blk * CRYPTO_MAX_BLOCK_SIZE, 
-                                 plainDestBuf + blk * CRYPTO_MAX_BLOCK_SIZE);
+          DesfireAESEncryptBlock(cryptoCtx, encSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
+                                 plainDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
      }
      return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
 }

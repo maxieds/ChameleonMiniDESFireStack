@@ -1,26 +1,32 @@
 /*
 The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt: 
-you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by the Free Software Foundation, 
-either version 3 of the License, or (at your option) any later version.
+is free software written by Maxie Dion Schmidt (@maxieds): 
+You can redistribute it and/or modify
+it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 
-The complete license provided with source distributions of this library is available at the following link:
-https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack
+The complete source distribution of  
+this firmware is available at the following link:
+https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-This notice must be retained at the top of all source files in the repository. 
+Based in part on the original DESFire code created by  
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+https://github.com/dev-zzo/ChameleonMini/tree/desfire.
+
+This notice must be retained at the top of all source files where indicated. 
 
 This source code is only licensed for 
-redistribution under the above GPL clause for 
-non-commercial users. All commerical use or inclusion of this 
+redistribution under for non-commercial users. 
+All commerical use or inclusion of this 
 software requires express written consent of the author (MDS). 
 This restriction pertains to any binary distributions which 
 are derivative works of this software.
+
+The author is free to revoke or modify this license for future 
+versions of the code at free will.
 */
 
 /* ArduinoCryptoLib-SingleSource.c : Include all sources in one file. */

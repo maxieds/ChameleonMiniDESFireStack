@@ -73,6 +73,7 @@ void MifareDesfireSetUid(ConfigurationUidType Uid);
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_HALT,
     DESFIRE_IDLE,
+    DESFIRE_IDLE2,
     DESFIRE_GET_VERSION2,
     DESFIRE_GET_VERSION3,
     DESFIRE_GET_APPLICATION_IDS2,
@@ -87,6 +88,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 } DesfireStateType;
 
 extern DesfireStateType DesfireState;
+extern DesfireStateType DesfirePreviousState;
 extern bool DesfireFromHalt;
 extern BYTE DesfireCmdCLA;
 

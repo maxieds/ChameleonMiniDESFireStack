@@ -50,11 +50,18 @@ versions of the code at free will.
 #include "Reader14443A.h"
 
 DesfireStateType DesfireState = DESFIRE_HALT;
+DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
 BYTE DesfireCmdCLA = 0x90;
 
 /* Dispatching routines */
 void MifareDesfireReset(void) {
+    if(DesfireState != DESFIRE_IDLE) {
+        DesfirePreviousState = DesfireState;
+    }
+    if(DesfirePreviousState == DESFIRE_IDLE2) {
+        DesfirePreviousState = DESFIRE_IDLE;
+    }
     DesfireState = DESFIRE_IDLE;
     InvalidateAuthState(0x00);
     DesfireCmdCLA = 0x00;
@@ -121,7 +128,7 @@ void MifareDesfireAppTask(void)
 
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount == 0) {
          return ISO14443A_APP_NO_RESPONSE;
     } 
@@ -129,16 +136,22 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
             (DesfireCmdCLA != DESFIRE_ISO7816_CLA)) {
         return ISO14443A_APP_NO_RESPONSE;
     }
-    else if(DesfireState == DESFIRE_IDLE) {
+    else if((Buffer[0] != STATUS_ADDITIONAL_FRAME) && (DesfireState == DESFIRE_IDLE)) {
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
         return ReturnBytes;
     }
    
     /* Expecting further data here */
-    if(Buffer[0] != STATUS_ADDITIONAL_FRAME && !CheckStateRetryCount(false)) {
+    //const char *loggingData = PSTR("State/Prev -> %d / %d");
+    //DEBUG_PRINT_P(loggingData, DesfireState, DesfirePreviousState);
+
+    if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         AbortTransaction();
         return ISO14443A_APP_NO_RESPONSE;
+    }
+    else if(DesfireState == DESFIRE_IDLE) {
+        DesfireState = DesfirePreviousState;
     }
 
     uint16_t ReturnBytes = 0;
@@ -220,7 +233,6 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = BitCount / BITS_PER_BYTE;
-    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount >= 8 && Buffer[0] == 0x90 && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
@@ -239,6 +251,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 }
 
 void ResetLocalStructureData(void) {
+     DesfirePreviousState = DESFIRE_IDLE;
      DesfireState = DESFIRE_HALT;
      InvalidateAuthState(0x00);
      memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
