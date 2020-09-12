@@ -65,11 +65,11 @@ versions of the code at free will.
 #define CRYPTO_TYPE_AES128      (0x4A) 
 
 #define CryptoType2KTDEA(ct) \
-    (ct == CRYPTO_TYPE_2KTDEA)
+    ((ct == CRYPTO_TYPE_2KTDEA) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoType3KTDEA(ct) \
-    (ct == CRYPTO_TYPE_3K3DES)
+    ((ct == CRYPTO_TYPE_3K3DES) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoTypeAES(ct) \
-    (ct == CRYPTO_TYPE_AES128) 
+    ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_ANY))
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_DES_KEY_SIZE                  (8)

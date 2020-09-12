@@ -121,10 +121,7 @@ void MifareDesfireAppTask(void)
 
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     
-    //const char *loggingErrorMsg = PSTR("MFDesfireProcessCmd: ByteCount -- %d");
-    //DEBUG_PRINT_P(loggingErrorMsg, ByteCount);
     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
-
     if(ByteCount == 0) {
          return ISO14443A_APP_NO_RESPONSE;
     } 
@@ -194,14 +191,12 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
         DesfireCmdCLA = Buffer[0];
         ByteCount = Buffer[4]; // also removing the trailing two parity bytes
         Buffer[0] = Buffer[1];
-        if(ByteCount > 1) {
-            memmove(&Buffer[1], &Buffer[5], ByteCount - 1);
-        }
+        memmove(&Buffer[1], &Buffer[5], ByteCount);
         /* Process the command */
         /* TODO: Where are we deciphering wrapped payload data? 
          *       This should depend on the CommMode standard? 
          */
-        BitCount = MifareDesfireProcessCommand(Buffer, ByteCount);
+        BitCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
         /* TODO: Where are we re-wrapping the data according to the CommMode standards? */
         if (BitCount) {
             /* Re-wrap into ISO 7816-4 */

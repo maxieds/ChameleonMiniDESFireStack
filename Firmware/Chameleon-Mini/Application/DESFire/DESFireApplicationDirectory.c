@@ -229,7 +229,7 @@ void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount) {
 }
 
 BYTE KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
-     if(KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadKeyCount(AppSlot)) {
+     if(KeyId >= DESFIRE_MAX_KEYS || KeyId > ReadKeyCount(AppSlot)) {
           return 0x00;
      }
      return 0x01;
