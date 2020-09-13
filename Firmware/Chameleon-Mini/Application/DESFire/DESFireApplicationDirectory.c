@@ -510,9 +510,6 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     uint8_t Slot;
     uint8_t FreeSlot;
     
-    //const char *loggingDebugMsg = PSTR("CreateApp: -- %d");
-    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
-
     /* Verify this AID has not been allocated yet */
     if((LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) && (LookupAppSlot(Aid) != 0)) {
         return STATUS_DUPLICATE_ERROR;
@@ -533,8 +530,6 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     
     /* Allocate storage for the application structure itself */
-    const char *loggingDebugMsg = PSTR("-- END CreateApp: -- %d @@ %d");
-    DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock, __LINE__);
     //return 0;
     AppDir.AppCacheStructBlockOffset[Slot] = AllocateBlocks(SELECTED_APP_CACHE_TYPE_BLOCK_SIZE);
     //const char *loggingDebugMsg = PSTR("-- END CreateApp: -- %d @@ %d");

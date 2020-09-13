@@ -135,6 +135,30 @@ static uint8_t const K[8] = {
     (0x1B << 2) ^ (0x1B << 1) ^ 0x1B
 };
 
+void cleanContext(void *dest, size_t size)
+{
+    // Force the use of volatile so that we actually clear the memory.
+    // Otherwise the compiler might optimise the entire contents of this
+    // function away, which will not be secure.
+    volatile uint8_t *d = (volatile uint8_t *)dest;
+    while (size > 0) {
+        *d++ = 0;
+        --size;
+    }   
+}
+
+bool secure_compare(const void *data1, const void *data2, size_t len)
+{
+    uint8_t result = 0;
+    const uint8_t *d1 = (const uint8_t *)data1;
+    const uint8_t *d2 = (const uint8_t *)data2;
+    while (len > 0) {
+        result |= (*d1++ ^ *d2++);
+        --len;
+    }
+    return (bool)((((uint16_t)0x0100) - result) >> 8);
+}
+
 void subBytesAndShiftRows(uint8_t *output, const uint8_t *input)
 {   
     OUT(0, 0) = pgm_read_byte(sbox + IN(0, 0));

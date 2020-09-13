@@ -6,7 +6,7 @@
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
 | CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :question: :grey_question: :interrobang: | |
 | CMD_AUTHENTICATE_ISO | 0x1A | ISO / TDES auth | | |
-| CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :wavy_dash: | |
+| CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |    
 | CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf | 
 | CMD_CHANGE_KEY_SETTINGS | 0x54 | | | |

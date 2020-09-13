@@ -285,12 +285,8 @@ void CreatePiccApp(void) {
     CryptoKeyBufferType Key; // TODO: Should default to some AES-based protocol
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
     CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
-    //const char *loggingDebugMsg = PSTR("After CreateApp: -- %d");
-    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     SelectPiccApp();
     memset(&Key, 0, sizeof(CryptoKeyBufferType));
-    //const char *loggingDebugMsg = PSTR("Pre-WAK: -- %d");
-    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
     const char *loggingDebugMsg = PSTR("Post-WAK: -- %d");
     DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);

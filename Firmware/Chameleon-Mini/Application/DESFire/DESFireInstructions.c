@@ -693,8 +693,8 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) { // TODO
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify authentication settings */
-    if (!(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_DIRECTORY_LIST) && 
-        AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+    if ((ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_DIRECTORY_LIST) && 
+        (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
         /* PICC master key authentication is required */
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -1201,7 +1201,6 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
          return DESFIRE_STATUS_RESPONSE_SIZE;
     }
    
-    InitAESCryptoContext(&AESCryptoContext);
     InitAESCryptoKeyData(&AESCryptoSessionKey);
     InitAESCryptoKeyData(&AESCryptoIVBuffer);
 
@@ -1212,7 +1211,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     /* Indicate that we are in AES key authentication land */
     DesfireCommandState.Authenticate.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_AES128;
-    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(cryptoKeyType);
+    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_AES128);
 
     /* Fetch the key */
     ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
@@ -1295,8 +1294,6 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check that the returned RndB matches what we sent in the previous round */
     if(memcmp(DesfireCommandState.Authenticate.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
-         LogEntry(LOG_APP_AUTH_KEY, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-         InvalidateAuthState(0x00);
          Buffer[0] = STATUS_AUTHENTICATION_ERROR;
          return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -1313,7 +1310,8 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     DesfireAESEncryptBuffer(&AESCryptoContext, challengeRndAB, &Buffer[1], CRYPTO_AES_BLOCK_SIZE);
 
-    // TODO: Check that the tag now has the correct key/session data to handle further operations ... 
+    const char *logAuthSuccess = PSTR("AES auth success");
+    DEBUG_PRINT_P(logAuthSuccess);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);

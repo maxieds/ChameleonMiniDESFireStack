@@ -119,7 +119,10 @@ static inline void oddparity_bytes_ts(const uint8_t *pbtData, const size_t szLen
 static inline void print_hex(const uint8_t *pbtData, const size_t szLen) {
   size_t  szPos;
   for (szPos = 0; szPos < szLen; szPos++) {
-    printf("%02x  ", pbtData[szPos]);
+    if((szPos > 0) && (szPos % 8) == 0) {
+      printf("| ");
+    }
+    printf("%02x ", pbtData[szPos]);
   }
   printf("\n");
 }
@@ -211,15 +214,11 @@ static  bool
 libnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData)
 {
   uint32_t cycles = 0;
-  //printf("Sent bits:     ");
-  //print_hex_bits(pbtTx, szTxBits);
   if ((rxData->recvSzRx = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, 
                              rxData->rxDataBuf, rxData->maxRxDataSize, NULL)) < 0) {
-      fprintf(stderr, "Error transceiving Bits: %s\n", nfc_strerror(pnd));
+      fprintf(stderr, "    -- Error transceiving Bits: %s\n", nfc_strerror(pnd));
       return false;
   }
-  //printf("Received bits: ");
-  //print_hex_bits(rxData->rxDataBuf, rxData->recvSzRx);
   return true;
 }
 
@@ -227,16 +226,12 @@ static  bool
 libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData)
 {
   uint32_t cycles = 0;
-  //printf("Sent bits:     ");
-  //print_hex(pbtTx, szTx);
   int res;
   if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
-      fprintf(stderr, "Error transceiving Bytes: %s\n", nfc_strerror(pnd));
+      fprintf(stderr, "    -- Error transceiving Bytes: %s\n", nfc_strerror(pnd));
       return false;
   }
   rxData->recvSzRx = res;
-  //printf("Received bits: ");
-  //print_hex(rxData->rxDataBuf, rxData->recvSzRx);
   return true;
 }
 

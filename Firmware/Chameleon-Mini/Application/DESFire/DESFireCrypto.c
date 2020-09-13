@@ -162,26 +162,40 @@ uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize,
      if(initKeyBuffer == NULL || cryptoCtx == NULL) {
           return STATUS_PARAMETER_ERROR;
      }
+     else if(bufSize != CRYPTO_AES_KEY_SIZE) {
+          return STATUS_LENGTH_ERROR;
+     }
      InitAESCryptoContext(cryptoCtx);
+     memcpy(cryptoCtx->keyData, initKeyBuffer, bufSize);
      if(!aes128SetKey(cryptoCtx, initKeyBuffer, bufSize)) {
          return STATUS_WRONG_VALUE_ERROR;
      }
      return STATUS_OPERATION_OK;
 }
 
+uint8_t DesfireAESCryptoReset(DesfireAESCryptoContext *cryptoCtx) {
+     uint8_t priorKeyData[CRYPTO_AES_KEY_SIZE];
+     memcpy(priorKeyData, cryptoCtx->keyData, CRYPTO_AES_KEY_SIZE);
+     return DesfireAESCryptoInit(priorKeyData, CRYPTO_AES_KEY_SIZE, cryptoCtx);
+}
+
 void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf) {
-    aes128EncryptBlock(cryptoCtx, plainSrcBuf, encDestBuf); 
+     aes128EncryptBlock(cryptoCtx, plainSrcBuf, encDestBuf); 
 }
 
 void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf) {
-     aes128DecryptBlock(cryptoCtx, encSrcBuf, plainDestBuf); 
+     aes128DecryptBlock(cryptoCtx, plainDestBuf, encSrcBuf); 
 }
 
 BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
                              uint8_t *encDestBuf, size_t bufSize) {
      size_t bufBlocks = (bufSize + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
      bool padLastBlock = (bufSize % CRYPTO_AES_BLOCK_SIZE) != 0;
-     size_t lastBlockSize = bufSize % CRYPTO_MAX_BLOCK_SIZE;
+     size_t lastBlockSize = bufSize % CRYPTO_AES_BLOCK_SIZE;
+     uint8_t ctxResetStatus = DesfireAESCryptoReset(cryptoCtx);
+     if(ctxResetStatus != STATUS_OPERATION_OK) {
+          return ctxResetStatus;
+     }
      for(int blk = 0; blk < bufBlocks; blk++) {
           if(padLastBlock && blk + 1 == bufBlocks) {
                uint8_t lastBlockBuf[CRYPTO_AES_BLOCK_SIZE];
@@ -202,8 +216,12 @@ BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrc
                              uint8_t *plainDestBuf, size_t bufSize) {
      size_t bufBlocks = (bufSize + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
      bool padLastBlock = (bufSize % CRYPTO_AES_BLOCK_SIZE) != 0;
+     uint8_t ctxResetStatus = DesfireAESCryptoReset(cryptoCtx);
+     if(ctxResetStatus != STATUS_OPERATION_OK) {
+          return ctxResetStatus;
+     }
      for(int blk = 0; blk < bufBlocks; blk++) {
-          DesfireAESEncryptBlock(cryptoCtx, encSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
+          DesfireAESDecryptBlock(cryptoCtx, encSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
                                  plainDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
      }
      return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;

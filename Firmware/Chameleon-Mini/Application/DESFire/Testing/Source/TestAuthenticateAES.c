@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 
     // Select AID application 0x000000:
     fprintf(stdout, ">>> Select Application By AID:\n");
-    fprintf(stdout, "    -> [TO CHAM TAG] ");
+    fprintf(stdout, "    -> ");
     print_hex(SELECT_APP_CMD, sizeof(SELECT_APP_CMD));
     rxDataStatus = libnfcTransmitBytes(nfcPnd, SELECT_APP_CMD, sizeof(SELECT_APP_CMD), rxDataStorage);
     if(rxDataStatus) {
@@ -34,14 +34,14 @@ int main(int argc, char **argv) {
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
-        fprintf(stdout, "    !! Unable to transfer bytes !!\n");
+        fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         return EXIT_FAILURE;
     }
     fprintf(stdout, "\n");
 
     // Get list of application IDs:
     fprintf(stdout, ">>> Get AID List From Device:\n");
-    fprintf(stdout, "    -> [TO CHAM TAG] ");
+    fprintf(stdout, "    -> ");
     print_hex(GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD));
     rxDataStatus = libnfcTransmitBytes(nfcPnd, GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD), rxDataStorage);
     if(rxDataStatus) {
@@ -49,14 +49,14 @@ int main(int argc, char **argv) {
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
-        fprintf(stdout, "    !! Unable to transfer bytes !!\n");
+        fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         return EXIT_FAILURE;
     }
     fprintf(stdout, "\n");
 
     // Start AES authentication (default key, blank setting of all zeros):
     fprintf(stdout, ">>> Start AES Authenticate:\n");
-    fprintf(stdout, "    -> [TO CHAM TAG] ");
+    fprintf(stdout, "    -> ");
     print_hex(AUTH_AES_CMD, sizeof(AUTH_AES_CMD));
     rxDataStatus = libnfcTransmitBytes(nfcPnd, AUTH_AES_CMD, sizeof(AUTH_AES_CMD), rxDataStorage);
     if(rxDataStatus) {
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
-        fprintf(stdout, "    !! Unable to transfer bytes !!\n");
+        fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         return EXIT_FAILURE;
     }
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     sendBytesBuf[4] = 0x10;
     memcpy(sendBytesBuf + 5, challengeResponseCipherText, 16);
 
-    fprintf(stdout, "    -> [TO CHAM TAG] ");
+    fprintf(stdout, "    -> ");
     print_hex(sendBytesBuf, sizeof(sendBytesBuf));
     rxDataStatus = libnfcTransmitBytes(nfcPnd, sendBytesBuf, 22, rxDataStorage);
     if(rxDataStatus) {
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
-        fprintf(stdout, "    !! Unable to transfer bytes !!\n");
+        fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         return EXIT_FAILURE;
     }
 
@@ -112,18 +112,17 @@ int main(int argc, char **argv) {
     // and report back whether they match: 
     uint8_t decryptedRndAFromPICC[16];
     DecryptAES128(rxDataStorage->rxDataBuf, 16, decryptedRndAFromPICC, aesCryptoData);
-    return 0;
     if(memcmp(rndA, decryptedRndAFromPICC, 8)) {
-        fprintf(stdout, "      ... OK! :)\n\n");
+        fprintf(stdout, "       ... AUTH OK! :)\n\n");
     }
     else {
-        fprintf(stdout, "      ... AUTH FAILED -- X; :(\n\n");
+        fprintf(stdout, "       ... AUTH FAILED -- X; :(\n\n");
         return EXIT_FAILURE;
     }
 
     // Get list of application IDs:
     fprintf(stdout, ">>> Get AID List From Device:\n");
-    fprintf(stdout, "    -> [TO CHAM TAG] ");
+    fprintf(stdout, "    -> ");
     print_hex(GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD));
     rxDataStatus = libnfcTransmitBytes(nfcPnd, GET_AID_LIST_CMD, sizeof(GET_AID_LIST_CMD), rxDataStorage);
     if(rxDataStatus) {
@@ -131,13 +130,10 @@ int main(int argc, char **argv) {
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
-        fprintf(stdout, "    !! Unable to transfer bytes !!\n");
+        fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         return EXIT_FAILURE;
     }
     fprintf(stdout, "\n");
-
-
-
 
     FreeRxDataStruct(rxDataStorage, true);
     FreeNFCDeviceDriver(&nfcCtxt, &nfcPnd);

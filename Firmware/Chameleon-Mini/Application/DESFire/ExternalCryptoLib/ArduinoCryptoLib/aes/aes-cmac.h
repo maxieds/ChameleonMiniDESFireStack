@@ -20,7 +20,9 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <avr/pgmspace.h>
+#ifndef __LocalHostInstall__
+     #include <avr/pgmspace.h>
+#endif
 
 typedef struct{
 	AES128Context   *cctx;

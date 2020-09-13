@@ -159,6 +159,7 @@ void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx);
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
 uint16_t GetPaddedBufferSize(uint16_t bufSize);
 uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
+uint8_t DesfireAESCryptoReset(DesfireAESCryptoContext *cryptoCtx);
 void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
 void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
 BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
