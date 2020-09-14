@@ -27,9 +27,11 @@
  */
 #include <stdint.h>
 #include <string.h>
-#include <avr/pgmspace.h>
+#ifndef HOST_BUILD
+    #include <avr/pgmspace.h>
+#endif
 
-const uint8_t sbox[256] PROGMEM = {
+const uint8_t DES_sbox[256] PROGMEM = {
   /* S-box 1 */
   0xE4, 0xD1, 0x2F, 0xB8, 0x3A, 0x6C, 0x59, 0x07,
   0x0F, 0x74, 0xE2, 0xD1, 0xA6, 0xCB, 0x95, 0x38,
@@ -273,14 +275,14 @@ uint32_t des_f(uint32_t r, uint8_t *kr){
 	uint8_t i;
 	uint32_t t=0,ret;
 	uint64_t data;
-	uint8_t *sbp; /* sboxpointer */ 
+	uint8_t *sbp; /* DES_sboxpointer */ 
 	permute((uint8_t*)e_permtab, (uint8_t*)&r, (uint8_t*)&data);
 	for(i=0; i<7; ++i)
 		((uint8_t*)&data)[i] ^= kr[i];
 	
 	/* Sbox substitution */
 	data = splitin6bitwords(data);
-	sbp=(uint8_t*)sbox;
+	sbp=(uint8_t*)DES_sbox;
 	for(i=0; i<8; ++i){
 		uint8_t x;
 		x = substitute(((uint8_t*)&data)[i], sbp);

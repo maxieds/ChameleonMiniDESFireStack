@@ -91,6 +91,7 @@ static inline int GetApplicationIds(nfc_device *nfcConnDev) {
 }
 
 static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+    
     if(nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
     }
@@ -126,7 +127,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8
     uint8_t rndA[8], challengeResponse[16], challengeResponseCipherText[16];
     uint8_t IVBuf[16];
     memcpy(encryptedRndB, rxDataStorage->rxDataBuf, 16);
-    AESCryptoData_t aesCryptoData = { 0 };
+    CryptoData_t aesCryptoData = { 0 };
     aesCryptoData.keySize = 16;
     aesCryptoData.keyData = keyData;
     aesCryptoData.ivSize = 16;
@@ -181,10 +182,89 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8
 }
 
 static inline int AuthenticateISO(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+    
+    if(nfcConnDev == NULL || keyData == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
 
+    // Start AES authentication (default key, blank setting of all zeros):
+    uint8_t AUTHENTICATE_ISO_CMD[] = {
+        0x90, 0x1a, 0x00, 0x00, 0x01, 0x00, 0x00
+    };
+    AUTHENTICATE_ISO_CMD[5] = keyIndex;
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> Start ISO Authenticate:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(AUTHENTICATE_ISO_CMD, sizeof(AUTHENTICATE_ISO_CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, AUTHENTICATE_ISO_CMD, sizeof(AUTHENTICATE_ISO_CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        return EXIT_FAILURE;
+    }
 
+    // Now need to decrypt the challenge response sent back as rndB (8 bytes), 
+    // rotate it left, generate a random 8 byte rndA, concat rndA+rotatedRndB, 
+    // encrypt this 16 byte result, and send it forth to the PICC:
+    uint8_t encryptedRndB[16], plainTextRndB[16], rotatedRndB[8];
+    uint8_t rndA[8], challengeResponse[16], challengeResponseCipherText[16];
+    uint8_t IVBuf[16];
+    memcpy(encryptedRndB, rxDataStorage->rxDataBuf, 16);
+    Decrypt3DES(16, encryptedRndB, plainTextRndB, keyData);
+    RotateArrayLeft(plainTextRndB, rotatedRndB, 8);
+    memcpy(IVBuf, rxDataStorage->rxDataBuf, 8);
+    GenerateRandomBytes(rndA, 8);
+    ConcatByteArrays(rndA, 8, rotatedRndB, 8, challengeResponse);
+    Encrypt3DES(16, challengeResponse, challengeResponseCipherText, keyData);
 
-    return EXIT_SUCCESS;
+    uint8_t sendBytesBuf[22];
+    memset(sendBytesBuf, 0x00, 22);
+    sendBytesBuf[0] = 0x90;
+    sendBytesBuf[1] = 0xaf;
+    sendBytesBuf[4] = 0x10;
+    memcpy(sendBytesBuf + 5, challengeResponseCipherText, 16);
+
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -> ");
+        print_hex(sendBytesBuf, sizeof(sendBytesBuf));
+    }
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, sendBytesBuf, 22, rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        return EXIT_FAILURE;
+    }
+
+    // Finally, to finish up the auth process: 
+    // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above, 
+    // and report back whether they match: 
+    uint8_t decryptedRndAFromPICC[16];
+    Decrypt3DES(16, rxDataStorage->rxDataBuf, decryptedRndAFromPICC, keyData);
+    if(memcmp(rndA, decryptedRndAFromPICC, 8)) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "       ... AUTH OK! :)\n\n");
+        }
+        return EXIT_SUCCESS;
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "       ... AUTH FAILED -- X; :(\n\n");
+        }
+        return EXIT_FAILURE;
+    }
 }
 
 static inline int AuthenticateLegacy(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {

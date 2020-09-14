@@ -8,14 +8,20 @@
 
 #include <openssl/rand.h>
 
-#include <ArduinoCryptoLib-SingleSource.c>
-#include <memxor/memxor_c.c>
+#include <CryptoLibs-SingleSource.c>
 
 #define DESFIRE_CRYPTO_AUTHTYPE_AES128      (1)
 #define DESFIRE_CRYPTO_AUTHTYPE_ISODES      (2)
 #define DESFIRE_CRYPTO_AUTHTYPE_LEGACY      (3)
 
-#define  AES128_BLOCK_SIZE                  (16)
+#define CRYPTO_DES_KEY_SIZE                 (8)
+#define CRYPTO_2KTDEA_KEY_SIZE              (2 * CRYPTO_DES_KEY_SIZE)
+#define CRYPTO_3KTDEA_KEY_SIZE              (3 * CRYPTO_DES_KEY_SIZE)
+
+#define CRYPTO_DES_BLOCK_SIZE               (8) 
+#define CRYPTO_2KTDEA_BLOCK_SIZE            (CRYPTO_DES_BLOCK_SIZE)
+#define CRYPTO_3KTDEA_BLOCK_SIZE            (CRYPTO_DES_BLOCK_SIZE)
+#define AES128_BLOCK_SIZE                   (16)
 
 static const inline uint8_t ZERO_KEY[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -40,10 +46,10 @@ typedef struct {
      size_t   keySize;
      uint8_t  *ivData;
      size_t   ivSize;
-} AESCryptoData_t;
+} CryptoData_t;
 
 static inline size_t CryptAES128(bool toEncrypt, uint8_t *inputBytes, uint8_t *outputBytes, 
-                                 size_t numBytes, AESCryptoData_t cdata) { 
+                                 size_t numBytes, CryptoData_t cdata) { 
      if((numBytes % AES128_BLOCK_SIZE) != 0) {
          return 0;
      }
@@ -63,12 +69,12 @@ static inline size_t CryptAES128(bool toEncrypt, uint8_t *inputBytes, uint8_t *o
 }
 
 static inline size_t EncryptAES128_CBC(uint8_t *inputPlainText, size_t ptSize, 
-                                   uint8_t *outputCipherText, AESCryptoData_t cdata) {
+                                   uint8_t *outputCipherText, CryptoData_t cdata) {
     return CryptAES128(true, inputPlainText, outputCipherText, ptSize, cdata);
 }
 
 static inline size_t DecryptAES128_CBC(uint8_t *inputCipherText, size_t ctSize, 
-                                   uint8_t *outputPlainText, AESCryptoData_t cdata) {
+                                   uint8_t *outputPlainText, CryptoData_t cdata) {
     return CryptAES128(false, inputCipherText, outputPlainText, ctSize, cdata);
 }
 
@@ -82,7 +88,7 @@ static inline void DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize
 }
 
 static inline size_t EncryptAES128(uint8_t *plainSrcBuf, size_t bufSize, 
-                                   uint8_t *encDestBuf, AESCryptoData_t cdata) {
+                                   uint8_t *encDestBuf, CryptoData_t cdata) {
      DesfireAESCryptoContext cryptoCtx;
      DesfireAESCryptoInit(cdata.keyData, cdata.keySize, &cryptoCtx);
      size_t bufBlocks = (bufSize + AES128_BLOCK_SIZE - 1) / AES128_BLOCK_SIZE;
@@ -105,7 +111,7 @@ static inline size_t EncryptAES128(uint8_t *plainSrcBuf, size_t bufSize,
 }
 
 static inline size_t DecryptAES128(uint8_t *encSrcBuf, size_t bufSize, 
-                                   uint8_t *plainDestBuf, AESCryptoData_t cdata) {
+                                   uint8_t *plainDestBuf, CryptoData_t cdata) {
      DesfireAESCryptoContext cryptoCtx;
      DesfireAESCryptoInit(cdata.keyData, cdata.keySize, &cryptoCtx);
      size_t bufBlocks = (bufSize + AES128_BLOCK_SIZE - 1) / AES128_BLOCK_SIZE;
@@ -115,6 +121,91 @@ static inline size_t DecryptAES128(uint8_t *encSrcBuf, size_t bufSize,
                              encSrcBuf + blk * AES128_BLOCK_SIZE);
      }
      return bufSize;
+}
+
+typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, const uint8_t *Keys);
+typedef struct {
+    CryptoTDEAFuncType cryptFunc;
+    uint16_t           blockSize;
+} CryptoTDEA_CBCSpec;
+
+static inline void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet) {   
+    uint8_t PaddingByte = FirstPaddingBitSet << 7;
+    uint8_t i;
+    for (i = BytesInBuffer; i < CRYPTO_DES_BLOCK_SIZE; ++i) {
+        Buffer[i] = PaddingByte;
+        PaddingByte = 0x00;
+    }
+}
+
+// This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
+void CryptoTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
+                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec) {
+    uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+    uint16_t blockIndex = 0;
+    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+    bool lastBlockPadding = false;
+    if(numBlocks * CryptoSpec.blockSize > Count) {
+         lastBlockPadding = true;
+    }   
+    while(blockIndex < numBlocks) {
+        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
+            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
+            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
+        }   
+        memcpy(tempBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
+        memcpy(ivBlock, IV, CryptoSpec.blockSize);
+        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
+        CryptoSpec.cryptFunc(ivBlock, tempBlock, Keys);
+        memcpy(IV, tempBlock, CryptoSpec.blockSize);
+        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        blockIndex++;
+    }   
+}
+
+static inline void CryptoEncrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
+    des_enc(tempBlock, Plaintext, Keys);
+    des_dec(Ciphertext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
+    memcpy(tempBlock, Ciphertext, CRYPTO_2KTDEA_BLOCK_SIZE);
+    des_enc(Ciphertext, tempBlock, Keys);
+}
+
+static inline void CryptoDecrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
+    des_dec(tempBlock, Ciphertext, Keys);
+    des_enc(Plaintext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
+    memcpy(tempBlock, Plaintext, CRYPTO_2KTDEA_BLOCK_SIZE);
+    des_dec(Plaintext, tempBlock, Keys);
+}
+
+static inline void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    tdes_enc(Ciphertext, Plaintext, Keys);
+}
+
+static inline void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    tdes_dec(Plaintext, Ciphertext, Keys);
+}
+
+void Encrypt3DES(uint16_t Count, void* Plaintext, void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     uint8_t ivBlock[CryptoSpec.blockSize];
+     memset(ivBlock, 0x00, CryptoSpec.blockSize);
+     CryptoTDEA_CBCSend(Count, Plaintext, Ciphertext, ivBlock, Keys, CryptoSpec);
+}
+
+void Decrypt3DES(uint16_t Count, void* Plaintext, void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     uint8_t ivBlock[CryptoSpec.blockSize];
+     memset(ivBlock, 0x00, CryptoSpec.blockSize);
+     CryptoTDEA_CBCSend(Count, Plaintext, Ciphertext, ivBlock, Keys, CryptoSpec);
 }
 
 static inline int GenerateRandomBytes(uint8_t *destBuf, size_t numBytes) {

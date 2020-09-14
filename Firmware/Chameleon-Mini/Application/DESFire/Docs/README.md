@@ -71,6 +71,8 @@ Additionally, the following weblinks and posts clarify some common reference poi
   data on the tag changes?
 * Check to figure out where possibly encrypted transfers (AES CMAC) come into play after the initial 
   authentication procedure?
+* See note on [CBC ciphering for AES/3DES](https://stackoverflow.com/q/20943305/10661959). Note that 
+  currently the AES is in ECB mode (per the Arduino crypto libs). 
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 

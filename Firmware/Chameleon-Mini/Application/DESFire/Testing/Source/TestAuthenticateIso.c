@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     bool rxDataStatus = false;
 
     // Select AID application 0x000000:
-    if(SelectApplication(MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
+    if(SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
         return EXIT_FAILURE;
     }
 

@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#ifndef __LocalHostInstall__
+#ifndef HOST_BUILD
      #include <avr/pgmspace.h>
 #endif
 
