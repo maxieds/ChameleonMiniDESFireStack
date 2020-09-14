@@ -181,7 +181,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8
     }
 }
 
-static inline int AuthenticateISO(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+static inline int AuthenticateIso(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
     
     if(nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;

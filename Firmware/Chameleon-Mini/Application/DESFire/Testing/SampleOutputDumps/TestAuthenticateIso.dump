@@ -1,0 +1,11 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start ISO Authenticate:
+    -> 90 1a 00 00 01 00 00 
+    <- 91 7e 
+    -> 90 af 00 00 10 d0 ef 10 | 0c 53 84 f8 b9 27 36 e0 | e1 32 1f c3 74 00 
+    <- 91 00 
+       ... AUTH OK! :)
+

@@ -8,11 +8,8 @@
 
 >>> Start AES Authenticate:
     -> 90 aa 00 00 01 00 00 
-    <- 28 7c 90 9c 36 c9 97 c7 | dc e3 19 91 f5 78 85 a1 | 91 af 
-    -> 90 af 00 00 10 04 52 08 | b7 de 8b 2c 16 b5 d2 6f | b3 5c 1f ae 66 00 
-    <- 59 fb ce da 47 ba f2 ca | 77 fb 65 1c 64 2a 52 2b | 91 00 
+    <- 13 dc fd 11 9c 75 cd 44 | 97 80 c7 ec f3 a3 36 23 | 91 af 
+    -> 90 af 00 00 10 8d a4 ad | d7 3d cb d5 b5 0f 79 9a | ab 2c c4 ac a5 00 
+    <- 30 c0 c7 c9 ba 4e 0d 10 | 4b 8e c0 d1 28 f8 88 73 | 91 00 
        ... AUTH OK! :)
 
->>> Get AID List From Device:
-    -> 90 6a 00 00 00 00 
-    <- 91 00 

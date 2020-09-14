@@ -23,8 +23,8 @@ int main(int argc, char **argv) {
     }
 
     // Start ISO authentication (default key, blank setting of all zeros):
-    if(AuthenticateAES128(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
-                           MASTER_KEY_INDEX, ZERO_KEY)) {
+    if(AuthenticateIso(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+                       MASTER_KEY_INDEX, ZERO_KEY)) {
         return EXIT_FAILURE;
     }
 
