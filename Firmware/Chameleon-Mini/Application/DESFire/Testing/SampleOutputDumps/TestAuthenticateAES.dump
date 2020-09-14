@@ -1,0 +1,18 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Get AID List From Device:
+    -> 90 6a 00 00 00 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- 28 7c 90 9c 36 c9 97 c7 | dc e3 19 91 f5 78 85 a1 | 91 af 
+    -> 90 af 00 00 10 04 52 08 | b7 de 8b 2c 16 b5 d2 6f | b3 5c 1f ae 66 00 
+    <- 59 fb ce da 47 ba f2 ca | 77 fb 65 1c 64 2a 52 2b | 91 00 
+       ... AUTH OK! :)
+
+>>> Get AID List From Device:
+    -> 90 6a 00 00 00 00 
+    <- 91 00 

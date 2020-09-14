@@ -179,7 +179,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         break;
     default:
         /* Should not happen. */
-        Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
+        Buffer[0] = STATUS_OPERATION_OK;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);

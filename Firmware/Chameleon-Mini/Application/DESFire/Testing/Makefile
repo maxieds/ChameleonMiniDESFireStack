@@ -16,7 +16,7 @@ BINEXT=exe
 OBJDIR=./Obj
 OBJEXT=o
 
-FILE_BASENAMES=NFCAntiCollisionMod TestAuthenticateAES
+FILE_BASENAMES=NFCAntiCollisionMod TestAuthenticateAES128
 OBJFILES=$(addprefix $(OBJDIR)/, $(addsuffix .$(OBJEXT), $(basename $(FILE_BASENAMES))))
 BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENAMES))))
 

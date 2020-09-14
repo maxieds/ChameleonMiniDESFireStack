@@ -5,13 +5,12 @@
 
 #include <string.h>
 #include <stdint.h>
-#include <stderr.h>
 #include <errno.h>
 
 #include "ANSIStringPrinting.h"
 
 #define STRING_BUFFER_SIZE          (256)
-static inline char __InternalLoggingStringBuffer[STRING_BUFFER_SIZE] = { \0 };
+static inline char __InternalLoggingStringBuffer[STRING_BUFFER_SIZE] = { '\0' };
 
 #define GetSourceFileLoggingData(outputDataBuf, maxBufSize)      ({    \
         char *strBuffer;                                               \
@@ -45,6 +44,7 @@ typedef enum {
      LIBC_ERROR, 
      LIBNFC_ERROR,
      GENERIC_OTHER_ERROR,
+     INVALID_PARAMS_ERROR,
      AES_AUTH_FAILED,
      AES_AUTH_FAILED_STEP1,
      AES_AUTH_FAILED_STEP2,
@@ -53,10 +53,11 @@ typedef enum {
      LAST_ERROR,
 } ErrorType_t;
 
-static inline const char *LOCAL_ERROR_MSGS[] {
+static inline const char *LOCAL_ERROR_MSGS[] = {
      [NO_ERROR]                    = "No error",
      [LIBC_ERROR]                  = "Libc function error",
      [GENERIC_OTHER_ERROR]         = "Unspecified (generic) error",
+     [INVALID_PARAMS_ERROR]        = "Invalid parameters",
      [AES_AUTH_FAILED]             = "AES auth procedure failed (generic)",
      [AES_AUTH_FAILED_STEP1]       = "AES auth failed ... reason",
      [AES_AUTH_FAILED_STEP2]       = "AES auth failed ... reason",
@@ -65,7 +66,10 @@ static inline const char *LOCAL_ERROR_MSGS[] {
      [LAST_ERROR]                  = NULL,
 };
 
-extern bool RUNTIME_QUIET_MODE;
-extern bool RUNTIME_VERBOSE_MODE;
+static inline bool RUNTIME_QUIET_MODE = false;
+static inline bool RUNTIME_VERBOSE_MODE = true;
+static bool PRINT_STATUS_EXCHANGE_MESSAGES = true;
+
+#define STATUS_OK                       (0x00)
 
 #endif
