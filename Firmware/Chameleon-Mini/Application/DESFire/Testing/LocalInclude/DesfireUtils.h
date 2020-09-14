@@ -268,9 +268,6 @@ static inline int AuthenticateIso(nfc_device *nfcConnDev, int authType, uint8_t 
 }
 
 static inline int AuthenticateLegacy(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
-
-
-
     return EXIT_SUCCESS;
 }
 
@@ -291,8 +288,162 @@ static inline int Authenticate(nfc_device *nfcConnDev, int authType, uint8_t key
     return EXIT_FAILURE;
 }
 
-static inline int SetApplicationKeyData(nfc_device *nfcConnDev, uint8_t keyIndex, uint8_t *keyData) {
+static inline int GetVersionCommand(nfc_device *nfcConnDev) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t GET_VERSION_CMD_INIT[] = {
+        0x90, 0x60, 0x00, 0x00, 0x00, 0x00
+    };
+    uint8_t CONTINUE_CMD[] = {
+        0x90, 0xaf, 0x00, 0x00, 0x00, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> GetVersion command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(GET_VERSION_CMD_INIT, sizeof(GET_VERSION_CMD_INIT));
+    }   
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, GET_VERSION_CMD_INIT, 
+                                       sizeof(GET_VERSION_CMD_INIT), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }   
+        return EXIT_FAILURE;
+    } 
+    for(int extraCmd = 0; extraCmd < 2; extraCmd++) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -> ");
+            print_hex(CONTINUE_CMD, sizeof(CONTINUE_CMD));
+        }   
+        rxDataStatus = libnfcTransmitBytes(nfcConnDev, CONTINUE_CMD, 
+                                           sizeof(CONTINUE_CMD), rxDataStorage);
+        if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    <- ");
+            print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        }
+        else {
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+            }   
+            return EXIT_FAILURE;
+        }
+    }
+    return EXIT_SUCCESS;
+}
 
+static inline int FormatPiccCommand(nfc_device *nfcConnDev) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t FORMAT_PICC_CMD[] = {
+        0x90, 0xfc, 0x00, 0x00, 0x00, 0x00
+    };
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, FORMAT_PICC_CMD, 
+                                       sizeof(FORMAT_PICC_CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> FormatPICC command:\n");
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }   
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+static inline int GetCardUIDCommand(nfc_device *nfcConnDev) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0x51, 0x00, 0x00, 0x00, 0x00
+    };
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, 
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> GetCardUID command:\n");
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }   
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+static inline int SetConfigurationCommand(nfc_device *nfcConnDev) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0x5c, 0x00, 0x00, 0x00, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> SetConfiguration command:\n");
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, 
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "    -- !! TODO: NOT IMPLEMENTED !!\n");
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }   
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0x6e, 0x00, 0x00, 0x00, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> FreeMemory command:\n");
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, 
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }   
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+static inline int SetApplicationKeyData(nfc_device *nfcConnDev, uint8_t keyIndex, uint8_t *keyData) {
     return EXIT_SUCCESS;
 }
 

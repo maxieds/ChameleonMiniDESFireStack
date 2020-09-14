@@ -471,11 +471,9 @@ uint8_t TransferEncryptTDEAReceive(uint8_t* Buffer, uint8_t Count) {
      return 0;
 }
 
-void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet)
-{
+void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet) {
     uint8_t PaddingByte = FirstPaddingBitSet << 7;
     uint8_t i;
-
     for (i = BytesInBuffer; i < CRYPTO_DES_BLOCK_SIZE; ++i) {
         Buffer[i] = PaddingByte;
         PaddingByte = 0x00;

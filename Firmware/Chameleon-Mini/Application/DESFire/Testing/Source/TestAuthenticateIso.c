@@ -5,8 +5,6 @@
 #include "DesfireUtils.h"
 #include "CryptoUtils.h"
 
-#define MAX_FRAME_LENGTH       (264)
-
 int main(int argc, char **argv) {
 
     nfc_context *nfcCtxt;
