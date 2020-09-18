@@ -411,6 +411,16 @@ uint8_t ReadFileType(uint8_t AppSlot, uint8_t FileIndex) {
     return fileStorageData.FileType;
 }
 
+uint16_t ReadDataFileSize(uint8_t AppSlot, uint8_t FileIndex) {
+    SIZET fileStructAddr = ReadFileDataStructAddress(AppSlot, FileIndex);
+    if(fileStructAddr == 0) {
+        return 0xffff;
+    }
+    DESFireFileTypeSettings fileStorageData;
+    ReadBlockBytes(&fileStorageData, fileStructAddr, sizeof(DESFireFileTypeSettings));
+    return fileStorageData.FileSize;
+}
+
 BYTE ReadFileCommSettings(uint8_t AppSlot, uint8_t FileIndex) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
           return 0x00;

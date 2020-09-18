@@ -17,11 +17,9 @@
 #define DESFIRE_CRYPTO_AUTHTYPE_LEGACY      (3)
 
 #define CRYPTO_DES_KEY_SIZE                 (8)
-#define CRYPTO_2KTDEA_KEY_SIZE              (2 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_3KTDEA_KEY_SIZE              (3 * CRYPTO_DES_KEY_SIZE)
 
 #define CRYPTO_DES_BLOCK_SIZE               (8) 
-#define CRYPTO_2KTDEA_BLOCK_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_3KTDEA_BLOCK_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define AES128_BLOCK_SIZE                   (16)
 
@@ -245,6 +243,93 @@ static inline bool Test3DESEncyptionRoutines(void) {
         fprintf(stdout, "    -- CT matches.\n");
     }   
     if(memcmp(pt2, ptData, 16)) {
+        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
+        status = false;
+    }   
+    else {
+        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
+    }   
+    fprintf(stdout, "\n");
+    return status;
+}
+
+void CryptoEncryptDESBlock(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    //uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
+    //des_enc(tempBlock, Plaintext, Keys);
+    //des_dec(Ciphertext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
+    //memcpy(tempBlock, Ciphertext, CRYPTO_2KTDEA_BLOCK_SIZE);
+    //des_enc(Ciphertext, tempBlock, Keys);
+    des_enc(Ciphertext, Plaintext, Keys);
+}
+
+void CryptoDecryptDESBlock(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
+    //uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
+    //des_dec(tempBlock, Ciphertext, Keys);
+    //des_enc(Plaintext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
+    //memcpy(tempBlock, Plaintext, CRYPTO_2KTDEA_BLOCK_SIZE);
+    //des_dec(Plaintext, tempBlock, Keys);
+    des_dec(Plaintext, Ciphertext, Keys);
+}
+
+void EncryptDES(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncryptDESBlock,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+     while(blockIndex < numBlocks) {
+        CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
+        ptBuf += CryptoSpec.blockSize;
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
+    }
+}
+
+void DecryptDES(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecryptDESBlock,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+     while(blockIndex < numBlocks) {
+        CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
+        ptBuf += CryptoSpec.blockSize;
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
+    }
+}
+
+static inline bool TestVanillaDESEncyptionRoutines(void) {
+    fprintf(stdout, ">>> TestVanillaDESEncryptionRoutines [non-DESFire command]:\n");
+    const uint8_t keyData[] = { 
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    };  
+    const uint8_t ptData[] = { 
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+    };  
+    const uint8_t ctData[] = { 
+        0x3e, 0xf0, 0xa8, 0x91, 0xcf, 0x8e, 0xd9, 0x90
+    };  
+    fprintf(stdout, "    -- : PT = "); print_hex(ptData, 8);
+    fprintf(stdout, "    -- : CT = "); print_hex(ctData, 8);
+    uint8_t pt[8], pt2[8], ct[8];
+    EncryptDES(8, ptData, ct, keyData);
+    fprintf(stdout, "    -- : CT = "); print_hex(ct, 8);
+    DecryptDES(8, pt2, ct, keyData);
+    fprintf(stdout, "    -- : PT = "); print_hex(pt2, 8);
+    bool status = true;
+    if(memcmp(ct, ctData, 8)) {
+        fprintf(stdout, "    -- CT does NOT match !!\n");
+        status = false;
+    }   
+    else {
+        fprintf(stdout, "    -- CT matches.\n");
+    }   
+    if(memcmp(pt2, ptData, 8)) {
         fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
         status = false;
     }   

@@ -19,10 +19,12 @@ OBJEXT=o
 FILE_BASENAMES=NFCAntiCollisionMod \
 			   TestAuthenticateAES128 \
 			   TestAuthenticateIso \
+			   TestAuthenticateLegacy \
 			   TestGeneralCommands \
 			   TestKeyManagementCommands \
 			   TestApplicationManagementCommands \
-			   TestFileManagementCommandsSupport
+			   TestFileManagementCommandsSupport \
+			   TestDataManipulationCommandsSupport
 OBJFILES=$(addprefix $(OBJDIR)/, $(addsuffix .$(OBJEXT), $(basename $(FILE_BASENAMES))))
 BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENAMES))))
 

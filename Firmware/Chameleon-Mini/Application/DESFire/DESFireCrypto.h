@@ -64,6 +64,8 @@ versions of the code at free will.
 #define CRYPTO_TYPE_3K3DES      (0x1A)
 #define CRYPTO_TYPE_AES128      (0x4A) 
 
+#define CryptoTypeDES(ct) \
+    ((ct == CRYPTO_TYPE_DES) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoType2KTDEA(ct) \
     ((ct == CRYPTO_TYPE_2KTDEA) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoType3KTDEA(ct) \

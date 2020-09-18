@@ -93,7 +93,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     };
 } DESFireFileTypeSettings;
 
-uint16_t GetFileSize(DESFireFileTypeSettings *File);
+uint16_t GetFileSizeFromFileType(DESFireFileTypeSettings *File);
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE Num;
@@ -104,11 +104,9 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
  * File management: creation, deletion, and misc routines
  */
 
-uint16_t GetFileDataAreaBlockId(uint8_t FileNum);
-void WriteFileDataAreaBlockId(uint8_t FileNum, uint16_t DataBlockId);
+uint16_t GetFileDataAreaBlockId(uint8_t FileIndex);
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
-uint16_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount);
 
 /* Creation and deletion */
 uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings, 
@@ -130,9 +128,9 @@ void AbortTransaction(void);
 /* File transfers */
 TransferStatus ReadDataFileTransfer(uint8_t* Buffer);
 uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount);
-uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
-uint8_t WriteDataFileSetup(uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length);
-uint16_t ReadDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
+uint8_t ReadDataFileSetup(uint8_t FileIndex, uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+uint8_t WriteDataFileSetup(uint8_t FileIndex, uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+uint16_t ReadDataFileIterator(uint8_t *Buffer);
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 

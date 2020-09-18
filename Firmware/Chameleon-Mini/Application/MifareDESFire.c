@@ -49,6 +49,9 @@ versions of the code at free will.
 #include "DESFire/DESFireLogging.h"
 #include "Reader14443A.h"
 
+#define DesfireCLA(cmdCode) \
+    ((cmdCode == DESFIRE_NATIVE_CLA) || (cmdCode == DESFIRE_ISO7816_CLA))
+
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
@@ -128,7 +131,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     }
     else if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
-        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
+        if(ReturnBytes > 0) {
+            LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
+        }
         return ReturnBytes;
     }
    
@@ -150,7 +155,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         ReturnBytes = GetApplicationIdsIterator(Buffer, ByteCount);
         break;
     case DESFIRE_LEGACY_AUTHENTICATE2:
-        ReturnBytes = EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
+        ReturnBytes = EV0CmdAuthenticateLegacy2(Buffer, ByteCount);
         break;
     case DESFIRE_ISO_AUTHENTICATE2:
         ReturnBytes = DesfireCmdAuthenticate3KTDEA2(Buffer, ByteCount);
@@ -159,7 +164,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         ReturnBytes = DesfireCmdAuthenticateAES2(Buffer, ByteCount);
         break;
     case DESFIRE_READ_DATA_FILE:
-        ReturnBytes = ReadDataFileIterator(Buffer, ByteCount);
+        ReturnBytes = ReadDataFileIterator(Buffer);
         break;
     default:
         /* Should not happen. */
@@ -173,7 +178,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = BitCount / BITS_PER_BYTE;
-    if(ByteCount >= 8 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
+    if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 && 
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) { // Wrapped native command structure: 
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
@@ -200,14 +205,14 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
     }
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
-        return MifareDesfireProcessCommand(Buffer, BitCount) * BITS_PER_BYTE;
+        return MifareDesfireProcessCommand(Buffer, ByteCount) * BITS_PER_BYTE;
     }
 
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = BitCount / BITS_PER_BYTE;
-    if(ByteCount >= 8 && Buffer[0] == 0x90 && Buffer[2] == 0x00 &&
+    if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
     }

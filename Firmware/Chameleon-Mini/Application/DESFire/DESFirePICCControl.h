@@ -92,7 +92,7 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         SIZET BytesLeft;
         struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferSourceFuncType Func;
-            SIZET Pointer; /* in EEPROM */
+            SIZET Pointer; /* in FRAM */
         } Source;
         struct DESFIRE_FIRMWARE_ALIGNAT {
             BOOL FirstPaddingBitSet;
@@ -104,7 +104,7 @@ typedef union DESFIRE_FIRMWARE_PACKING {
         SIZET BytesLeft;
         struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferSinkFuncType Func;
-            SIZET Pointer; /* in EEPROM */
+            SIZET Pointer; /* in FRAM */
         } Sink;
         struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferEncryptFuncType Func;

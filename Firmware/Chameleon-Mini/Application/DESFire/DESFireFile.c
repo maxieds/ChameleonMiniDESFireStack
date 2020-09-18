@@ -43,7 +43,7 @@ versions of the code at free will.
 #include "../MifareDESFire.h"
 #include "../../Common.h"
 
-uint16_t GetFileSize(DESFireFileTypeSettings *File) {
+uint16_t GetFileSizeFromFileType(DESFireFileTypeSettings *File) {
      if(File == NULL) {
           return 0x0000;
      }
@@ -67,12 +67,11 @@ uint16_t GetFileSize(DESFireFileTypeSettings *File) {
  * File management: creation, deletion, and misc routines
  */
 
-uint16_t GetFileDataAreaBlockId(uint8_t FileNum) {
-     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
-     if(fileIndex >= DESFIRE_MAX_FILES) {
-         return 0;
-     }
-     return ReadFileDataStructAddress(SelectedApp.Slot, fileIndex);
+uint16_t GetFileDataAreaBlockId(uint8_t fileIndex) {
+     SIZET fileStructAddr = ReadFileDataStructAddress(SelectedApp.Slot, fileIndex);
+     DESFireFileTypeSettings FileData;
+     MemoryReadBlock(&FileData, fileStructAddr, sizeof(DESFireFileTypeSettings));
+     return FileData.FileDataAddress;
 }
 
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File) {
@@ -306,15 +305,11 @@ uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount) {
     return PcdToPiccTransfer(Buffer, ByteCount);
 }
 
-uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length) {
-    uint16_t fileSize = GetFileSize(&(SelectedFile.File));
-    /* Verify boundary conditions */
-    if (Offset + Length > fileSize) {
-        return STATUS_BOUNDARY_ERROR;
-    }
+uint8_t ReadDataFileSetup(uint8_t FileIndex, uint8_t CommSettings, uint16_t Offset, uint16_t Length) {
+    uint16_t fileSize = ReadDataFileSize(SelectedApp.Slot, FileIndex);
     /* Setup data source */
     TransferState.ReadData.Source.Func = &ReadDataEEPROMSource;
-    if (!Length) {
+    if(Length == 0) {
         TransferState.ReadData.Encryption.FirstPaddingBitSet = true;
         TransferState.ReadData.BytesLeft = fileSize - Offset;
     }
@@ -323,15 +318,14 @@ uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length
         TransferState.ReadData.BytesLeft = Length;
     }
     /* Clean data is always located in the beginning of data area */
-    TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * 
-                                            DESFIRE_EEPROM_BLOCK_SIZE + Offset;
+    TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(FileIndex);
     /* Setup data filter */
     return ReadDataFilterSetup(CommSettings);
 }
 
-uint8_t WriteDataFileSetup(uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length) {
+uint8_t WriteDataFileSetup(uint8_t FileIndex, uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length) {
     /* Verify boundary conditions */
-    if (Offset + Length > GetFileSize(&(SelectedFile.File))) {
+    if (Offset + Length > ReadDataFileSize(SelectedApp.Slot, FileIndex)) {
         return STATUS_BOUNDARY_ERROR;
     }
     /* Setup data sink */
@@ -347,7 +341,7 @@ uint8_t WriteDataFileSetup(uint8_t FileType, uint8_t CommSettings, uint16_t Offs
     return WriteDataFilterSetup(CommSettings);
 }
 
-uint16_t ReadDataFileIterator(uint8_t* Buffer, uint16_t ByteCount) {
+uint16_t ReadDataFileIterator(uint8_t* Buffer) {
     /* NOTE: incoming ByteCount is not verified here for now */
     TransferStatus Status;
     Status = ReadDataFileTransfer(&Buffer[1]);

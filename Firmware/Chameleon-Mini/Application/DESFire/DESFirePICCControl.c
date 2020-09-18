@@ -90,38 +90,43 @@ void SynchronizePICCInfo(void) {
     //MemoryStore();
 }
 
-TransferStatus PiccToPcdTransfer(uint8_t* Buffer) { // TODO: Check 
+/* TODO: Currently, everything is transfered in plaintext, without checksums */
+TransferStatus PiccToPcdTransfer(uint8_t* Buffer) {
     TransferStatus Status;
     uint8_t XferBytes;
-
     /* Only read if required */
     if (TransferState.ReadData.BytesLeft) {
         /* Figure out how much to read */
-        XferBytes = (uint8_t)TransferState.ReadData.BytesLeft;
-        if (TransferState.ReadData.BytesLeft > DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE) {
-            XferBytes = DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE;
+        if(TransferState.ReadData.BytesLeft > DESFIRE_MAX_PAYLOAD_SIZE) {
+            XferBytes = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_PAYLOAD_SIZE) * DESFIRE_EEPROM_BLOCK_SIZE;
+        }
+        else { 
+            XferBytes = (uint8_t) TransferState.ReadData.BytesLeft;
         }
         /* Read input bytes */
         TransferState.ReadData.Source.Func(Buffer, XferBytes);
         TransferState.ReadData.BytesLeft -= XferBytes;
         /* Update checksum/MAC */
-        if (TransferState.Checksums.UpdateFunc)
-            TransferState.Checksums.UpdateFunc(Buffer, XferBytes);
-        if (TransferState.ReadData.BytesLeft == 0) {
-            /* Finalise TransferChecksum and append the checksum */
-            if (TransferState.Checksums.FinalFunc)
-                XferBytes += TransferState.Checksums.FinalFunc(&Buffer[XferBytes]);
-        }
+        //if (TransferState.Checksums.UpdateFunc)
+        //    TransferState.Checksums.UpdateFunc(Buffer, XferBytes);
+        //if (TransferState.ReadData.BytesLeft == 0) {
+        //    /* Finalise TransferChecksum and append the checksum */
+        //    if (TransferState.Checksums.FinalFunc)
+        //        XferBytes += TransferState.Checksums.FinalFunc(&Buffer[XferBytes]);
+        //}
         /* Encrypt */
-        Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, XferBytes);
-        Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
+        //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, XferBytes);
+        //Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
+        Status.BytesProcessed = XferBytes;
+        Status.IsComplete = TransferState.ReadData.BytesLeft == 0;
     }
     else {
         /* Final encryption block */
-        Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, 0);
+        //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, 0);
+        //Status.IsComplete = true;
+        Status.BytesProcessed = 0;
         Status.IsComplete = true;
     }
-
     return Status;
 }
 

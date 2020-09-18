@@ -85,7 +85,7 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
           case CRYPTO_TYPE_AES128:
                return 16;
           default:
-               return 0;
+               return 8;
      }
 }
 
@@ -98,7 +98,7 @@ const char * GetCryptoMethodDesc(uint8_t cryptoType) {
           case CRYPTO_TYPE_AES128:
                return PSTR("AES128");
           default:
-               return PSTR("");
+               return PSTR("DES");
      }
 }
 
@@ -136,7 +136,7 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
           case CMD_AUTHENTICATE_EV2_NONFIRST:
                return CRYPTO_TYPE_AES128;
           case CMD_AUTHENTICATE_ISO:
-               return CRYPTO_TYPE_3K3DES;
+               return CRYPTO_TYPE_DES;
           case CMD_AUTHENTICATE:
           case CMD_ISO7816_EXTERNAL_AUTHENTICATE:
           case CMD_ISO7816_INTERNAL_AUTHENTICATE:
@@ -477,19 +477,53 @@ void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPadding
 }
 
 void CryptoEncrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
-    uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
-    des_enc(tempBlock, Plaintext, Keys);
-    des_dec(Ciphertext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
-    memcpy(tempBlock, Ciphertext, CRYPTO_2KTDEA_BLOCK_SIZE);
-    des_enc(Ciphertext, tempBlock, Keys);
+    //uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
+    //des_enc(tempBlock, Plaintext, Keys);
+    //des_dec(Ciphertext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
+    //memcpy(tempBlock, Ciphertext, CRYPTO_2KTDEA_BLOCK_SIZE);
+    //des_enc(Ciphertext, tempBlock, Keys);
+    des_enc(Ciphertext, Plaintext, Keys);
 }
 
 void CryptoDecrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
-    uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
-    des_dec(tempBlock, Ciphertext, Keys);
-    des_enc(Plaintext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
-    memcpy(tempBlock, Plaintext, CRYPTO_2KTDEA_BLOCK_SIZE);
-    des_dec(Plaintext, tempBlock, Keys);
+    //uint8_t tempBlock[CRYPTO_2KTDEA_BLOCK_SIZE]; 
+    //des_dec(tempBlock, Ciphertext, Keys);
+    //des_enc(Plaintext, tempBlock, Keys + CRYPTO_DES_KEY_SIZE);
+    //memcpy(tempBlock, Plaintext, CRYPTO_2KTDEA_BLOCK_SIZE);
+    //des_dec(Plaintext, tempBlock, Keys);
+    des_dec(Plaintext, Ciphertext, Keys);
+}
+
+void EncryptDESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = { 
+         .cryptFunc   = &CryptoEncrypt2KTDEA,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };  
+     uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+     while(blockIndex < numBlocks) {
+        CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
+        ptBuf += CryptoSpec.blockSize;
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
+    }   
+}
+
+void DecryptDESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt2KTDEA,
+         .blockSize   = CRYPTO_DES_BLOCK_SIZE
+     };
+     uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+     while(blockIndex < numBlocks) {
+        CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
+        ptBuf += CryptoSpec.blockSize;
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
+    }
 }
 
 void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys) {
@@ -508,8 +542,6 @@ void Encrypt3DESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, 
      uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
      uint16_t blockIndex = 0;
      uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-     uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
-     bool lastBlockPadding = false;
      while(blockIndex < numBlocks) {
         CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
         ptBuf += CryptoSpec.blockSize;
@@ -526,8 +558,6 @@ void Decrypt3DESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, 
      uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
      uint16_t blockIndex = 0;
      uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-     uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
-     bool lastBlockPadding = false;
      while(blockIndex < numBlocks) {
         CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
         ptBuf += CryptoSpec.blockSize;

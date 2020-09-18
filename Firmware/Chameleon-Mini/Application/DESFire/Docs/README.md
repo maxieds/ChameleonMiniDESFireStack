@@ -73,8 +73,12 @@ Additionally, the following weblinks and posts clarify some common reference poi
   authentication procedure?
 * See note on [CBC ciphering for AES/3DES](https://stackoverflow.com/q/20943305/10661959). Note that 
   currently the AES is in ECB mode (per the Arduino crypto libs). 
-* Need to handle encrypted transfer modes invoked after authenticate?
+* Need to handle encrypted transfer modes invoked after authenticate (term: SAM?)?
 * Need to replace the DES/3DES encryption library for something faster?
+* When setting the key data via a set command, need to initialize the key addresses, update the 
+  key count in the AID, and other accounting details ...
+* Currently, all of the file transfers (read/write) are done in plaintext ...
+* The ``ReadData`` command ``offset`` input has no action at this point (TODO later) ...
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 

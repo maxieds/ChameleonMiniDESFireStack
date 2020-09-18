@@ -53,16 +53,13 @@ extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
  */
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count);
 
-extern char callingFunc[32];
-extern int callingLine;
-
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
-#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
+//#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
     strncpy(callingFunc, __func__, 32);                            \
     callingFunc[31] = '\0';                                        \
     callingLine = __LINE__;                                        \
     WriteBlockBytesMain(Buffer, StartBlock, Count);
-//#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
+#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
     WriteBlockBytesMain(Buffer, StartBlock, Count);
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);

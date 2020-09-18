@@ -91,7 +91,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_CREATE_CYCLIC_RECORD_FILE = 0xC0,
     CMD_DELETE_FILE = 0xDF,
     CMD_GET_ISO_FILE_IDS = 0x61,
-    CMD_READ_DATA =  0x8D,
+    CMD_READ_DATA =  0xBD,
     CMD_WRITE_DATA =  0x3D,
     CMD_GET_VALUE = 0x6C,
     CMD_CREDIT = 0x0C,
@@ -105,8 +105,8 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_CONTINUE =  0xAF,
     
     /* ISO7816 Command Set Support: */
-    // TODO: See p. 72 of the data sheet for response codes 
-    //       and detailed descriptions of the parameters ... 
+    // NOTE: See p. 72 of the data sheet for response codes 
+    //       and detailed descriptions of the parameters:
     CMD_ISO7816_SELECT = 0xa4, 
     CMD_ISO7816_GET_CHALLENGE = 0x84, 
     CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82, 
@@ -116,7 +116,8 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_ISO7816_READ_RECORDS = 0xb2,
     CMD_ISO7816_APPEND_RECORD = 0xe2, 
     
-    /* Space for undocumented command codes: */
+    /* Space for undocumented command codes -- 
+     * need command codes and parameters to make these work moving forward: */
     //CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf (for Mifare DESFire Light tags) */
 
 } DESFireCommandType;
@@ -191,8 +192,8 @@ uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
 
 /* EV1/EV2 supported commands */
-uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount);
