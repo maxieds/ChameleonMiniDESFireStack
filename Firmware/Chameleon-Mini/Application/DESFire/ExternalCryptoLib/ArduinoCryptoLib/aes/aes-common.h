@@ -37,6 +37,7 @@
         schedule[2] ^= temp[2]; \
         schedule[3] ^= temp[3]; \
     } while (0)
+
 #define KXOR(a, b) \
     do { \
         schedule[(a) * 4] ^= schedule[(b) * 4]; \

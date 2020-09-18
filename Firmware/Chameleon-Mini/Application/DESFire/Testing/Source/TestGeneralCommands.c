@@ -17,8 +17,16 @@ int main(int argc, char **argv) {
     if(nfcPnd == NULL) {
          return EXIT_FAILURE;
     }   
-    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
-    bool rxDataStatus = false;
+
+    if(SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
+        fprintf(stdout, "    -- !! Error selecting PICC (Master) AID by default !!\n");
+        return EXIT_FAILURE;
+    }   
+    else if(Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+                         MASTER_KEY_INDEX, ZERO_KEY)) {
+        fprintf(stdout, "    -- !! Error authenticating with AES !!\n");
+        return EXIT_FAILURE;
+    }
 
     if(GetVersionCommand(nfcPnd)) {
         fprintf(stdout, "    -- !! GetVersion failed !!\n");
@@ -41,7 +49,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    FreeRxDataStruct(rxDataStorage, true);
     FreeNFCDeviceDriver(&nfcCtxt, &nfcPnd);
     return EXIT_SUCCESS;
 

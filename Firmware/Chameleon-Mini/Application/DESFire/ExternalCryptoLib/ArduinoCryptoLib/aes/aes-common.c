@@ -31,6 +31,13 @@ versions of the code at free will.
 
 /* aes-common.c : Common utilities for AES encryption. */
 
+#ifdef HOST_BUILD
+    #undef  pgm_read_byte
+    #define pgm_read_byte(addr)   ((uint8_t) *(addr))
+    #undef  PROGMEM
+    #define PROGMEM
+#endif
+
 /**
  * \class AESCommon AES.h <AES.h>
  * \brief Abstract base class for AES block ciphers.

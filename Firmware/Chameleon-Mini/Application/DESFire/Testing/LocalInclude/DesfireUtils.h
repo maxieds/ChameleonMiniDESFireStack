@@ -27,6 +27,19 @@ static const inline uint8_t SELECT_APPLICATION_CMD[]   = {
     0x90, 0x5a, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00 
 };
 
+static inline uint8_t CRYPTO_RNDB_STATE[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static inline bool AUTHENTICATED = false;
+static inline int AUTHENTICATED_PROTO = 0;
+
+static inline void InvalidateAuthState(void) {
+    memset(CRYPTO_RNDB_STATE, 0x00, 8);
+    AUTHENTICATED = false;
+    AUTHENTICATED_PROTO = 0;
+}
+
 static inline int SelectApplication(nfc_device *nfcConnDev, uint8_t *aidBytes, size_t aidLength) {
     if(nfcConnDev == NULL || aidBytes == NULL || aidLength < APPLICATION_AID_LENGTH) {
         return INVALID_PARAMS_ERROR;
@@ -79,6 +92,7 @@ static inline int GetApplicationIds(nfc_device *nfcConnDev) {
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
             fprintf(stdout, "\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_SUCCESS;
     }
     else {
@@ -86,11 +100,12 @@ static inline int GetApplicationIds(nfc_device *nfcConnDev) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
             fprintf(stdout, "\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 }
 
-static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
     
     if(nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
@@ -117,6 +132,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 
@@ -147,6 +163,9 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8
     memcpy(sendBytesBuf + 5, challengeResponseCipherText, 16);
 
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- RNDA = "); print_hex(rndA, 8);
+        fprintf(stdout, "    -- RNDB = "); print_hex(plainTextRndB, 8);
+        fprintf(stdout, "    -- CHAL = "); print_hex(challengeResponse, 16);
         fprintf(stdout, "    -> ");
         print_hex(sendBytesBuf, sizeof(sendBytesBuf));
     }
@@ -159,29 +178,36 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, int authType, uint8
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 
     // Finally, to finish up the auth process: 
     // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above, 
     // and report back whether they match: 
-    uint8_t decryptedRndAFromPICC[16];
-    DecryptAES128(rxDataStorage->rxDataBuf, 16, decryptedRndAFromPICC, aesCryptoData);
-    if(memcmp(rndA, decryptedRndAFromPICC, 8)) {
+    uint8_t decryptedRndAFromPICCRotated[16], decryptedRndA[16];
+    DecryptAES128(rxDataStorage->rxDataBuf, 16, decryptedRndAFromPICCRotated, aesCryptoData);
+    RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, 8);
+    if(!memcmp(rndA, decryptedRndA, 8)) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH OK! :)\n\n");
         }
+        AUTHENTICATED = true;
+        AUTHENTICATED_PROTO = DESFIRE_CRYPTO_AUTHTYPE_AES128;
+        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, 8);
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_SUCCESS;
     }
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH FAILED -- X; :(\n\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 }
 
-static inline int AuthenticateIso(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+static inline int AuthenticateIso(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
     
     if(nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
@@ -208,6 +234,7 @@ static inline int AuthenticateIso(nfc_device *nfcConnDev, int authType, uint8_t 
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 
@@ -245,43 +272,54 @@ static inline int AuthenticateIso(nfc_device *nfcConnDev, int authType, uint8_t 
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 
     // Finally, to finish up the auth process: 
     // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above, 
     // and report back whether they match: 
-    uint8_t decryptedRndAFromPICC[16];
-    Decrypt3DES(16, rxDataStorage->rxDataBuf, decryptedRndAFromPICC, keyData);
-    if(memcmp(rndA, decryptedRndAFromPICC, 8)) {
+    uint8_t decryptedRndAFromPICCRotated[16], decryptedRndA[16];
+    Decrypt3DES(rxDataStorage->rxDataBuf, 16, decryptedRndAFromPICCRotated, keyData);
+    RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, 8);
+    if(!memcmp(rndA, decryptedRndA, 8)) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH OK! :)\n\n");
         }
+        AUTHENTICATED = true;
+        AUTHENTICATED_PROTO = DESFIRE_CRYPTO_AUTHTYPE_ISODES;
+        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, 8);
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_SUCCESS;
     }
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH FAILED -- X; :(\n\n");
         }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
 }
 
-static inline int AuthenticateLegacy(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
+    if(nfcConnDev == NULL || keyData == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
     return EXIT_SUCCESS;
 }
 
 static inline int Authenticate(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
+    InvalidateAuthState();
     if(nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
     }
     switch(authType) {
         case DESFIRE_CRYPTO_AUTHTYPE_AES128:
-            return AuthenticateAES128(nfcConnDev, authType, keyIndex, keyData);
+            return AuthenticateAES128(nfcConnDev, keyIndex, keyData);
         case DESFIRE_CRYPTO_AUTHTYPE_ISODES:
-            return AuthenticateISO(nfcConnDev, authType, keyIndex, keyData);
+            return AuthenticateIso(nfcConnDev, keyIndex, keyData);
         case DESFIRE_CRYPTO_AUTHTYPE_LEGACY:
-            return AuthenticateLegacy(nfcConnDev, authType, keyIndex, keyData);
+            return AuthenticateLegacy(nfcConnDev, keyIndex, keyData);
         default:
             break;
     }
@@ -314,7 +352,8 @@ static inline int GetVersionCommand(nfc_device *nfcConnDev) {
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }   
+        }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     } 
     for(int extraCmd = 0; extraCmd < 2; extraCmd++) {
@@ -331,10 +370,12 @@ static inline int GetVersionCommand(nfc_device *nfcConnDev) {
         else {
             if(PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-            }   
+            }
+            FreeRxDataStruct(rxDataStorage, true);
             return EXIT_FAILURE;
         }
     }
+    FreeRxDataStruct(rxDataStorage, true);
     return EXIT_SUCCESS;
 }
 
@@ -345,21 +386,27 @@ static inline int FormatPiccCommand(nfc_device *nfcConnDev) {
     uint8_t FORMAT_PICC_CMD[] = {
         0x90, 0xfc, 0x00, 0x00, 0x00, 0x00
     };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> FormatPICC command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(FORMAT_PICC_CMD, sizeof(FORMAT_PICC_CMD));
+    }
     RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
     bool rxDataStatus = false;
     rxDataStatus = libnfcTransmitBytes(nfcConnDev, FORMAT_PICC_CMD, 
                                        sizeof(FORMAT_PICC_CMD), rxDataStorage);
     if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> FormatPICC command:\n");
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }   
+        }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
+    FreeRxDataStruct(rxDataStorage, true);
     return EXIT_SUCCESS;
 }
 
@@ -370,21 +417,27 @@ static inline int GetCardUIDCommand(nfc_device *nfcConnDev) {
     uint8_t CMD[] = {
         0x90, 0x51, 0x00, 0x00, 0x00, 0x00
     };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> GetCardUID command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
     RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
     bool rxDataStatus = false;
     rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, 
                                        sizeof(CMD), rxDataStorage);
     if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> GetCardUID command:\n");
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }   
+        }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
+    FreeRxDataStruct(rxDataStorage, true);
     return EXIT_SUCCESS;
 }
 
@@ -397,6 +450,8 @@ static inline int SetConfigurationCommand(nfc_device *nfcConnDev) {
     };
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> SetConfiguration command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
     }
     RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
     bool rxDataStatus = false;
@@ -410,9 +465,11 @@ static inline int SetConfigurationCommand(nfc_device *nfcConnDev) {
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }   
+        }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
+    FreeRxDataStruct(rxDataStorage, true);
     return EXIT_SUCCESS;
 }
 
@@ -425,6 +482,8 @@ static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
     };
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> FreeMemory command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
     }
     RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
     bool rxDataStatus = false;
@@ -437,13 +496,142 @@ static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
     else {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }   
+        }
+        FreeRxDataStruct(rxDataStorage, true);
         return EXIT_FAILURE;
     }
+    FreeRxDataStruct(rxDataStorage, true);
     return EXIT_SUCCESS;
 }
 
-static inline int SetApplicationKeyData(nfc_device *nfcConnDev, uint8_t keyIndex, uint8_t *keyData) {
+static inline int ChangeKeyCommand(nfc_device *nfcConnDev, uint8_t keyNo, const uint8_t *keyData) {
+    if(nfcConnDev == NULL || keyData == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[31];
+    CMD[0] = 0x90;
+    CMD[1] = 0xc4;
+    memset(CMD + 2, 0x00, 29);
+    CMD[4] = 25;
+    CMD[5] = keyNo;
+    memcpy(CMD + 6, keyData, 24);
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> ChangeKey command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
+    return EXIT_SUCCESS;
+}
+
+static inline int GetKeySettingsCommand(nfc_device *nfcConnDev) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0x45, 0x00, 0x00, 0x00, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> GetKeySettings command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
+    return EXIT_SUCCESS;
+}
+
+static inline int ChangeKeySettingsCommand(nfc_device *nfcConnDev, const uint8_t *keyData) {
+    if(nfcConnDev == NULL || keyData == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[14];
+    CMD[0] = 0x90;
+    CMD[1] = 0x54;
+    memset(CMD + 2, 0x00, 12);
+    CMD[4] = 8;
+    memcpy(CMD + 5, keyData, 8);
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> ChangeKeySettings command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
+    return EXIT_SUCCESS;
+}
+
+static inline int GetKeyVersionCommand(nfc_device *nfcConnDev, uint8_t keyNo) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0x64, 0x00, 0x00, 0x01, keyNo, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> GetKeyVersion command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
     return EXIT_SUCCESS;
 }
 

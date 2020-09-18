@@ -45,12 +45,13 @@ typedef struct {
     uint8_t     rounds;
     uint8_t     schedule[AES128_CRYPTO_SCHEDULE_SIZE];
     uint8_t     reverse[AES128_CRYPTO_SCHEDULE_SIZE];
+    uint8_t     keyData[AES128_KEY_SIZE];
 } AES128Context;
 
 void aes128InitContext(AES128Context *ctx);
 void aes128ClearContext(AES128Context *ctx);
 bool aes128SetKey(AES128Context *ctx, const uint8_t *keyData, size_t keySize);
-void aes128EncryptBlock(AES128Context *ctx, const uint8_t *ptBlockBuf, uint8_t *ctBlockBuf);
+void aes128EncryptBlock(AES128Context *ctx, uint8_t *ctBlockBuf, const uint8_t *ptBlockBuf);
 void aes128DecryptBlock(AES128Context *ctx, uint8_t *ptBlockBuf, const uint8_t *ctBlockBuf);
 
 #endif

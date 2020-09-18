@@ -5,24 +5,24 @@
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
 | CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :question: :grey_question: :interrobang: | |
-| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :ballot_box_with_check: | |
+| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :x: | |
 | CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |    
 | CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf | 
-| CMD_CHANGE_KEY_SETTINGS | 0x54 | | | |
-| CMD_SET_CONFIGURATION |  0x5C | | | |
-| CMD_CHANGE_KEY |  0xC4 | | | |
-| CMD_GET_KEY_VERSION | 0x64 | | | |
+| CMD_CHANGE_KEY_SETTINGS | 0x54 | | :ballot_box_with_check: | |
+| CMD_SET_CONFIGURATION |  0x5C | | :x: | |
+| CMD_CHANGE_KEY |  0xC4 | | :ballot_box_with_check: | |
+| CMD_GET_KEY_VERSION | 0x64 | | :ballot_box_with_check: | |
 | CMD_CREATE_APPLICATION |  0xCA | | | |
 | CMD_DELETE_APPLICATION |  0xDA | | | |
 | CMD_GET_APPLICATION_IDS | 0x6A | | | |
 | CMD_FREE_MEMORY | 0x6E | | | |
 | CMD_GET_DF_NAMES | 0x6D | | | |
 | CMD_GET_KEY_SETTINGS | 0x45 | | | |
-| CMD_SELECT_APPLICATION |  0x5A | | | |
-| CMD_FORMAT_PICC |  0xFC | | | |
-| CMD_GET_VERSION | 0x60 | | | |
-| CMD_GET_CARD_UID | 0x51 | | | |
+| CMD_SELECT_APPLICATION |  0x5A | | :ballot_box_with_check: | |
+| CMD_FORMAT_PICC |  0xFC | | :ballot_box_with_check: | |
+| CMD_GET_VERSION | 0x60 | | :ballot_box_with_check: | |
+| CMD_GET_CARD_UID | 0x51 | | :ballot_box_with_check: | |
 | CMD_GET_FILE_IDS |  0x6F | | | |
 | CMD_GET_FILE_SETTINGS | 0xF5 | | | |
 | CMD_CHANGE_FILE_SETTINGS | 0x5F | | | |

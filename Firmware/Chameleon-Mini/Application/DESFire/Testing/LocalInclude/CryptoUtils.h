@@ -10,6 +10,8 @@
 
 #include <CryptoLibs-SingleSource.c>
 
+#include "LibNFCUtils.h"
+
 #define DESFIRE_CRYPTO_AUTHTYPE_AES128      (1)
 #define DESFIRE_CRYPTO_AUTHTYPE_ISODES      (2)
 #define DESFIRE_CRYPTO_AUTHTYPE_LEGACY      (3)
@@ -46,6 +48,7 @@ typedef struct {
      size_t   keySize;
      uint8_t  *ivData;
      size_t   ivSize;
+     DesfireAESCryptoContext cryptoCtx;
 } CryptoData_t;
 
 static inline size_t CryptAES128(bool toEncrypt, uint8_t *inputBytes, uint8_t *outputBytes, 
@@ -87,40 +90,82 @@ static inline void DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize
      aes128SetKey(cryptoCtx, initKeyBuffer, bufSize);
 }
 
-static inline size_t EncryptAES128(uint8_t *plainSrcBuf, size_t bufSize, 
+static inline void PrintAESCryptoContext(DesfireAESCryptoContext *cryptoCtx) {
+    if(cryptoCtx == NULL) {
+        return;
+    }
+    fprintf(stdout, "    -- SCHED = "); print_hex(cryptoCtx->schedule, 16);
+    fprintf(stdout, "    -- REV   = "); print_hex(cryptoCtx->reverse, 16);
+    fprintf(stdout, "    -- KEY   = "); print_hex(cryptoCtx->keyData, 16);
+}
+
+static inline size_t EncryptAES128(const uint8_t *plainSrcBuf, size_t bufSize, 
                                    uint8_t *encDestBuf, CryptoData_t cdata) {
-     DesfireAESCryptoContext cryptoCtx;
-     DesfireAESCryptoInit(cdata.keyData, cdata.keySize, &cryptoCtx);
-     size_t bufBlocks = (bufSize + AES128_BLOCK_SIZE - 1) / AES128_BLOCK_SIZE;
+     DesfireAESCryptoContext *cryptoCtx = &(cdata.cryptoCtx);
+     DesfireAESCryptoInit(cdata.keyData, cdata.keySize, cryptoCtx);
+     size_t bufBlocks = bufSize / AES128_BLOCK_SIZE;
      bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
-     size_t lastBlockSize = bufSize % AES128_BLOCK_SIZE;
      for(int blk = 0; blk < bufBlocks; blk++) {
-          if(padLastBlock && blk + 1 == bufBlocks) {
-               uint8_t lastBlockBuf[AES128_BLOCK_SIZE];
-               memset(lastBlockBuf, 0x00, AES128_BLOCK_SIZE);
-               memcpy(lastBlockBuf, plainSrcBuf + blk * AES128_BLOCK_SIZE, lastBlockSize);
-               aes128EncryptBlock(&cryptoCtx, lastBlockBuf, 
-                                  encDestBuf + blk * AES128_BLOCK_SIZE);
-          }   
-          else {
-               aes128EncryptBlock(&cryptoCtx, plainSrcBuf + blk * AES128_BLOCK_SIZE, 
-                                  encDestBuf + blk * AES128_BLOCK_SIZE);
-          }   
+           aes128EncryptBlock(cryptoCtx, encDestBuf + blk * AES128_BLOCK_SIZE, 
+                              plainSrcBuf + blk * AES128_BLOCK_SIZE);
      }
      return bufSize;
 }
 
-static inline size_t DecryptAES128(uint8_t *encSrcBuf, size_t bufSize, 
+static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize, 
                                    uint8_t *plainDestBuf, CryptoData_t cdata) {
-     DesfireAESCryptoContext cryptoCtx;
-     DesfireAESCryptoInit(cdata.keyData, cdata.keySize, &cryptoCtx);
+     DesfireAESCryptoContext *cryptoCtx = &(cdata.cryptoCtx);
+     DesfireAESCryptoInit(cdata.keyData, cdata.keySize, cryptoCtx);
      size_t bufBlocks = (bufSize + AES128_BLOCK_SIZE - 1) / AES128_BLOCK_SIZE;
      bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
      for(int blk = 0; blk < bufBlocks; blk++) {
-          aes128DecryptBlock(&cryptoCtx, plainDestBuf + blk * AES128_BLOCK_SIZE,
+          aes128DecryptBlock(cryptoCtx, plainDestBuf + blk * AES128_BLOCK_SIZE,
                              encSrcBuf + blk * AES128_BLOCK_SIZE);
      }
      return bufSize;
+}
+
+static inline bool TestAESEncyptionRoutines(void) {
+    fprintf(stdout, ">>> TestAESEncryptionRoutines [non-DESFire command]:\n");
+    const uint8_t keyData[] = { 
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+    };
+    const uint8_t ptData[] = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
+    };
+    const uint8_t ctData[] = {
+        0x69, 0xC4, 0xE0, 0xD8, 0x6A, 0x7B, 0x04, 0x30,
+        0xD8, 0xCD, 0xB7, 0x80, 0x70, 0xB4, 0xC5, 0x5A
+    };
+    CryptoData_t cdata;
+    cdata.keyData = keyData;
+    cdata.keySize = 16;
+    uint8_t pt[16], pt2[16], ct[16];
+    EncryptAES128(ptData, 16, ct, cdata);
+    DecryptAES128(ct, 16, pt2, cdata);
+    fprintf(stdout, "    -- : PT = "); print_hex(ptData, 16);
+    fprintf(stdout, "    -- : CT = "); print_hex(ctData, 16);
+    fprintf(stdout, "    -- : CT = "); print_hex(ct, 16);
+    fprintf(stdout, "    -- : PT = "); print_hex(pt2, 16);
+    bool status = true;
+    if(memcmp(ct, ctData, 16)) {
+        fprintf(stdout, "    -- CT does NOT match !!\n");
+        status = false;
+    }
+    else {
+        fprintf(stdout, "    -- CT matches.\n");
+    }
+    if(memcmp(pt2, ptData, 16)) {
+        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
+        status = false;
+    }
+    else {
+        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
+    }
+    fprintf(stdout, "\n");
+    return status;
 }
 
 typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, const uint8_t *Keys);
