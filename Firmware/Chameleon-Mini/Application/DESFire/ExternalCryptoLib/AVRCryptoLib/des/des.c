@@ -27,8 +27,15 @@
  */
 #include <stdint.h>
 #include <string.h>
+
 #ifndef HOST_BUILD
     #include <avr/pgmspace.h>
+#endif
+#ifdef HOST_BUILD
+    #undef  pgm_read_byte
+    #define pgm_read_byte(addr)   ((uint8_t) *(addr))
+    #undef  PROGMEM
+    #define PROGMEM
 #endif
 
 const uint8_t DES_sbox[256] PROGMEM = {
@@ -237,7 +244,7 @@ static inline
 void shiftkey(uint8_t *key){
 	uint8_t k[7];
 	memcpy(k, key, 7);
-	permute((uint8_t*)shiftkey_permtab, k, key);	
+	permute((uint8_t*) &(shiftkey_permtab[0]), k, key);	
 }
 
 /******************************************************************************/
@@ -245,7 +252,7 @@ static inline
 void shiftkey_inv(uint8_t *key){
 	uint8_t k[7];
 	memcpy(k, key, 7);
-	permute((uint8_t*)shiftkeyinv_permtab, k, key);
+	permute((uint8_t*) &(shiftkeyinv_permtab[0]), k, key);
 	
 }
 
@@ -254,7 +261,7 @@ static inline
 uint64_t splitin6bitwords(uint64_t a){
 	uint64_t ret=0;
 	a &= 0x0000ffffffffffffLL;
-	permute((uint8_t*)splitin6bitword_permtab, (uint8_t*)&a, (uint8_t*)&ret);	
+	permute((uint8_t*) &(splitin6bitword_permtab[0]), (uint8_t*)&a, (uint8_t*)&ret);	
 	return ret;
 }
 
@@ -276,7 +283,7 @@ uint32_t des_f(uint32_t r, uint8_t *kr){
 	uint32_t t=0,ret;
 	uint64_t data;
 	uint8_t *sbp; /* DES_sboxpointer */ 
-	permute((uint8_t*)e_permtab, (uint8_t*)&r, (uint8_t*)&data);
+	permute((uint8_t*) &(e_permtab[0]), (uint8_t*)&r, (uint8_t*)&data);
 	for(i=0; i<7; ++i)
 		((uint8_t*)&data)[i] ^= kr[i];
 	
@@ -292,7 +299,7 @@ uint32_t des_f(uint32_t r, uint8_t *kr){
 	}
 	changeendian32(&t);
 		
-	permute((uint8_t*)p_permtab,(uint8_t*)&t, (uint8_t*)&ret);
+	permute((uint8_t*) &(p_permtab[0]),(uint8_t*)&t, (uint8_t*)&ret);
 
 	return ret;
 }
@@ -316,13 +323,13 @@ void des_enc(void *out, const void *in, const uint8_t *key){
 		shiftkey(k);
 		if(ROTTABLE&((1<<((i<<1)+0))) )
 			shiftkey(k);
-		permute((uint8_t*)pc2_permtab, k, kr);
+		permute((uint8_t*) &(pc2_permtab[0]), k, kr);
 		L ^= des_f(R, kr);
 		
 		shiftkey(k);
 		if(ROTTABLE&((1<<((i<<1)+1))) )
 			shiftkey(k);
-		permute((uint8_t*)pc2_permtab, k, kr);
+		permute((uint8_t*) &(pc2_permtab[0]), k, kr);
 		R ^= des_f(L, kr);
 
 	}
@@ -330,7 +337,7 @@ void des_enc(void *out, const void *in, const uint8_t *key){
 	R ^= L;
 	L ^= R;
 	R ^= L;
-	permute((uint8_t*)inv_ip_permtab, data.v8, (uint8_t*)out);
+	permute((uint8_t*) &(inv_ip_permtab[0]), data.v8, (uint8_t*)out);
 }
 
 /******************************************************************************/
@@ -342,18 +349,18 @@ void des_dec(void *out, const void *in, const uint8_t *key){
 		uint32_t v32[2];
 	} data;
 	int8_t i;
-	permute((uint8_t*)ip_permtab, (uint8_t*)in, data.v8);
-	permute((uint8_t*)pc1_permtab, (const uint8_t*)key, k);
+	permute((uint8_t*) &(ip_permtab[0]), (uint8_t*)in, data.v8);
+	permute((uint8_t*) &(pc1_permtab[0]), (const uint8_t*)key, k);
 	for(i=7; i>=0; --i){
 		
-		permute((uint8_t*)pc2_permtab, k, kr);
+		permute((uint8_t*) &(pc2_permtab[0]), k, kr);
 		L ^= des_f(R, kr);
 		shiftkey_inv(k);
 		if(ROTTABLE&((1<<((i<<1)+1))) ){
 			shiftkey_inv(k);
 		}
 
-		permute((uint8_t*)pc2_permtab, k, kr);
+		permute((uint8_t*) &(pc2_permtab[0]), k, kr);
 		R ^= des_f(L, kr);
 		shiftkey_inv(k);
 		if(ROTTABLE&((1<<((i<<1)+0))) ){
@@ -365,23 +372,23 @@ void des_dec(void *out, const void *in, const uint8_t *key){
 	R ^= L;
 	L ^= R;
 	R ^= L;
-	permute((uint8_t*)inv_ip_permtab, data.v8, (uint8_t*)out);
+	permute((uint8_t*) &(inv_ip_permtab[0]), data.v8, (uint8_t*)out);
 }
 
 /******************************************************************************/
 
 void tdes_enc(void *out, const void *in, const uint8_t *key){
-	des_enc(out,  in, (uint8_t*)key + 0);
-	des_dec(out, out, (uint8_t*)key + 8);
-	des_enc(out, out, (uint8_t*)key + 16);
+	des_enc(out,  in, (uint8_t*) (key + 0));
+	des_dec(out, out, (uint8_t*) (key + 8));
+	des_enc(out, out, (uint8_t*) (key + 16));
 }
 
 /******************************************************************************/
 
 void tdes_dec(void *out, const void *in, const uint8_t *key){
-	des_dec(out,  in, (uint8_t*)key + 16);
-	des_enc(out, out, (uint8_t*)key + 8);
-	des_dec(out, out, (uint8_t*)key + 0);
+	des_dec(out,  in, (uint8_t*) (key + 16));
+	des_enc(out, out, (uint8_t*) (key + 8));
+	des_dec(out, out, (uint8_t*) (key + 0));
 }
 
 /******************************************************************************/

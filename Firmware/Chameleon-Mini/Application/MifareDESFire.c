@@ -175,13 +175,9 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = BitCount / BITS_PER_BYTE;
     if(ByteCount >= 8 && Buffer[0] == 0x90 && Buffer[2] == 0x00 && 
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) { // Wrapped native command structure: 
+        /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
         // -- Actually, just ignore parity problems if they exist (TODO later)
-        //if(!ISO14443ACheckCRCA(Buffer, ByteCount - 2)) {
-        //    Buffer[0] = STATUS_INTEGRITY_ERROR;
-        //    return DESFIRE_STATUS_RESPONSE_SIZE * BITS_PER_BYTE;
-        //}
-        /* Unwrap the PDU from ISO 7816-4 */
         DesfireCmdCLA = Buffer[0];
         ByteCount = Buffer[4]; // also removing the trailing two parity bytes
         Buffer[0] = Buffer[1];
@@ -204,9 +200,6 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
     }
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
-        const char *loggingErrorMsg = PSTR("Skipping the ProcessCommand method");
-        DEBUG_PRINT_P(loggingErrorMsg);
-        //return 0; // TODO: Remove this!
         return MifareDesfireProcessCommand(Buffer, BitCount) * BITS_PER_BYTE;
     }
 
@@ -219,9 +212,6 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
     uint16_t BitCount2 = BitCount;
-    //const char *loggingErrorMsg = PSTR("Skipping over the internal Picc process func");
-    //DEBUG_PRINT_P(loggingErrorMsg, ByteCount);
-    //return 0;
     BitCount = ISO144433APiccProcess(Buffer, BitCount);
     if(BitCount != ISO14443A_APP_NO_RESPONSE) {
          return BitCount;

@@ -175,8 +175,8 @@ static inline int AuthenticateIso(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     uint8_t encryptedRndB[16], plainTextRndB[16], rotatedRndB[8];
     uint8_t rndA[8], challengeResponse[16], challengeResponseCipherText[16];
     uint8_t IVBuf[16];
-    memcpy(encryptedRndB, rxDataStorage->rxDataBuf, 16);
-    Decrypt3DES(16, encryptedRndB, plainTextRndB, keyData);
+    memcpy(encryptedRndB, rxDataStorage->rxDataBuf, 8);
+    Decrypt3DES(8, plainTextRndB, encryptedRndB, keyData);
     RotateArrayLeft(plainTextRndB, rotatedRndB, 8);
     memcpy(IVBuf, rxDataStorage->rxDataBuf, 8);
     GenerateRandomBytes(rndA, 8);
@@ -211,7 +211,7 @@ static inline int AuthenticateIso(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above, 
     // and report back whether they match: 
     uint8_t decryptedRndAFromPICCRotated[16], decryptedRndA[16];
-    Decrypt3DES(rxDataStorage->rxDataBuf, 16, decryptedRndAFromPICCRotated, keyData);
+    Decrypt3DES(8, decryptedRndAFromPICCRotated, rxDataStorage->rxDataBuf, keyData);
     RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, 8);
     if(!memcmp(rndA, decryptedRndA, 8)) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {

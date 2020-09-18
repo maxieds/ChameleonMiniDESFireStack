@@ -500,6 +500,42 @@ void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys)
     tdes_dec(Plaintext, Ciphertext, Keys);
 }
 
+void Encrypt3DESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoEncrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+     uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+     bool lastBlockPadding = false;
+     while(blockIndex < numBlocks) {
+        CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
+        ptBuf += CryptoSpec.blockSize;
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
+    }   
+}
+
+void Decrypt3DESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys) {
+     CryptoTDEA_CBCSpec CryptoSpec = {
+         .cryptFunc   = &CryptoDecrypt3KTDEA,
+         .blockSize   = CRYPTO_3KTDEA_BLOCK_SIZE
+     };
+     uint16_t numBlocks = (Count + CryptoSpec.blockSize - 1) / CryptoSpec.blockSize;
+     uint16_t blockIndex = 0;
+     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
+     uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
+     bool lastBlockPadding = false;
+     while(blockIndex < numBlocks) {
+        CryptoSpec.cryptFunc(ptBuf, ctBuf, Keys);
+        ptBuf += CryptoSpec.blockSize;
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
+    }   
+}
+
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
 void CryptoTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                         void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec) {
@@ -543,7 +579,7 @@ void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
             CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
         }
         memcpy(ivBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
-        CryptoSpec.cryptFunc(ivBlock, tempBlock, CryptoSpec.blockSize);
+        CryptoSpec.cryptFunc(ivBlock, tempBlock, Keys);
         memcpy(ivBlock, IV, CryptoSpec.blockSize);
         memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
         memcpy(IV, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);

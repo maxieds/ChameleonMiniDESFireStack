@@ -1236,7 +1236,6 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
     *Key = AESCryptoSessionKey;
-    *IVBuffer = AESCryptoIVBuffer;
 
     /* Indicate that we are in AES key authentication land */
     DesfireCommandState.KeyId = KeyId;
@@ -1268,16 +1267,16 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    CryptoEncrypt3KTDEA_CBCSend(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, 
-                                &Buffer[1], IVBuffer, Key);
+    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, 
+                      &Buffer[1], *Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
 
     /* Done */
-    DesfireState = DESFIRE_AES_AUTHENTICATE2;
+    DesfireState = DESFIRE_ISO_AUTHENTICATE2;
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    return DESFIRE_STATUS_RESPONSE_SIZE + CRYPTO_CHALLENGE_RESPONSE_BYTES;
 
 }
 
@@ -1298,17 +1297,16 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-    *Key = ExtractAESKeyBuffer(&AESCryptoSessionKey, keySize);
-    *IVBuffer = ExtractAESKeyBuffer(&AESCryptoIVBuffer, keySize);
     ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    CryptoDecrypt3KTDEA_CBCReceive(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, 
-                                   &Buffer[1], *IVBuffer, AESCryptoSessionKey);
-    RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
+    Decrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, 
+                      &Buffer[1], *Key);
+    RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB, 
+                     CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Check that the returned RndB matches what we sent in the previous round */
@@ -1324,18 +1322,17 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
                                      (KeyId == DESFIRE_MASTER_KEY_ID);
     
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
-    memset(challengeRndAB, 0x00, 2 * CRYPTO_AES_BLOCK_SIZE);
+    memset(challengeRndAB, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndAB, challengeRndA, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    **IVBuffer = 0x00;
-    CryptoEncrypt3KTDEA_CBCSend(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, 
-                                &Buffer[1], IVBuffer, AESCryptoSessionKey);
+    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, 
+                      &Buffer[1], *Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    return DESFIRE_STATUS_RESPONSE_SIZE + CRYPTO_CHALLENGE_RESPONSE_BYTES;
 
 }
 
