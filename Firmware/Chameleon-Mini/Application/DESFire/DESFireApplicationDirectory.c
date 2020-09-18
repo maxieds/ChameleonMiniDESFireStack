@@ -514,12 +514,20 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     uint8_t FreeSlot;
     
     /* Verify this AID has not been allocated yet */
-    if((LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) && (LookupAppSlot(Aid) != 0) && 
-       (Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00)) {
+    if(LookupAppSlot(Aid) == 0 && (Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00) && 
+       AppDir.FirstFreeSlot == 0) {
+        Slot = 0;
+    }
+    else if((Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00)) {
         return STATUS_DUPLICATE_ERROR;
     }
+    else if(LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) {
+        return STATUS_DUPLICATE_ERROR;
+    }
+    else {
+        Slot = AppDir.FirstFreeSlot;
+    }
     /* Verify there is space */
-    Slot = AppDir.FirstFreeSlot;
     if(Slot >= DESFIRE_MAX_SLOTS) {
         return STATUS_APP_COUNT_ERROR;
     }
@@ -627,10 +635,10 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
          WriteBlockBytes(cryptoBlankKeyData, keyAddresses[0], CRYPTO_MAX_KEY_SIZE);
          WriteBlockBytes(keyAddresses, appCacheData.KeyAddress, sizeof(SIZET) * DESFIRE_MAX_KEYS);
     }
-    // Note: Creating the block means we have selected it: 
     SIZET appCacheDataBlockId = AppDir.AppCacheStructBlockOffset[Slot];
     WriteBlockBytes(&appCacheData, appCacheDataBlockId, sizeof(SelectedAppCacheType));
-    SelectAppBySlot(Slot);
+    // Note: Creating the block DOES NOT mean we have selected it: 
+    //SelectAppBySlot(Slot);
 
     /* Update the directory */
     for(int aidx = 0; aidx < DESFIRE_AID_SIZE; aidx++) {
@@ -653,13 +661,12 @@ uint16_t DeleteApp(const DESFireAidType Aid) {
     for(int aidx = 0; aidx < DESFIRE_AID_SIZE; aidx++) {
          AppDir.AppIds[Slot][aidx] = 0x00;
     }
-    if(Slot < AppDir.FirstFreeSlot) {
-        AppDir.FirstFreeSlot = MIN(Slot, AppDir.FirstFreeSlot);
-    }
+    AppDir.FirstFreeSlot = MIN(Slot, AppDir.FirstFreeSlot);
     SynchronizeAppDir();
-    if(Slot == SelectedApp.Slot) {
-        SelectAppBySlot(DESFIRE_PICC_APP_SLOT);
-    }    
+    if(!IsPiccAppSelected()) {
+        InvalidateAuthState(0x00);
+    }
+    SelectAppBySlot(DESFIRE_PICC_APP_SLOT);
     return STATUS_OPERATION_OK;
 }
 

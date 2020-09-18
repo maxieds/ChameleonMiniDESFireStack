@@ -134,10 +134,10 @@ void SynchronizePICCInfo(void);
    bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; 
           PICC master key changeable = 1
 */
-#define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (1 << 0)
-#define DESFIRE_FREE_DIRECTORY_LIST      (1 << 1)
-#define DESFIRE_FREE_CREATE_DELETE       (1 << 2)
-#define DESFIRE_ALLOW_CONFIG_CHANGE      (1 << 3)
+#define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (0x01) //(1 << 0)
+#define DESFIRE_FREE_DIRECTORY_LIST      (0x02) //(1 << 1)
+#define DESFIRE_FREE_CREATE_DELETE       (0x04) //(1 << 2)
+#define DESFIRE_ALLOW_CONFIG_CHANGE      (0x08) //(1 << 3)
 #define DESFIRE_USE_TARGET_KEY           0xE
 #define DESFIRE_ALL_KEYS_FROZEN          0xF
 

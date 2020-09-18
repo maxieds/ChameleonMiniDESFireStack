@@ -28,38 +28,54 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }   
 
-    uint8_t *aidToCreateList[] = {
-        { 0x77, 0x88, 0x99 },
-        { 0x01, 0x00, 0x34 }
+    uint8_t aidToCreateList1[] = {
+        0x77, 0x88, 0x99 
+    };
+    uint8_t aidToCreateList2[] = { 
+        0x01, 0x00, 0x34
     };
     if(GetApplicationIds(nfcPnd)) {
         fprintf(stdout, "    -- !! Error listing existing AIDs !!\n");
         return EXIT_FAILURE;
     }
-    else if(CreateApplication(nfcPnd, aidToCreateList[0], 0x0f, 3) || 
-            CreateApplication(nfcPnd, aidToCreateList[1], 0x0f, 3) || 
-            CreateApplication(nfcPnd, aidToCreateList[0], 0x0f, 3)) {
+    else if(CreateApplication(nfcPnd, aidToCreateList1, 0x0f, 3) || GetApplicationIds(nfcPnd) || 
+            CreateApplication(nfcPnd, aidToCreateList2, 0x0f, 3) || GetApplicationIds(nfcPnd) || 
+            CreateApplication(nfcPnd, aidToCreateList1, 0x0f, 3) || GetApplicationIds(nfcPnd)) {
         fprintf(stdout, "    -- !! Error creating new AID !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(SelectApplication(nfcPnd, aidToCreateList1, APPLICATION_AID_LENGTH)) {
+        fprintf(stdout, "    -- !! Error selecting newly created AID !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+                         MASTER_KEY_INDEX, ZERO_KEY)) {
+        fprintf(stdout, "    -- !! Error authenticating with AES!!\n");
+        return EXIT_FAILURE;
+    }
+    else if(DeleteApplication(nfcPnd, aidToCreateList1)) {
+        fprintf(stdout, "    -- !! Error deleting newly created AID !!\n");
         return EXIT_FAILURE;
     }
     else if(GetApplicationIds(nfcPnd)) {
         fprintf(stdout, "    -- !! Error listing existing AIDs !!\n");
         return EXIT_FAILURE;
     }
-    else if(SelectApplication(nfcPnd, aidToCreateList[0], APPLICATION_AID_LENGTH)) {
-        fprintf(stdout, "    -- !! Error selecting newly created AID !!\n");
-        return EXIT_FAILURE;
-    }
-    else if(DeleteApplication(nfcPnd, aidToCreateList[0])) {
-        fprintf(stdout, "    -- !! Error deleting newly created AID !!\n");
-        return EXIT_FAILURE;
-    }
     else if(SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
         fprintf(stdout, "    -- !! Error selecting PICC app !!\n");
         return EXIT_FAILURE;
     }
-    else if(DeleteApplication(nfcPnd, aidToCreateList[1])) {
+    else if(Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+                         MASTER_KEY_INDEX, ZERO_KEY)) {
+        fprintf(stdout, "    -- !! Error authenticating with AES!!\n");
+        return EXIT_FAILURE;
+    }
+    else if(DeleteApplication(nfcPnd, aidToCreateList2)) {
         fprintf(stdout, "    -- !! Error deleting second new AID !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(GetApplicationIds(nfcPnd)) {
+        fprintf(stdout, "    -- !! Error listing existing AIDs !!\n");
         return EXIT_FAILURE;
     }
     else if(DeleteApplication(nfcPnd, MASTER_APPLICATION_AID)) {

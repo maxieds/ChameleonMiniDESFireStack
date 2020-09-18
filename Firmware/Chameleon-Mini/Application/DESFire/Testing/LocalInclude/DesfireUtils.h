@@ -616,7 +616,7 @@ static inline int CreateApplication(nfc_device *nfcConnDev, uint8_t *aidBytes,
     CMD[1] = 0xca;
     memset(CMD + 2, 0x00, 9);
     CMD[4] = 5;
-    memset(CMD + 5, aidBytes, 3);
+    memcpy(CMD + 5, aidBytes, 3);
     CMD[8] = keySettings;
     CMD[9] = numKeys;
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -648,10 +648,10 @@ static inline int DeleteApplication(nfc_device *nfcConnDev, uint8_t *aidBytes) {
     }
     uint8_t CMD[9];
     CMD[0] = 0x90;
-    CMD[1] = 0xca;
+    CMD[1] = 0xda;
     memset(CMD + 2, 0x00, 7);
-    CMD[4] = 5;
-    memset(CMD + 5, aidBytes, 3);
+    CMD[4] = 3;
+    memcpy(CMD + 5, aidBytes, 3);
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> DeleteApplication command:\n");
         fprintf(stdout, "    -> ");

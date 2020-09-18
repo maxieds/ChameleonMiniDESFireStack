@@ -784,7 +784,7 @@ uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate AID: AID of all zeros cannot be deleted */
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     if ((Aid[0] | Aid[1] | Aid[2]) == 0x00) {
-        Status = STATUS_PARAMETER_ERROR;
+        Status = STATUS_PERMISSION_DENIED;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate authentication: a master key is always required */
@@ -803,8 +803,10 @@ uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
             return DESFIRE_STATUS_RESPONSE_SIZE;
         }
         PiccKeySettings = GetPiccKeySettings();
+        const char *logMsg = PSTR("PICC key settings -- %02x");
+        DEBUG_PRINT_P(logMsg, PiccKeySettings);
         /* Check the PICC key settings whether it is OK to delete using app master key */
-        if (!(PiccKeySettings & DESFIRE_FREE_CREATE_DELETE)) {
+        if ((PiccKeySettings & DESFIRE_FREE_CREATE_DELETE) == 0x00) {
             Status = STATUS_AUTHENTICATION_ERROR;
             return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
         }
@@ -817,6 +819,7 @@ uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount) {
+    InvalidateAuthState(0x00);
     // handle a special case with EV1: 
     // https://stackoverflow.com/questions/38232695/m4m-mifare-desfire-ev1-which-mifare-aid-needs-to-be-added-to-nfc-routing-table
     if(ByteCount == 8) {
@@ -833,7 +836,6 @@ uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    InvalidateAuthState(0x00);
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     /* Done */
     Buffer[0] = SelectApp(Aid);
