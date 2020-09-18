@@ -74,6 +74,7 @@ Additionally, the following weblinks and posts clarify some common reference poi
 * See note on [CBC ciphering for AES/3DES](https://stackoverflow.com/q/20943305/10661959). Note that 
   currently the AES is in ECB mode (per the Arduino crypto libs). 
 * Need to handle encrypted transfer modes invoked after authenticate?
+* Need to replace the DES/3DES encryption library for something faster?
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 
