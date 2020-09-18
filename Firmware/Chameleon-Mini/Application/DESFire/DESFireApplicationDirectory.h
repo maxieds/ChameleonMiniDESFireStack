@@ -166,9 +166,10 @@ SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot);
 void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value);
 
 /* Application key management */
+BYTE KeyIdValid(uint8_t AppSlot, uint8_t KeyId);
+BYTE ReadMaxKeyCount(uint8_t AppSlot);
 BYTE ReadKeyCount(uint8_t AppSlot);
 void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount);
-BYTE KeyIdValid(uint8_t AppSlot, uint8_t KeyId);
 BYTE ReadKeySettings(uint8_t AppSlot, uint8_t KeyId);
 void WriteKeySettings(uint8_t AppSlot, uint8_t KeyId, BYTE Value);
 BYTE ReadKeyVersion(uint8_t AppSlot, uint8_t KeyId);

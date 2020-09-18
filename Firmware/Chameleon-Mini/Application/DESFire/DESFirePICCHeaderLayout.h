@@ -175,6 +175,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE  Slot;
     BYTE  KeyCount;
+    BYTE  MaxKeyCount;
     BYTE  FileCount;
     BYTE  CryptoCommStandard;
     SIZET KeySettings;            /* Block offset in EEPROM */
@@ -209,6 +210,7 @@ extern SIZET CardCapacityBlocks;
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* AppData keeping track how many keys each app has */
     DESFIRE_APP_KEY_COUNT,
+    DESFIRE_APP_MAX_KEY_COUNT,
     /* AppData active file count */
     DESFIRE_APP_FILE_COUNT,
     /* AppData keep track of default crypto comm standard */

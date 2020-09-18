@@ -717,7 +717,7 @@ uint16_t DesfireCmdGetKeyVersion(uint8_t *Buffer, uint16_t ByteCount) {
  * DESFire application management commands
  */
 
-uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) { // TODO: Check 
+uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) {
     /* Validate command length */
     if (ByteCount != 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
@@ -743,23 +743,23 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount) { // TODO
 
 uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
-    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t KeyCount;
     uint8_t KeySettings;
-    /* Require the PICC app to be selected */
-    if (!IsPiccAppSelected()) {
-        Status = STATUS_PERMISSION_DENIED;
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
     /* Validate command length */
     if (ByteCount != 1 + 3 + 1 + 1) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+    /* Require the PICC app to be selected */
+    if (!IsPiccAppSelected()) {
+        Status = STATUS_PERMISSION_DENIED;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     KeySettings = Buffer[4];
     KeyCount = Buffer[5];
     /* Validate number of keys: less than max (one for the Master Key) */
-    if (KeyCount > DESFIRE_MAX_KEYS || KeyCount == 0) {
+    if(KeyCount > DESFIRE_MAX_KEYS || KeyCount == 0) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -773,12 +773,8 @@ uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
-
-
-// TODO: Working from here ... 
 uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
-    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t PiccKeySettings;
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -786,19 +782,26 @@ uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate AID: AID of all zeros cannot be deleted */
+    const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     if ((Aid[0] | Aid[1] | Aid[2]) == 0x00) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate authentication: a master key is always required */
-    if (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+    if (!Authenticated || AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         Status = STATUS_AUTHENTICATION_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Validate authentication: deletion with PICC master key is always OK, 
-       but if another app is selected... */
+       but if another app is selected, have more permissions checking to do */
     if (!IsPiccAppSelected()) {
-        /* TODO: verify the selected application is the one being deleted */
+        /* Verify the selected application is the one being deleted */
+        DESFireAidType selectedAID;
+        memcpy(selectedAID, AppDir.AppIds[SelectedApp.Slot], 3);
+        if(memcmp(selectedAID, Aid, 3)) {
+            Buffer[0] = STATUS_PERMISSION_DENIED;
+            return DESFIRE_STATUS_RESPONSE_SIZE;
+        }
         PiccKeySettings = GetPiccKeySettings();
         /* Check the PICC key settings whether it is OK to delete using app master key */
         if (!(PiccKeySettings & DESFIRE_FREE_CREATE_DELETE)) {
@@ -806,7 +809,7 @@ uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount) {
             return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
         }
         SelectPiccApp();
-        AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
+        InvalidateAuthState(0x00);
     }
     /* Done */
     Status = DeleteApp(Aid);

@@ -13,12 +13,12 @@
 | CMD_SET_CONFIGURATION |  0x5C | | :x: | |
 | CMD_CHANGE_KEY |  0xC4 | | :ballot_box_with_check: | |
 | CMD_GET_KEY_VERSION | 0x64 | | :ballot_box_with_check: | |
-| CMD_CREATE_APPLICATION |  0xCA | | | |
-| CMD_DELETE_APPLICATION |  0xDA | | | |
-| CMD_GET_APPLICATION_IDS | 0x6A | | | |
-| CMD_FREE_MEMORY | 0x6E | | | |
-| CMD_GET_DF_NAMES | 0x6D | | | |
-| CMD_GET_KEY_SETTINGS | 0x45 | | | |
+| CMD_CREATE_APPLICATION |  0xCA | | :ballot_box_with_check: | |
+| CMD_DELETE_APPLICATION |  0xDA | | :ballot_box_with_check: | |
+| CMD_GET_APPLICATION_IDS | 0x6A | | :ballot_box_with_check: | |
+| CMD_FREE_MEMORY | 0x6E | | :ballot_box_with_check: | |
+| CMD_GET_DF_NAMES | 0x6D | | :x: | *Need docs for what this command does!* |
+| CMD_GET_KEY_SETTINGS | 0x45 | | :ballot_box_with_check: | |
 | CMD_SELECT_APPLICATION |  0x5A | | :ballot_box_with_check: | |
 | CMD_FORMAT_PICC |  0xFC | | :ballot_box_with_check: | |
 | CMD_GET_VERSION | 0x60 | | :ballot_box_with_check: | |

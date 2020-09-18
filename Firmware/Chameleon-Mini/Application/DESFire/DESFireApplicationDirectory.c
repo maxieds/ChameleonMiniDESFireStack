@@ -144,6 +144,8 @@ SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
      switch(propId) {
           case DESFIRE_APP_KEY_COUNT:
                return appCache.KeyCount;
+          case DESFIRE_APP_MAX_KEY_COUNT:
+               return appCache.MaxKeyCount;
           case DESFIRE_APP_FILE_COUNT:
                return appCache.FileCount;
           case DESFIRE_APP_CRYPTO_COMM_STANDARD:
@@ -219,19 +221,23 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
  * Application key management
  */
 
+BYTE KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
+     if(KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot) || KeyId > ReadKeyCount(AppSlot)) {
+          return 0x00;
+     }
+     return 0x01;
+}
+
+BYTE ReadMaxKeyCount(uint8_t AppSlot) {
+    return (BYTE) GetAppProperty(DESFIRE_APP_MAX_KEY_COUNT, AppSlot);
+}
+
 BYTE ReadKeyCount(uint8_t AppSlot) {
      return (BYTE) GetAppProperty(DESFIRE_APP_KEY_COUNT, AppSlot);
 }
 
 void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount) {
      SetAppProperty(DESFIRE_APP_KEY_COUNT, AppSlot, (SIZET) KeyCount);
-}
-
-BYTE KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
-     if(KeyId >= DESFIRE_MAX_KEYS || KeyId > ReadKeyCount(AppSlot)) {
-          return 0x00;
-     }
-     return 0x01;
 }
 
 BYTE ReadKeySettings(uint8_t AppSlot, uint8_t KeyId) {
@@ -536,6 +542,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     SelectedAppCacheType appCacheData = { 0 };
     appCacheData.Slot = Slot;
     appCacheData.KeyCount = 1; // Master Key
+    appCacheData.MaxKeyCount = KeyCount;
     appCacheData.FileCount = 0;
     appCacheData.CryptoCommStandard = DESFIRE_DEFAULT_COMMS_STANDARD;
     appCacheData.KeySettings = AllocateBlocks(APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE);
@@ -644,10 +651,10 @@ uint16_t DeleteApp(const DESFireAidType Aid) {
     }
     /* Deactivate the app */
     for(int aidx = 0; aidx < DESFIRE_AID_SIZE; aidx++) {
-         AppDir.AppIds[Slot][aidx] = Aid[aidx];
+         AppDir.AppIds[Slot][aidx] = 0x00;
     }
     if(Slot < AppDir.FirstFreeSlot) {
-        AppDir.FirstFreeSlot = Slot;
+        AppDir.FirstFreeSlot = MIN(Slot, AppDir.FirstFreeSlot);
     }
     SynchronizeAppDir();
     if(Slot == SelectedApp.Slot) {
@@ -671,7 +678,7 @@ TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer) {
              AppDir.AppIds[EntryIndex][2]) == 0)
             continue;
         /* If it won't fit -- remember and return */
-        if (Status.BytesProcessed >= DESFIRE_AID_SIZE * 19) { // TODO ??? 19 / Magic Number ???
+        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE) { // TODO ??? 19 / Magic Number ???
             TransferState.GetApplicationIds.NextIndex = EntryIndex;
             Status.IsComplete = false;
             return Status;

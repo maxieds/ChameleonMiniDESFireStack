@@ -67,6 +67,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
      }
      Authenticated = 0x00;
      AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
+     AuthenticatedWithPICCMasterKey = 0x00;
      CryptoAuthMethod = CRYPTO_TYPE_ANY;
      ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
