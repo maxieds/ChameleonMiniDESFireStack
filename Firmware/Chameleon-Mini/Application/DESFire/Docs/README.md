@@ -36,18 +36,9 @@ Additionally, the following weblinks and posts clarify some common reference poi
 
 # TODO
 
-## Short list 
+## Short list of developer notes
 
-* Add in logging and debugging print statements **everywhere** 
 * grep through the "TODO" marked parts in the source files 
-* Read though the old DESFire EV0 datasheet to make sure are correctly handling all of the SW response code cases 
-* If ``LocalTestingMode != 0``, then need to implement a solution so can test with predictable 
-  (non-randomized) crypto vectors. In particular, ``RndA`` (random number associated with the authenticate 
-  session) and the value of the ``SessionIV`` crypto salt should be fixed to facilitate debugging.
-* **All** the crypto needs to be re-routed through the well tested AVR board crypto library. 
-  This is going to require writing wrappers around their excellent existing GPL routines. 
-  Then can consult with the LibFreeFare implementation for DESFire tags to glue this together with the 
-  Send / Receive protocol exchanges with MAC/CRC checksums going on.
 * Need to document the reasons for the obscured file system layout that has to 
   put in-use accounting arrays into EEPROM and fetch them every time a request is made: 
   The ATXMega128 avr chip (even, for upgraded RevG boards) has severely limited ``.data`` segment 
@@ -56,29 +47,11 @@ Additionally, the following weblinks and posts clarify some common reference poi
   And with a moderately small number of requests for small-ish files going through the tag at 
   any given time, this solution is the only way to maintain all the runtime data for actively selected 
   applications in a somewhat state-of-art pushing standard that is the ever spec-wise unknown DESFire stack. 
-* See what data segment space can be saved by setting ``__attribute__((...))`` packed on big union 
-  structures like ``TransferStateType`` versus aligned at one for the component structs?
-* May need to allocate the ``SelectedAppCacheType`` structures on an as-needed basis.
-* Where does the default ``CommMode`` get invoked? For all transfers, or just 
-  for sensitive file and key data transfers? 
-* Need to store info about key type and byte size? 
-* Need a general function for transferring data based on the ``ActiveCommMode``.
 * Try to add extended support for the ``CLONE`` command when DESFire emulation is on the 
   active slot.
 * See all the example functionality in [libfreefare](https://github.com/nfc-tools/libfreefare/tree/master/examples).
-* Currently always factory resets the device when turning on the device, or choosing a new config ... 
 * **BIG Q:** Does calling ``MemoryStore()`` to frequently cause problems? This should be rare-ish when 
   data on the tag changes?
-* Check to figure out where possibly encrypted transfers (AES CMAC) come into play after the initial 
-  authentication procedure?
-* See note on [CBC ciphering for AES/3DES](https://stackoverflow.com/q/20943305/10661959). Note that 
-  currently the AES is in ECB mode (per the Arduino crypto libs). 
-* Need to handle encrypted transfer modes invoked after authenticate (term: SAM?)?
-* Need to replace the DES/3DES encryption library for something faster?
-* When setting the key data via a set command, need to initialize the key addresses, update the 
-  key count in the AID, and other accounting details ...
-* Currently, all of the file transfers (read/write) are done in plaintext ...
-* The ``ReadData`` command ``offset`` input has no action at this point (TODO later) ...
 
 ## Feature requests (for debugging) 
 * Have an action where a (long) push of a button allows for 
