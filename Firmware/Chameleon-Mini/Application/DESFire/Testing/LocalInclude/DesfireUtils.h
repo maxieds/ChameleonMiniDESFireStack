@@ -36,6 +36,16 @@ static inline void InvalidateAuthState(void) {
     AUTHENTICATED_PROTO = 0;
 }
 
+static inline void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value) {
+    if(byteBuffer == NULL) {
+        return;
+    }
+    byteBuffer[0] = (uint8_t) (int32Value & 0x000000ff);
+    byteBuffer[1] = (uint8_t) ((int32Value >> 8) & 0x000000ff);
+    byteBuffer[2] = (uint8_t) ((int32Value >> 16) & 0x000000ff);
+    byteBuffer[3] = (uint8_t) ((int32Value >> 24) & 0x000000ff);
+}
+
 static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
     
     if(nfcConnDev == NULL || keyData == NULL) {
@@ -719,8 +729,8 @@ static inline int GetDFNamesCommand(nfc_device *nfcConnDev) {
 }
 
 static inline int CreateStandardDataFile(nfc_device *nfcConnDev, uint8_t fileNo, uint8_t commSettings, 
-                                         uint8_t *accessRights, uint8_t *fileSize) {
-    if(nfcConnDev == NULL || accessRights == NULL || fileSize == NULL) {
+                                         uint16_t accessRights, uint16_t fileSize) {
+    if(nfcConnDev == NULL) {
         return INVALID_PARAMS_ERROR;
     }
     size_t cmdBufSize = 6 + 1 + 1 + 2 + 3;
@@ -731,8 +741,10 @@ static inline int CreateStandardDataFile(nfc_device *nfcConnDev, uint8_t fileNo,
     CMD[4] = cmdBufSize - 6;
     CMD[5] = fileNo;
     CMD[6] = commSettings;
-    memcpy(CMD + 7, accessRights, 2);
-    memcpy(CMD + 9, fileSize, 3);
+    CMD[7] = (uint8_t) (accessRights & 0x00ff);
+    CMD[8] = (uint8_t) ((accessRights >> 8) & 0x00ff);
+    CMD[9] = (uint8_t) (fileSize & 0x00ff);
+    CMD[10] = (uint8_t) ((fileSize >> 8) & 0x00ff);
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> CreateStdDataFile command:\n");
         fprintf(stdout, "    -> ");
@@ -756,39 +768,177 @@ static inline int CreateStandardDataFile(nfc_device *nfcConnDev, uint8_t fileNo,
         }   
         return EXIT_FAILURE;
     }   
-
 }
 
-static inline int CreateBackupDataFile(nfc_device *nfcConnDev) {
-
+static inline int CreateBackupDataFile(nfc_device *nfcConnDev, uint8_t fileNo, uint8_t commSettings,
+                                         uint16_t accessRights, uint16_t fileSize) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    size_t cmdBufSize = 6 + 1 + 1 + 2 + 3;
+    uint8_t CMD[cmdBufSize];
+    CMD[0] = 0x90;
+    CMD[1] = 0xcb;
+    memset(CMD + 2, 0x00, cmdBufSize - 2);
+    CMD[4] = cmdBufSize - 6;
+    CMD[5] = fileNo;
+    CMD[6] = commSettings;
+    CMD[7] = (uint8_t) (accessRights & 0x00ff);
+    CMD[8] = (uint8_t) ((accessRights >> 8) & 0x00ff);
+    CMD[9] = (uint8_t) (fileSize & 0x00ff);
+    CMD[10] = (uint8_t) ((fileSize >> 8) & 0x00ff);
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> CreateBackupDataFile command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, cmdBufSize);
+    }   
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, cmdBufSize, rxDataStorage);
+    if(rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    <- ");
+            print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
+        }   
+        return EXIT_SUCCESS;
+    }    
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+            fprintf(stdout, "\n");
+        }   
+        return EXIT_FAILURE;
+    }
 }
 
-static inline int CreateValueFile(nfc_device *nfcConnDev) {
-
+static inline int CreateValueFile(nfc_device *nfcConnDev, uint8_t fileNo, uint8_t CommSettings, 
+                                  uint16_t AccessRights, uint32_t LowerLimit, uint32_t UpperLimit, 
+                                  uint32_t Value, uint8_t LimitedCreditEnabled) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    size_t cmdBufSize = 6 + 1 + 1 + 2 + 4 + 4 + 4 + 1;
+    uint8_t CMD[cmdBufSize];
+    CMD[0] = 0x90;
+    CMD[1] = 0xcc;
+    memset(CMD + 2, 0x00, cmdBufSize - 2);
+    CMD[4] = cmdBufSize - 6;
+    CMD[5] = fileNo;
+    CMD[6] = CommSettings;
+    CMD[7] = (uint8_t) (AccessRights & 0x00ff);
+    CMD[8] = (uint8_t) ((AccessRights >> 8) & 0x00ff);
+    Int32ToByteBuffer(CMD + 9, LowerLimit);
+    Int32ToByteBuffer(CMD + 13, UpperLimit);
+    Int32ToByteBuffer(CMD + 17, Value);
+    CMD[22] = LimitedCreditEnabled;
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> CreateValueFile command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, cmdBufSize);
+    }   
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, cmdBufSize, rxDataStorage);
+    if(rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    <- ");
+            print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
+        }   
+        return EXIT_SUCCESS;
+    }    
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+            fprintf(stdout, "\n");
+        }   
+        return EXIT_FAILURE;
+    }
 }
 
 static inline int CreateLinearRecordFile(nfc_device *nfcConnDev) {
-
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- !! CreateLinearRecordFile command NOT IMPLEMENTED !!\n");
+    }
+    return EXIT_SUCCESS;
 }
 
 static inline int CreateCyclicRecordFile(nfc_device *nfcConnDev) {
-
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- !! CreateCyclicRecordFile command NOT IMPLEMENTED !!\n");
+    }
+    return EXIT_SUCCESS;
 }
 
-static inline int DeleteFile(nfc_device *nfcConnDev) {
-
+static inline int DeleteFile(nfc_device *nfcConnDev, uint8_t fileNo) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0xdf, 0x00, 0x00, 0x01, fileNo, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> DeleteFile command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");    
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else if(!rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
+    return EXIT_SUCCESS;
 }
 
 static inline int GetFileIds(nfc_device *nfcConnDev) {
-
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0x6f, 0x00, 0x00, 0x00, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> GetFileIds command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else if(!rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
+    return EXIT_SUCCESS;
 }
 
 static inline int GetFileSettings(nfc_device *nfcConnDev) {
-
+    return EXIT_FAILURE;
 }
 
 static inline int ChangeFileSettings(nfc_device *nfcConnDev) {
-
+    return EXIT_FAILURE;
 }
 
 #endif

@@ -50,12 +50,14 @@ versions of the code at free will.
 
 /* File types */
 
-// TODO: See pages 48-49 of the datasheet for more details ... 
+// NOTE: See pages 48-49 of the datasheet for more details:
 #define DESFIRE_FILE_STANDARD_DATA      0
 #define DESFIRE_FILE_BACKUP_DATA        1
 #define DESFIRE_FILE_VALUE_DATA         2
 #define DESFIRE_FILE_LINEAR_RECORDS     3
 #define DESFIRE_FILE_CIRCULAR_RECORDS   4
+
+#define DESFIRE_FILE_NOFILE_INDEX       (0xff)
 
 /** Data about an application's file is currently kept in this structure.
  * The location of these structures is defined by the file index.
@@ -63,6 +65,7 @@ versions of the code at free will.
 typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t FileType;
     uint16_t FileSize;
+    uint16_t FileDataAddress;
     union DESFIRE_FIRMWARE_ALIGNAT {
         struct DESFIRE_FIRMWARE_ALIGNAT {
             uint16_t FileSize;
@@ -114,9 +117,7 @@ uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t Acces
 uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
                         int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled);
-// TODO: CreateLinearRecordFile(...); 
-// TODO: CreateCyclicRecordFile(...);
-uint8_t DeleteFile(uint8_t FileNum);
+uint8_t DeleteFile(uint8_t FileIndex);
 
 /* Transactions */
 void StartTransaction(void);
@@ -143,6 +144,8 @@ uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 #define VALIDATE_ACCESS_READWRITE          ((uint16_t) (0x000f))
 #define VALIDATE_ACCESS_WRITE              ((uint16_t) (0x000f << 4))
 #define VALIDATE_ACCESS_READ               ((uint16_t) (0x000f << 8))
+#define VALIDATE_ACCESS_CHANGE             ((uint16_t) (0x000f << 12))
+
 #define VALIDATED_ACCESS_DENIED            0
 #define VALIDATED_ACCESS_GRANTED           1
 #define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
@@ -168,7 +171,7 @@ const char * GetFileAccessPermissionsDesc(uint16_t fileAccessRights);
  * from the table on page 21 of the NXP application note:
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
-uint8_t CreateFileCommonValidation(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights);
+uint8_t CreateFileCommonValidation(uint8_t FileNum);
 uint8_t ValidateAuthentication(uint16_t AccessRights, uint16_t CheckMask);
 
 #endif

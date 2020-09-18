@@ -592,7 +592,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     else {
          BYTE fileNumbersArrayMapData[DESFIRE_MAX_FILES];
-         memset(fileNumbersArrayMapData, 0x00, DESFIRE_MAX_FILES);
+         memset(fileNumbersArrayMapData, DESFIRE_FILE_NOFILE_INDEX, DESFIRE_MAX_FILES);
          WriteBlockBytes(fileNumbersArrayMapData, appCacheData.FileNumbersArrayMap, DESFIRE_MAX_FILES);
     }
     appCacheData.FileCommSettings = AllocateBlocks(APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE);
