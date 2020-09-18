@@ -933,7 +933,7 @@ static inline int GetFileIds(nfc_device *nfcConnDev) {
     return EXIT_SUCCESS;
 }
 
-static inline int GetFileSettings(nfc_device *nfcConnDev) {
+static inline int GetFileSettings(nfc_device *nfcConnDev, uint8_t fileNo) {
     return EXIT_FAILURE;
 }
 

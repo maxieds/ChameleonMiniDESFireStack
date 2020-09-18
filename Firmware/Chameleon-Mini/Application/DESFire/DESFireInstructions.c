@@ -1256,10 +1256,13 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    KeyId = Buffer[1];
     /* Validate number of keys: less than max */
+    KeyId = Buffer[1];
     if(!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
+        //Buffer[1] = ReadMaxKeyCount(SelectedApp.Slot);
+        //Buffer[2] = SelectedApp.Slot;
+        //Buffer[3] = SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     } 
     /* Make sure that this key is AES, and figure out its byte size */

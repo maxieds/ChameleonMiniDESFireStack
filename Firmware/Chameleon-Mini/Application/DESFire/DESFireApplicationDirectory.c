@@ -223,19 +223,19 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
  * Application key management
  */
 
-BYTE KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
-     if(KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot) || KeyId > ReadKeyCount(AppSlot)) {
-          return 0x00;
+bool KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
+     if(KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot)) {
+          return false;
      }
-     return 0x01;
+     return true;
 }
 
 BYTE ReadMaxKeyCount(uint8_t AppSlot) {
-    return (BYTE) GetAppProperty(DESFIRE_APP_MAX_KEY_COUNT, AppSlot);
+     return GetAppProperty(DESFIRE_APP_MAX_KEY_COUNT, AppSlot);
 }
 
 BYTE ReadKeyCount(uint8_t AppSlot) {
-     return (BYTE) GetAppProperty(DESFIRE_APP_KEY_COUNT, AppSlot);
+     return GetAppProperty(DESFIRE_APP_KEY_COUNT, AppSlot);
 }
 
 void WriteKeyCount(uint8_t AppSlot, BYTE KeyCount) {
@@ -534,11 +534,13 @@ bool IsPiccAppSelected(void) {
 uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettings) {
     uint8_t Slot;
     uint8_t FreeSlot;
-    
+    bool initMasterApp = false;
+
     /* Verify this AID has not been allocated yet */
-    if(LookupAppSlot(Aid) == 0 && (Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00) && 
+    if((Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00) && 
        AppDir.FirstFreeSlot == 0) {
         Slot = 0;
+        initMasterApp = true;
     }
     else if((Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00)) {
         return STATUS_DUPLICATE_ERROR;
@@ -602,7 +604,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     else {
          BYTE fileCommSettingsData[DESFIRE_MAX_FILES];
          memset(fileCommSettingsData, DESFIRE_DEFAULT_COMMS_STANDARD, DESFIRE_MAX_FILES);
-         WriteBlockBytes(appCacheData.FileCommSettings, fileCommSettingsData, DESFIRE_MAX_FILES);
+         WriteBlockBytes(fileCommSettingsData, appCacheData.FileCommSettings, DESFIRE_MAX_FILES);
     }
     appCacheData.FileAccessRights = AllocateBlocks(APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE);
     if(appCacheData.FileAccessRights == 0) {
@@ -661,6 +663,9 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     WriteBlockBytes(&appCacheData, appCacheDataBlockId, sizeof(SelectedAppCacheType));
     // Note: Creating the block DOES NOT mean we have selected it: 
     //SelectAppBySlot(Slot);
+    if(initMasterApp) {
+        memcpy(&SelectedApp, &appCacheData, sizeof(SelectedAppCacheType));
+    }
 
     /* Update the directory */
     for(int aidx = 0; aidx < DESFIRE_AID_SIZE; aidx++) {

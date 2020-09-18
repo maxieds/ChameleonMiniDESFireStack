@@ -183,9 +183,9 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     SIZET FileNumbersArrayMap;    /* Block offset in EEPROM */ 
     SIZET FileCommSettings;       /* Block offset in EEPROM */
     SIZET FileAccessRights;       /* Block offset in EEPROM */
+    SIZET FilesAddress;           /* Block offset in EEPROM */
     SIZET KeyVersionsArray;       /* Block offset in EEPROM */
     SIZET KeyTypesArray;          /* Block offset in EEPROM */
-    SIZET FilesAddress;           /* Block offset in EEPROM */
     SIZET KeyAddress;             /* Block offset in EEPROM */
     UINT  DirtyFlags;
 } SelectedAppCacheType;

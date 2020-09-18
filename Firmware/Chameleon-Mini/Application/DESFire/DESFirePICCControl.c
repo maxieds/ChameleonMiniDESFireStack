@@ -282,7 +282,7 @@ void FormatPicc(void) {
 }
 
 void CreatePiccApp(void) { 
-    CryptoKeyBufferType Key; // TODO: Should default to some AES-based protocol
+    CryptoKeyBufferType Key; 
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
     BYTE statusCode = CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
     if(statusCode != STATUS_OPERATION_OK) {

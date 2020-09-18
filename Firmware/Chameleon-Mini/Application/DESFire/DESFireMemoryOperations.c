@@ -43,10 +43,13 @@ versions of the code at free will.
 volatile char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
 char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
+char callingFunc[32];
+int callingLine = 0;
+
 void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
-        const char *loggingErrorMsg = PSTR("ReadBlockBytes: Block Address to large -- %d");
-        DEBUG_PRINT_P(loggingErrorMsg, StartBlock);
+        const char *loggingErrorMsg = PSTR("RBB: BA to large -- %d -- %s @ %d");
+        DEBUG_PRINT_P(loggingErrorMsg, StartBlock, callingFunc, callingLine);
         return;
     }
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
@@ -54,8 +57,8 @@ void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
 
 void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
-        const char *loggingErrorMsg = PSTR("WriteBlockBytes: Block Address to large -- %d");
-        DEBUG_PRINT_P(loggingErrorMsg, StartBlock);
+        const char *loggingErrorMsg = PSTR("WBB: BA to large -- %d -- %s @ %d");
+        DEBUG_PRINT_P(loggingErrorMsg, StartBlock, callingFunc, callingLine);
         return;
     }
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);

@@ -21,6 +21,10 @@ int main(int argc, char **argv) {
     if(SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
         return EXIT_FAILURE;
     }
+    else if(GetApplicationIds(nfcPnd)) {
+        fprintf(stdout, "    -- !! Error listing active AID numbers !!\n");
+        return EXIT_FAILURE;
+    }
 
     // Start ISO authentication (default key, blank setting of all zeros):
     if(Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
