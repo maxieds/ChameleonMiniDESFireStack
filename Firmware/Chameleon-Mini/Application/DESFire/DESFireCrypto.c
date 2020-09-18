@@ -56,7 +56,7 @@ DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
 
 uint8_t Authenticated = 0x00;
-uint8_t AuthenticatedWithKey = 0x00;
+uint8_t AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
 uint8_t AuthenticatedWithPICCMasterKey = 0x00;
 uint8_t CryptoAuthMethod = CRYPTO_TYPE_ANY;
 uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
@@ -65,10 +65,14 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
      if(!keepPICCAuthData) {
           AuthenticatedWithPICCMasterKey = DESFIRE_NOT_AUTHENTICATED;
      }
-     Authenticated = DESFIRE_NOT_AUTHENTICATED;
+     Authenticated = 0x00;
      AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
      CryptoAuthMethod = CRYPTO_TYPE_ANY;
      ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
+}
+
+bool IsAuthenticated(void) {
+    return Authenticated != 0x00;
 }
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
@@ -179,11 +183,11 @@ uint8_t DesfireAESCryptoReset(DesfireAESCryptoContext *cryptoCtx) {
      return DesfireAESCryptoInit(priorKeyData, CRYPTO_AES_KEY_SIZE, cryptoCtx);
 }
 
-void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf) {
-     aes128EncryptBlock(cryptoCtx, plainSrcBuf, encDestBuf); 
+void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encDestBuf, uint8_t *plainSrcBuf) {
+     aes128EncryptBlock(cryptoCtx, encDestBuf, plainSrcBuf); 
 }
 
-void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf) {
+void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainDestBuf, uint8_t *encSrcBuf) {
      aes128DecryptBlock(cryptoCtx, plainDestBuf, encSrcBuf); 
 }
 
@@ -197,17 +201,8 @@ BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainS
           return ctxResetStatus;
      }
      for(int blk = 0; blk < bufBlocks; blk++) {
-          if(padLastBlock && blk + 1 == bufBlocks) {
-               uint8_t lastBlockBuf[CRYPTO_AES_BLOCK_SIZE];
-               memset(lastBlockBuf, 0x00, CRYPTO_AES_BLOCK_SIZE);
-               memcpy(lastBlockBuf, plainSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, lastBlockSize);
-               DesfireAESEncryptBlock(cryptoCtx, lastBlockBuf, 
-                                      encDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
-          }
-          else {
-               DesfireAESEncryptBlock(cryptoCtx, plainSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
-                                      encDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
-          }
+           DesfireAESEncryptBlock(cryptoCtx, encDestBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
+                                  plainSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE);
      }
      return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
 }
@@ -221,8 +216,8 @@ BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrc
           return ctxResetStatus;
      }
      for(int blk = 0; blk < bufBlocks; blk++) {
-          DesfireAESDecryptBlock(cryptoCtx, encSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
-                                 plainDestBuf + blk * CRYPTO_AES_BLOCK_SIZE);
+          DesfireAESDecryptBlock(cryptoCtx, plainDestBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
+                                 encSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE);
      }
      return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
 }

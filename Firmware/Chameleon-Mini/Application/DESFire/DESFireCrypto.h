@@ -113,6 +113,7 @@ extern uint8_t ActiveCommMode;
  * 3) A failed authentication;
  */
 void InvalidateAuthState(BYTE keepPICCAuthData);
+bool IsAuthenticated(void);
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);

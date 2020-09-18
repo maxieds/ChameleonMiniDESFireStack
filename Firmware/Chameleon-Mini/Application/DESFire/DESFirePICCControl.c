@@ -284,12 +284,14 @@ void FormatPicc(void) {
 void CreatePiccApp(void) { 
     CryptoKeyBufferType Key; // TODO: Should default to some AES-based protocol
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
-    CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
+    BYTE statusCode = CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
+    if(statusCode != STATUS_OPERATION_OK) {
+        const char *loggingMsg = PSTR("CreateApp returned -- %d\n");
+        DEBUG_PRINT_P(loggingMsg, statusCode);
+    }
     SelectPiccApp();
-    memset(&Key, 0, sizeof(CryptoKeyBufferType));
+    memset(&Key, 0x00, sizeof(CryptoKeyBufferType));
     WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
-    const char *loggingDebugMsg = PSTR("Post-WAK: -- %d");
-    DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     SynchronizeAppDir();
 }
 

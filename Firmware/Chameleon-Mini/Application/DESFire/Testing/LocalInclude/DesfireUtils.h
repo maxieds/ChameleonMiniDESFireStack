@@ -141,7 +141,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
     // encrypt this 16 byte result, and send it forth to the PICC:
     uint8_t encryptedRndB[16], plainTextRndB[16], rotatedRndB[8];
     uint8_t rndA[8], challengeResponse[16], challengeResponseCipherText[16];
-    uint8_t IVBuf[16];
+    int8_t IVBuf[16];
     memcpy(encryptedRndB, rxDataStorage->rxDataBuf, 16);
     CryptoData_t aesCryptoData = { 0 };
     aesCryptoData.keySize = 16;
@@ -367,7 +367,7 @@ static inline int GetVersionCommand(nfc_device *nfcConnDev) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
         }
-        else {
+        else if(!rxDataStatus) {
             if(PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
             }
@@ -399,7 +399,7 @@ static inline int FormatPiccCommand(nfc_device *nfcConnDev) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -430,7 +430,7 @@ static inline int GetCardUIDCommand(nfc_device *nfcConnDev) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -462,7 +462,7 @@ static inline int SetConfigurationCommand(nfc_device *nfcConnDev) {
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
         fprintf(stdout, "    -- !! TODO: NOT IMPLEMENTED !!\n");
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -493,7 +493,7 @@ static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -504,17 +504,22 @@ static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
     return EXIT_SUCCESS;
 }
 
-static inline int ChangeKeyCommand(nfc_device *nfcConnDev, uint8_t keyNo, const uint8_t *keyData) {
+static inline int ChangeKeyCommand(nfc_device *nfcConnDev, uint8_t keyNo, const uint8_t *keyData, int keyType) {
     if(nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
     }
-    uint8_t CMD[31];
+    else if(keyType != DESFIRE_CRYPTO_AUTHTYPE_AES128 && keyType != DESFIRE_CRYPTO_AUTHTYPE_ISODES) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t keySize = keyType == DESFIRE_CRYPTO_AUTHTYPE_AES128 ? 16 : 24;
+    size_t cmdBufSize = 7 + keySize;
+    uint8_t CMD[cmdBufSize];
     CMD[0] = 0x90;
     CMD[1] = 0xc4;
-    memset(CMD + 2, 0x00, 29);
-    CMD[4] = 25;
+    memset(CMD + 2, 0x00, cmdBufSize - 2);
+    CMD[4] = keySize + 1;
     CMD[5] = keyNo;
-    memcpy(CMD + 6, keyData, 24);
+    memcpy(CMD + 6, keyData, keySize);
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> ChangeKey command:\n");
         fprintf(stdout, "    -> ");
@@ -528,7 +533,7 @@ static inline int ChangeKeyCommand(nfc_device *nfcConnDev, uint8_t keyNo, const 
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -559,7 +564,7 @@ static inline int GetKeySettingsCommand(nfc_device *nfcConnDev) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -570,16 +575,16 @@ static inline int GetKeySettingsCommand(nfc_device *nfcConnDev) {
     return EXIT_SUCCESS;
 }
 
-static inline int ChangeKeySettingsCommand(nfc_device *nfcConnDev, const uint8_t *keyData) {
-    if(nfcConnDev == NULL || keyData == NULL) {
+static inline int ChangeKeySettingsCommand(nfc_device *nfcConnDev, const uint8_t keySettingsData) {
+    if(nfcConnDev == NULL) {
         return INVALID_PARAMS_ERROR;
     }
-    uint8_t CMD[14];
+    uint8_t CMD[7];
     CMD[0] = 0x90;
     CMD[1] = 0x54;
-    memset(CMD + 2, 0x00, 12);
-    CMD[4] = 8;
-    memcpy(CMD + 5, keyData, 8);
+    memset(CMD + 2, 0x00, 5);
+    CMD[4] = 1;
+    CMD[5] = keySettingsData;
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> ChangeKeySettings command:\n");
         fprintf(stdout, "    -> ");
@@ -593,7 +598,7 @@ static inline int ChangeKeySettingsCommand(nfc_device *nfcConnDev, const uint8_t
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
@@ -624,7 +629,7 @@ static inline int GetKeyVersionCommand(nfc_device *nfcConnDev, uint8_t keyNo) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
     }
-    else {
+    else if(!rxDataStatus) {
         if(PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }

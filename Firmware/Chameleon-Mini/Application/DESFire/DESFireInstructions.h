@@ -44,16 +44,12 @@ versions of the code at free will.
 #define DESFIRE_VERSION2_BYTES_PROCESSED     (8)
 #define DESFIRE_VERSION3_BYTES_PROCESSED     (15)
 
-typedef union DESFIRE_FIRMWARE_PACKING {
-    struct DESFIRE_FIRMWARE_PACKING {
-        uint8_t KeyId;
-        uint8_t RndB[CRYPTO_MAX_BLOCK_SIZE] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
-    } Authenticate;
-    struct DESFIRE_FIRMWARE_PACKING {
-        uint8_t NextIndex;
-    } GetApplicationIds;
+typedef struct DESFIRE_FIRMWARE_PACKING {
+    uint8_t NextIndex;
     uint8_t CryptoMethodType;
     uint8_t ActiveCommMode;
+    uint8_t KeyId;
+    uint8_t RndB[CRYPTO_CHALLENGE_RESPONSE_BYTES] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
 } DesfireSavedCommandStateType;
 extern DesfireSavedCommandStateType DesfireCommandState;
 
@@ -155,8 +151,6 @@ uint16_t DesfireCmdSetConfiguration(uint8_t *Buffer, uint16_t ByteCount); // ?? 
 uint16_t DesfireCmdFreeMemory(uint8_t *Buffer, uint16_t ByteCount); // returns free memory on the tag
 
 /* Key management commands */
-uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetKeySettings(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdChangeKeySettings(uint8_t *Buffer, uint16_t ByteCount);
@@ -197,6 +191,8 @@ uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
 
 /* EV1/EV2 supported commands */
+uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount);

@@ -46,7 +46,7 @@ extern BYTE INIT[];
 
 #define DESFIRE_STATUS_RESPONSE_SIZE 1
 
-// TODO: See p. 72 of the datasheet for descriptions of these response codes ...
+// NOTE: See p. 72 of the datasheet for descriptions of these response codes: 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     STATUS_OPERATION_OK = 0x00,
     STATUS_NO_CHANGES = 0x0C,

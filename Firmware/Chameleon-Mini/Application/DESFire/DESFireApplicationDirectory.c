@@ -57,7 +57,6 @@ versions of the code at free will.
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
-    //MemoryStore();
 }
 
 BYTE PMKConfigurationChangeable(void) {
@@ -307,7 +306,7 @@ void WriteKeyStorageAddress(uint8_t AppSlot, SIZET Value) {
 }
 
 void ReadAppKey(uint8_t AppSlot, uint8_t KeyId, uint8_t *Key, SIZET KeySize) {
-     if(AppSlot >= DESFIRE_MAX_SLOTS || KeyId >= DESFIRE_MAX_KEYS) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || !KeyIdValid(AppSlot, KeyId)) {
           return;
      }
      else if(KeySize > CRYPTO_MAX_KEY_SIZE) {
@@ -326,8 +325,6 @@ void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZET KeySi
      else if(KeySize > CRYPTO_MAX_KEY_SIZE) {
           return;
      }
-     const char *logKeySize = PSTR("WAK-KeySize -- %d");
-     DEBUG_PRINT_P(logKeySize, KeySize);
      SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
      SIZET keyStorageArray[DESFIRE_MAX_KEYS];
      ReadBlockBytes(keyStorageArray, keyStorageArrayBlockId, 2 * DESFIRE_MAX_KEYS);
@@ -511,7 +508,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     uint8_t FreeSlot;
     
     /* Verify this AID has not been allocated yet */
-    if((LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) && (LookupAppSlot(Aid) != 0)) {
+    if((LookupAppSlot(Aid) != DESFIRE_MAX_SLOTS) && (LookupAppSlot(Aid) != 0) && 
+       (Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00)) {
         return STATUS_DUPLICATE_ERROR;
     }
     /* Verify there is space */
@@ -530,10 +528,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     
     /* Allocate storage for the application structure itself */
-    //return 0;
     AppDir.AppCacheStructBlockOffset[Slot] = AllocateBlocks(SELECTED_APP_CACHE_TYPE_BLOCK_SIZE);
-    //const char *loggingDebugMsg = PSTR("-- END CreateApp: -- %d @@ %d");
-    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock, __LINE__);
     if(AppDir.AppCacheStructBlockOffset[Slot] == 0) {
         return STATUS_OUT_OF_EEPROM_ERROR;
     }
@@ -637,9 +632,6 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     AppDir.FirstFreeSlot = FreeSlot;
     SynchronizeAppDir();
     
-    //const char *loggingDebugMsg = PSTR("-- END CreateApp: -- %d");
-    //DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
-
     return STATUS_OPERATION_OK;
 }
 

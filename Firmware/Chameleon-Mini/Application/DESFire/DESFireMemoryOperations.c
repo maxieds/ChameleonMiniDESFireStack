@@ -50,8 +50,6 @@ void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
         return;
     }
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
-    //MemoryReadBlock(Buffer, StartBlock, Count);
-    //ReadEEPBlock(StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Buffer, Count);
 }
 
 void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
@@ -61,8 +59,6 @@ void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
         return;
     }
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
-    //MemoryWriteBlock(Buffer, StartBlock, Count);
-    //WriteEEPBlock(StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Buffer, Count);
 }
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
@@ -89,8 +85,6 @@ uint8_t AllocateBlocksMain(uint8_t BlockCount) {
     Picc.FirstFreeBlock = Block + BlockCount;
     DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
     SynchronizePICCInfo();
-    const char *loggingDebugMsg = PSTR("AllocateBlocks: Next Free Block -- %d");
-    DEBUG_PRINT_P(loggingDebugMsg, Picc.FirstFreeBlock);
     return Block;
 }
 

@@ -66,11 +66,13 @@ void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
 
 BYTE AllocateBlocksMain(BYTE BlockCount);
-#define AllocateBlocks(BlockCount)                              ({ \
+//#define AllocateBlocks(BlockCount)                              ({ \
     const char *logCallingFunc2 = PSTR("AB Caller -- %s / %d");    \
     DEBUG_PRINT_P(logCallingFunc2, __func__, Picc.FirstFreeBlock); \
     AllocateBlocksMain(BlockCount);                                \
     })
+#define AllocateBlocks(BlockCount)                                 \
+    AllocateBlocksMain(BlockCount);
 
 BYTE GetCardCapacityBlocks(void);
 
