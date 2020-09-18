@@ -57,6 +57,8 @@ versions of the code at free will.
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+    SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
+    WriteBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
 }
 
 BYTE PMKConfigurationChangeable(void) {
@@ -387,6 +389,26 @@ void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber)
      ReadBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
      fileNumbersHashmap[FileIndex] = FileNumber;
      WriteBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
+}
+
+SIZET ReadFileDataStructAddress(uint8_t AppSlot, uint8_t FileIndex) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
+         return 0;
+     }
+     SIZET filesAddressBlockId = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, SelectedApp.Slot);
+     SIZET fileAddressArray[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileAddressArray, filesAddressBlockId, 2 * DESFIRE_MAX_FILES);
+     return fileAddressArray[FileIndex];
+}
+
+uint8_t ReadFileType(uint8_t AppSlot, uint8_t FileIndex) {
+    SIZET fileStructAddr = ReadFileDataStructAddress(AppSlot, FileIndex);
+    if(fileStructAddr == 0) {
+        return 0xff;
+    }
+    DESFireFileTypeSettings fileStorageData;
+    ReadBlockBytes(&fileStorageData, fileStructAddr, sizeof(DESFireFileTypeSettings));
+    return fileStorageData.FileType;
 }
 
 BYTE ReadFileCommSettings(uint8_t AppSlot, uint8_t FileIndex) {

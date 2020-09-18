@@ -61,9 +61,8 @@ versions of the code at free will.
  * The location of these structures is defined by the file index.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
-    uint8_t Type;
-    uint8_t CommSettings;
-    uint16_t AccessRights;
+    uint8_t FileType;
+    uint16_t FileSize;
     union DESFIRE_FIRMWARE_ALIGNAT {
         struct DESFIRE_FIRMWARE_ALIGNAT {
             uint16_t FileSize;
@@ -89,8 +88,6 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
         } LinearRecordFile;
         // TODO: CyclicRecordFile type 
     };
-    uint8_t FileType;
-    uint16_t FileDataBlockId;
 } DESFireFileTypeSettings;
 
 uint16_t GetFileSize(DESFireFileTypeSettings *File);
@@ -111,7 +108,8 @@ uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 uint16_t AllocateFileStorage(uint8_t FileNum, uint8_t BlockCount);
 
 /* Creation and deletion */
-uint8_t CreateFileHeaderData(uint8_t FileNum, DESFireFileTypeSettings *File);
+uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings, 
+                             uint16_t AccessRights, DESFireFileTypeSettings *File);
 uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
@@ -128,17 +126,11 @@ void FinaliseTransaction(bool RollBack);
 void CommitTransaction(void);
 void AbortTransaction(void);
 
-/* File management: data transfer related routines */
-uint8_t SelectFile(uint8_t FileNum);
-uint8_t GetSelectedFileType(void);
-uint8_t GetSelectedFileCommSettings(void);
-uint16_t GetSelectedFileAccessRights(void);
-
 /* File transfers */
 TransferStatus ReadDataFileTransfer(uint8_t* Buffer);
 uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount);
 uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
-uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+uint8_t WriteDataFileSetup(uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length);
 uint16_t ReadDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);

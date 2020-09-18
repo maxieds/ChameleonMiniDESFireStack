@@ -718,4 +718,77 @@ static inline int GetDFNamesCommand(nfc_device *nfcConnDev) {
     return EXIT_SUCCESS;
 }
 
+static inline int CreateStandardDataFile(nfc_device *nfcConnDev, uint8_t fileNo, uint8_t commSettings, 
+                                         uint8_t *accessRights, uint8_t *fileSize) {
+    if(nfcConnDev == NULL || accessRights == NULL || fileSize == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    size_t cmdBufSize = 6 + 1 + 1 + 2 + 3;
+    uint8_t CMD[cmdBufSize];
+    CMD[0] = 0x90;
+    CMD[1] = 0xcd;
+    memset(CMD + 2, 0x00, cmdBufSize - 2); 
+    CMD[4] = cmdBufSize - 6;
+    CMD[5] = fileNo;
+    CMD[6] = commSettings;
+    memcpy(CMD + 7, accessRights, 2);
+    memcpy(CMD + 9, fileSize, 3);
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> CreateStdDataFile command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, cmdBufSize);
+    }   
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, cmdBufSize, rxDataStorage);
+    if(rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    <- ");
+            print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
+        }   
+        return EXIT_SUCCESS;
+    }   
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+            fprintf(stdout, "\n");
+        }   
+        return EXIT_FAILURE;
+    }   
+
+}
+
+static inline int CreateBackupDataFile(nfc_device *nfcConnDev) {
+
+}
+
+static inline int CreateValueFile(nfc_device *nfcConnDev) {
+
+}
+
+static inline int CreateLinearRecordFile(nfc_device *nfcConnDev) {
+
+}
+
+static inline int CreateCyclicRecordFile(nfc_device *nfcConnDev) {
+
+}
+
+static inline int DeleteFile(nfc_device *nfcConnDev) {
+
+}
+
+static inline int GetFileIds(nfc_device *nfcConnDev) {
+
+}
+
+static inline int GetFileSettings(nfc_device *nfcConnDev) {
+
+}
+
+static inline int ChangeFileSettings(nfc_device *nfcConnDev) {
+
+}
+
 #endif

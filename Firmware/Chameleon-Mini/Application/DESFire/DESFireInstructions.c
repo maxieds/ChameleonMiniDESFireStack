@@ -871,10 +871,6 @@ uint16_t EV0CmdCreateStandardDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     }
     /* Validate the file size */
     FileSize = GET_LE24(&Buffer[5]);
-    if (FileSize > 8160) {
-        Status = STATUS_OUT_OF_EEPROM_ERROR;
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
     Status = CreateStandardFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
@@ -974,6 +970,7 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     uint8_t FileNum;
     uint8_t CommSettings;
+    uint16_t AccessRights;
     __uint24 Offset;
     __uint24 Length;
 
@@ -982,22 +979,17 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    FileNum = Buffer[1];
     /* Validate file number */
-    if (FileNum >= DESFIRE_MAX_FILES) {
+    FileNum = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
-    Status = SelectFile(FileNum);
-    if (Status != STATUS_OPERATION_OK) {
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
-
-    CommSettings = GetSelectedFileCommSettings();
+    AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
     /* Verify authentication: read or read&write required */
-    switch (ValidateAuthentication(GetSelectedFileAccessRights(), 
-            VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
+    switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -1010,9 +1002,10 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     /* TODO: Support for more file types */
-    if (GetSelectedFileType() != DESFIRE_FILE_STANDARD_DATA && 
-        GetSelectedFileType() != DESFIRE_FILE_BACKUP_DATA) {
+    if (fileType != DESFIRE_FILE_STANDARD_DATA && 
+        fileType != DESFIRE_FILE_BACKUP_DATA) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -1036,6 +1029,7 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     uint8_t FileNum;
     uint8_t CommSettings;
+    uint16_t AccessRights;
     __uint24 Offset;
     __uint24 Length;
 
@@ -1045,21 +1039,15 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     FileNum = Buffer[1];
-    /* Validate file number */
-    if (FileNum >= DESFIRE_MAX_FILES) {
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
-
-    Status = SelectFile(FileNum);
-    if (Status != STATUS_OPERATION_OK) {
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
-
-    CommSettings = GetSelectedFileCommSettings();
+    }    
+    AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
     /* Verify authentication: read or read&write required */
-    switch (ValidateAuthentication(GetSelectedFileAccessRights(), 
-            VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_WRITE)) {
+    switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_WRITE)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -1072,9 +1060,10 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     /* TODO: Support for more file types */
-    if (GetSelectedFileType() != DESFIRE_FILE_STANDARD_DATA && 
-        GetSelectedFileType() != DESFIRE_FILE_BACKUP_DATA) {
+    if (fileType != DESFIRE_FILE_STANDARD_DATA && 
+        fileType != DESFIRE_FILE_BACKUP_DATA) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -1087,7 +1076,7 @@ uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Setup and start the transfer */
-    Status = WriteDataFileSetup(CommSettings, (uint16_t)Offset, (uint16_t)Length);
+    Status = WriteDataFileSetup(fileType, CommSettings, (uint16_t)Offset, (uint16_t)Length);
     if (Status) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -1099,6 +1088,7 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     uint8_t FileNum;
     uint8_t CommSettings;
+    uint16_t AccessRights;
     TransferStatus XferStatus;
 
     /* Validate command length */
@@ -1107,20 +1097,15 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     FileNum = Buffer[1];
-    /* Validate file number */
-    if (FileNum >= DESFIRE_MAX_FILES) {
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
-    Status = SelectFile(FileNum);
-    if (Status != STATUS_OPERATION_OK) {
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
-
-    CommSettings = GetSelectedFileCommSettings();
+    AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
     /* Verify authentication: read or read&write required */
-    switch (ValidateAuthentication(GetSelectedFileAccessRights(), 
+    switch (ValidateAuthentication(AccessRights, 
             VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ | VALIDATE_ACCESS_WRITE)) {
     case VALIDATED_ACCESS_DENIED:
         Status = STATUS_AUTHENTICATION_ERROR;
@@ -1134,7 +1119,8 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     }
 
     /* Validate the file type */
-    if (GetSelectedFileType() != DESFIRE_FILE_VALUE_DATA) {
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    if(fileType != DESFIRE_FILE_VALUE_DATA) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
