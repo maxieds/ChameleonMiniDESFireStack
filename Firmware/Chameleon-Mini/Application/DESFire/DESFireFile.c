@@ -252,25 +252,6 @@ uint8_t DeleteFile(uint8_t fileIndex) {
      return STATUS_OPERATION_OK;
 }
 
-/*
- * File management: transaction related routines
- */
-
-void StartTransaction(void) {
-    Picc.TransactionStarted = SelectedApp.Slot;
-    SynchronizePICCInfo();
-    SelectedApp.DirtyFlags = 0;
-}
-
-void MarkFileDirty(uint8_t FileNum) {
-    SelectedApp.DirtyFlags |= 1 << FileNum;
-}
-
-void StopTransaction(void) {
-    Picc.TransactionStarted = 0;
-    SynchronizePICCInfo();
-}
-
 /* Exposed transfer API: standard/backup data files */
 
 TransferStatus ReadDataFileTransfer(uint8_t* Buffer) {

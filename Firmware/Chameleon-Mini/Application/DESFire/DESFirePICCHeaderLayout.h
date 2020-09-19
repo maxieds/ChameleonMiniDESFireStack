@@ -40,8 +40,6 @@ versions of the code at free will.
 #include "DESFireFirmwareSettings.h"
 #include "DESFireISO14443Support.h"
 
-extern const BYTE PICC_FORMATTED_MARKER[]; 
-
 #define DESFIRE_PICC_APP_SLOT          0x00
 #define DESFIRE_MASTER_KEY_ID          0x00
 

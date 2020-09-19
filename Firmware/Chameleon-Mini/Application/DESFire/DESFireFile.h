@@ -83,8 +83,8 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
             int32_t PreviousDebit;
         } ValueFile;
         struct DESFIRE_FIRMWARE_ALIGNAT {
-            uint8_t BlockCount;
-            uint8_t ClearPending;
+            uint8_t BlockCount;    // USED ???
+            uint8_t ClearPending;  // USED ???
             uint8_t RecordSize[3];
             uint8_t CurrentNumRecords[3];
             uint8_t MaxRecordCount[3];

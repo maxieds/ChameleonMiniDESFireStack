@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }   
     else if(Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
-                         MASTER_KEY_INDEX, ZERO_KEY)) {
+                         0x01, ZERO_KEY)) {
         fprintf(stdout, "    -- !! Error authenticating with AES !!\n");
         return EXIT_FAILURE;
     }   

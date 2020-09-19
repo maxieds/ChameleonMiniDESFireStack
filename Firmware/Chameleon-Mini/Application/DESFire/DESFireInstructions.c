@@ -1152,7 +1152,6 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
     uint16_t AccessRights;
     __uint24 Offset;
     __uint24 Length;
-
     /* Validate command length */
     if(ByteCount != 1 + 1 + 3 + 3) {
         Status = STATUS_LENGTH_ERROR;
@@ -1179,7 +1178,6 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
         /* Carry on */
         break;
     }
-
     /* Validate the file type */
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     if (fileType != DESFIRE_FILE_STANDARD_DATA && 
@@ -1195,7 +1193,6 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
         Status = STATUS_BOUNDARY_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
     /* Setup and start the transfer */
     Status = ReadDataFileSetup(fileIndex, CommSettings, (uint16_t) Offset, (uint16_t) Length);
     if(Status != STATUS_OPERATION_OK) {
@@ -1479,18 +1476,117 @@ uint16_t EV0CmdLimitedCredit(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount != 1 + 1 + 3 + 3) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }    
+    __uint24 Offset = GET_LE24(&Buffer[2]);
+    __uint24 Length = GET_LE24(&Buffer[5]);
+    uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    /* Verify authentication: read or read&write required */
+    switch(ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
+        case VALIDATED_ACCESS_DENIED:
+            Status = STATUS_AUTHENTICATION_ERROR;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
+    }    
+    /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    if(fileType != DESFIRE_FILE_LINEAR_RECORDS && 
+       fileType != DESFIRE_FILE_CIRCULAR_RECORDS) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint16_t fileSize = ReadDataFileSize(SelectedApp.Slot, fileIndex);
+    if((Offset > fileSize) || (fileSize - Offset < Length)) {
+        Status = STATUS_BOUNDARY_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* We are only able to read chunks of data starting at a round block offset */
+    uint8_t blockReadOffset = DESFIRE_BYTES_TO_BLOCKS(Offset);
+    Status = ReadDataFileSetup(fileIndex, CommSettings, (uint16_t) blockReadOffset, (uint16_t) Length);
+    if(Status != STATUS_OPERATION_OK) {
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }    
+    return ReadDataFileIterator(Buffer);
 }
 
 uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount < 1 + 1 + 3 + 3) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }    
+    __uint24 Offset = GET_LE24(&Buffer[2]);
+    __uint24 Length = GET_LE24(&Buffer[5]);
+    uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    /* Verify authentication: read or read&write required */
+    switch(ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_WRITE)) {
+        case VALIDATED_ACCESS_DENIED:
+            Status = STATUS_AUTHENTICATION_ERROR;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
+    }    
+    /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    if(fileType != DESFIRE_FILE_LINEAR_RECORDS && 
+       fileType != DESFIRE_FILE_CIRCULAR_RECORDS) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint16_t fileSize = ReadDataFileSize(SelectedApp.Slot, fileIndex);
+    if((Offset > fileSize) || (fileSize - Offset < Length)) {
+        Status = STATUS_BOUNDARY_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* We are only able to read chunks of data starting at a round block offset */
+    DesfireState = DESFIRE_WRITE_DATA_FILE;
+    uint8_t offsetBlocks = DESFIRE_BYTES_TO_BLOCKS(Offset);
+    uint16_t effectiveOffset = offsetBlocks * DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t bufReadOffset = Offset - effectiveOffset;
+    uint16_t dataXferLength = ByteCount - 8;
+    uint16_t dataWriteAddr = GetFileDataAreaBlockId(fileIndex) + offsetBlocks;
+    uint8_t priorFileData[effectiveOffset];
+    ReadBlockBytes(priorFileData, dataWriteAddr, effectiveOffset);
+    memmove(&Buffer[8] + effectiveOffset, &Buffer[0], dataXferLength);
+    memcpy(&Buffer[0], priorFileData, effectiveOffset);
+    dataXferLength += effectiveOffset;
+    WriteBlockBytes(&Buffer[0], dataWriteAddr, dataXferLength);
+    TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
+    TransferState.WriteData.Sink.Pointer = dataWriteAddr + DESFIRE_BYTES_TO_BLOCKS(dataXferLength);
+    return STATUS_OPERATION_OK;
 }
 
 uint16_t EV0CmdClearRecords(uint8_t* Buffer, uint16_t ByteCount) {
+    uint8_t Status;
+    if(ByteCount != 1 + 1) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    
+    
+    
     DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;

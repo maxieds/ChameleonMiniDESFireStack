@@ -43,6 +43,7 @@ versions of the code at free will.
 #include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes128.h"
 #include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes-cmac.h"
 #include "ExternalCryptoLib/AVRCryptoLib/des/des.h"
+#include "ExternalCryptoLib/AVRCryptoLib/memxor/memxor.h"
 
 /* Communication modes: 
  * Define the modes of communication over the RFID channel
@@ -322,5 +323,10 @@ void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Cipherte
                                  void *IV, const uint8_t* Keys);
 void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                     void *IV, const uint8_t* Keys);
+
+void CryptoEncryptDESBlock(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void CryptoDecryptDESBlock(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void EncryptDESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void DecryptDESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys);
 
 #endif

@@ -263,7 +263,7 @@ uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
 }
 
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
-void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
+/*void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
                        void *IV, DesfireAESCryptoContext *AESCryptoContextData, 
                        CryptoAES_CBCSpec CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
@@ -287,10 +287,10 @@ void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
         memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
         blockIndex++;
     }
-}
+}*/
 
 // This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
-void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
+/*void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
                        void *IV, DesfireAESCryptoContext *AESCryptoContextData, 
                        CryptoAES_CBCSpec CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
@@ -314,7 +314,7 @@ void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
         memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
         blockIndex++;
     }
-}
+}*/
 
 void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
                               void *IV, DesfireAESCryptoContext *AESCryptoContextData) {

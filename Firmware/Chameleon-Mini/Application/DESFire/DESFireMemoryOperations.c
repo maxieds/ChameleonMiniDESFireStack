@@ -45,8 +45,6 @@ char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
-        //const char *loggingErrorMsg = PSTR("RBB: BA to large -- %d -- %s @ %d");
-        //DEBUG_PRINT_P(loggingErrorMsg, StartBlock, callingFunc, callingLine);
         return;
     }
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
@@ -54,8 +52,6 @@ void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
 
 void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
-        //const char *loggingErrorMsg = PSTR("WBB: BA to large -- %d -- %s @ %d");
-        //DEBUG_PRINT_P(loggingErrorMsg, StartBlock, callingFunc, callingLine);
         return;
     }
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
@@ -128,5 +124,4 @@ void WriteDataEEPROMSink(uint8_t* Buffer, uint8_t Count) {
     MemoryWriteBlock(Buffer, TransferState.WriteData.Sink.Pointer, Count);
     TransferState.WriteData.Sink.Pointer += DESFIRE_BYTES_TO_BLOCKS(Count);
 }
-
 

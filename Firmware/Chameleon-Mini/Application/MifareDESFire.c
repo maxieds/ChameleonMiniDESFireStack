@@ -134,12 +134,12 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         if(ReturnBytes > 0) {
             LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
         }
+        DesfireState = DESFIRE_IDLE;
         return ReturnBytes;
     }
    
     /* Expecting further data here */
     if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
-        AbortTransaction();
         return ISO14443A_APP_NO_RESPONSE;
     }
 
@@ -166,6 +166,8 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     case DESFIRE_READ_DATA_FILE:
         ReturnBytes = ReadDataFileIterator(Buffer);
         break;
+    case DESFIRE_WRITE_DATA_FILE:
+        ReturnBytes = WriteDataFileInternal(&Buffer[1], ByteCount - 1);
     default:
         /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
@@ -182,7 +184,7 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) { // Wrapped native command structure: 
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
-        // -- Actually, just ignore parity problems if they exist (TODO later)
+        // -- Actually, just ignore parity problems if they exist
         DesfireCmdCLA = Buffer[0];
         ByteCount = Buffer[4]; // also removing the trailing two parity bytes
         Buffer[0] = Buffer[1];

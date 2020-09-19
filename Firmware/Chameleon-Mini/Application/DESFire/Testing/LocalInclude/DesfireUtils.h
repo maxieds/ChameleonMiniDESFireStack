@@ -14,6 +14,9 @@
 #include "CryptoUtils.h"
 #include "LibNFCUtils.h"
 
+#define MIN(x, y)                    ((x) <= (y) ? (x) : (y))
+#define MAX(x, y)                    ((x) <= (y) ? (y) : (y))
+
 #define MAX_FRAME_LENGTH             (264)
 #define APPLICATION_AID_LENGTH       (3)
 
@@ -689,7 +692,7 @@ static inline int GetApplicationIds(nfc_device *nfcConnDev) {
         0x90, 0x6a, 0x00, 0x00, 0x00, 0x00 
     };
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> Get AID List From Device:\n");
+        fprintf(stdout, ">>> GetApplicationIds command:\n");
         fprintf(stdout, "    -> ");
         print_hex(GET_APPLICATION_AID_LIST_CMD, sizeof(GET_APPLICATION_AID_LIST_CMD));
     }
@@ -1400,6 +1403,146 @@ static inline int AbortTransaction(nfc_device *nfcConnDev) {
     };
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> AbortTransaction command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, sizeof(CMD));
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD,
+                                       sizeof(CMD), rxDataStorage);
+    if(rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    <- ");    
+        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+    }
+    else if(!rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        FreeRxDataStruct(rxDataStorage, true);
+        return EXIT_FAILURE;
+    }
+    FreeRxDataStruct(rxDataStorage, true);
+    return EXIT_SUCCESS;
+}
+
+static inline int ReadRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo, 
+                                     uint32_t offset, uint32_t dataLength) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    size_t cmdBufSize = 6 + 1 + 3 + 3;
+    uint8_t CMD[cmdBufSize];
+    CMD[0] = 0x90;
+    CMD[1] = 0xbb;
+    memset(CMD + 2, 0x00, cmdBufSize - 2);
+    CMD[4] = cmdBufSize - 6;
+    CMD[5] = fileNo;
+    Int24ToByteBuffer(CMD + 6, offset);
+    Int24ToByteBuffer(CMD + 9, dataLength);
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> ReadRecords command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, cmdBufSize);
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    bool continueFrame = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, cmdBufSize, rxDataStorage);
+    do {
+        if(continueFrame) {
+            uint8_t CMDCONT[] = { 0x90, 0xaf, 0x00, 0x00, 0x00, 0x00 };
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    -> ");
+                print_hex(CMDCONT, cmdBufSize);
+            }       
+            rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMDCONT, sizeof(CMDCONT), rxDataStorage);
+        }
+        if(rxDataStatus) {
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    <- ");
+                print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            }
+        }
+        else {
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+            }
+            return EXIT_FAILURE;
+        }
+        continueFrame = (rxDataStorage->rxDataBuf[rxDataStorage->recvSzRx - 1] == 0xaf);
+    } while(continueFrame);
+    return EXIT_SUCCESS;
+}
+
+static inline int WriteRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo, 
+                                      uint32_t offset, uint32_t dataLength, uint8_t *dataBuf) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    size_t cmdBufSize = 6 + 1 + 3 + 3 + MIN(dataLength, 52);
+    uint8_t CMD[cmdBufSize];
+    CMD[0] = 0x90;
+    CMD[1] = 0x3b;
+    memset(CMD + 2, 0x00, cmdBufSize - 2);
+    CMD[4] = cmdBufSize - 6;
+    CMD[5] = fileNo;
+    Int24ToByteBuffer(CMD + 6, offset);
+    Int24ToByteBuffer(CMD + 9, dataLength);
+    memcpy(CMD + 12, dataBuf, MIN(dataLength, 52));
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> WriteRecords command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, cmdBufSize);
+    }
+    uint32_t remDataBytes = MAX(0, dataLength - 52);
+    uint8_t *remDataBytesBuf = dataBuf + 52;
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    bool continueFrame = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, cmdBufSize, rxDataStorage);
+    do {
+        if(continueFrame && remDataBytes > 0) {
+            cmdBufSize = 6 + MIN(remDataBytes, 59);
+            uint8_t CMDCONT[cmdBufSize]; 
+            CMDCONT[0] = 0x90;
+            CMDCONT[1] = 0xaf;
+            memset(CMDCONT + 2, 0x00, cmdBufSize - 2);
+            CMDCONT[4] = cmdBufSize - 6;
+            memcpy(CMDCONT + 5, remDataBytesBuf, MIN(remDataBytes, 59));
+            remDataBytes = MAX(0, remDataBytes - 59);
+            remDataBytesBuf += 59;
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    -> ");
+                print_hex(CMDCONT, cmdBufSize);
+            }       
+            rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMDCONT, sizeof(CMDCONT), rxDataStorage);
+        }
+        if(rxDataStatus) {
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    <- ");
+                print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            }
+        }
+        else {
+            if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+                fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+            }
+            return EXIT_FAILURE;
+        }
+        continueFrame = (rxDataStorage->rxDataBuf[rxDataStorage->recvSzRx - 1] == 0xaf);
+    } while(continueFrame);
+    return EXIT_SUCCESS;
+}
+
+static inline int ClearRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    uint8_t CMD[] = {
+        0x90, 0xeb, 0x00, 0x00, 0x01, fileNo, 0x00
+    };
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> ClearRecords command:\n");
         fprintf(stdout, "    -> ");
         print_hex(CMD, sizeof(CMD));
     }
