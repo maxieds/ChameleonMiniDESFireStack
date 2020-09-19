@@ -76,6 +76,17 @@ void Int24ToByteBuffer(uint8_t *byteBuffer, uint32_t int24Value) {
     byteBuffer[2] = (uint8_t) ((int24Value >> 16) & 0x0000ff);
 }
 
+int32_t Int32FromByteBuffer(uint8_t *byteBuffer) {
+    if(byteBuffer == NULL) {
+        return 0;
+    }
+    int32_t b0 = byteBuffer[0];
+    int32_t b1 = (byteBuffer[1] << 8) & 0x0000ff00;
+    int32_t b2 = (byteBuffer[2] << 16) & 0x00ff0000;
+    int32_t b3 = (byteBuffer[3] << 24) & 0xff000000;
+    return b0 | b1 | b2 | b3;
+}
+
 void DebugPrintP(const char *fmt, ...) {
     char Format[80];
     char Buffer[80];

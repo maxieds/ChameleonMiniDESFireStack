@@ -119,12 +119,6 @@ uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings
 uint8_t DeleteFile(uint8_t FileIndex);
 
 /* Transactions */
-void StartTransaction(void);
-void MarkFileDirty(uint8_t FileNum);
-void StopTransaction(void);
-void FinaliseTransaction(bool RollBack);
-void CommitTransaction(void);
-void AbortTransaction(void);
 
 /* File transfers */
 TransferStatus ReadDataFileTransfer(uint8_t* Buffer);

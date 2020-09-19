@@ -520,7 +520,6 @@ uint8_t LookupAppSlot(const DESFireAidType Aid) {
 }
 
 void SelectAppBySlot(uint8_t AppSlot) {
-    AbortTransaction(); /* TODO: verify this behaviour */
     SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[AppSlot];
     ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;

@@ -53,6 +53,7 @@ void ShortToByteArray(SIZET shortValue, BYTE *outputArr);
 void IntegerToByteArray(UINT intValue, BYTE *outputArr);
 void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value);
 void Int24ToByteBuffer(uint8_t *byteBuffer, uint32_t int24Value);
+int32_t Int32FromByteBuffer(uint8_t *byteBuffer);
 
 void ByteToBinaryString(BYTE byteValue, char *destStrBuf, SIZET maxDestSize);
 void ByteArrayToBinaryString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);

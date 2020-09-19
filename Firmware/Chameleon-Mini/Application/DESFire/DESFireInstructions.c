@@ -1327,21 +1327,154 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdCredit(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount != 1 + 1 + 4) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }    
+    int32_t creditAmount = Int32FromByteBuffer(&Buffer[2]);
+    if(creditAmount < 0) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    /* Verify authentication: read or read&write required */
+    switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE)) {
+        case VALIDATED_ACCESS_DENIED:
+            Status = STATUS_AUTHENTICATION_ERROR;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
+    }    
+    /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    if(fileType != DESFIRE_FILE_VALUE_DATA) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    DESFireFileTypeSettings fileData;
+    Status = ReadFileControlBlock(fileNumber, &fileData);
+    if(Status != STATUS_OPERATION_OK) {
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* Make sure that the transaction will fit in the bounds of the tag */
+    int32_t nextValueAmount = fileData.ValueFile.DirtyValue + creditAmount;
+    if(nextValueAmount >= fileData.ValueFile.LowerLimit && nextValueAmount <= fileData.ValueFile.UpperLimit) {
+        Status = STATUS_BOUNDARY_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    fileData.ValueFile.DirtyValue = nextValueAmount;
+    Status = WriteFileControlBlock(fileNumber, &fileData);
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdDebit(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount != 1 + 1 + 4) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }    
+    int32_t debitAmount = Int32FromByteBuffer(&Buffer[2]);
+    if(debitAmount < 0) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    /* Verify authentication: read or read&write required */
+    switch(ValidateAuthentication(AccessRights, 
+           VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ | VALIDATE_ACCESS_WRITE)) {
+        case VALIDATED_ACCESS_DENIED:
+            Status = STATUS_AUTHENTICATION_ERROR;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
+    }    
+    /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    if(fileType != DESFIRE_FILE_VALUE_DATA) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    DESFireFileTypeSettings fileData;
+    Status = ReadFileControlBlock(fileNumber, &fileData);
+    if(Status != STATUS_OPERATION_OK) {
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* Make sure that the transaction will fit in the bounds of the tag */
+    int32_t nextValueAmount = fileData.ValueFile.DirtyValue - debitAmount;
+    if(nextValueAmount >= fileData.ValueFile.LowerLimit && 
+       nextValueAmount <= fileData.ValueFile.UpperLimit) {
+        Status = STATUS_BOUNDARY_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    fileData.ValueFile.DirtyValue = nextValueAmount;
+    fileData.ValueFile.PreviousDebit -= debitAmount;
+    Status = WriteFileControlBlock(fileNumber, &fileData);
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdLimitedCredit(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount != 1 + 1 + 4) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }    
+    int32_t creditAmount = Int32FromByteBuffer(&Buffer[2]);
+    if(creditAmount < 0) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    /* Validate the file type */
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    if(fileType != DESFIRE_FILE_VALUE_DATA) {
+        Status = STATUS_PARAMETER_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    DESFireFileTypeSettings fileData;
+    Status = ReadFileControlBlock(fileNumber, &fileData);
+    if(Status != STATUS_OPERATION_OK) {
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    if(fileData.ValueFile.LimitedCreditEnabled == 0) {
+        Status = STATUS_PERMISSION_DENIED;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* Make sure that the transaction will fit in the bounds of the tag */
+    int32_t nextValueAmount = fileData.ValueFile.DirtyValue + creditAmount;
+    if(nextValueAmount >= fileData.ValueFile.LowerLimit && 
+       nextValueAmount <= fileData.ValueFile.UpperLimit) {
+        Status = STATUS_BOUNDARY_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    fileData.ValueFile.DirtyValue = nextValueAmount;
+    Status = WriteFileControlBlock(fileNumber, &fileData);
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount) {
@@ -1392,9 +1525,8 @@ uint16_t EV0CmdCommitTransaction(uint8_t* Buffer, uint16_t ByteCount) {
         if(Status != STATUS_OPERATION_OK) {
             break;
         }
-        fileData.ValueFile.CleanValue -= fileData.ValueFile.PreviousDebit;
+        fileData.ValueFile.CleanValue = fileData.ValueFile.DirtyValue;
         fileData.ValueFile.PreviousDebit = 0;
-        fileData.ValueFile.DirtyValue = fileData.ValueFile.CleanValue;
         Status = WriteFileControlBlock(fileNumsByIndexArray[fileIdx], &fileData);
         if(Status != STATUS_OPERATION_OK) {
             break;
@@ -1431,8 +1563,8 @@ uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount) {
         if(Status != STATUS_OPERATION_OK) {
             break;
         }
-        fileData.ValueFile.PreviousDebit = 0;
         fileData.ValueFile.DirtyValue = fileData.ValueFile.CleanValue;
+        fileData.ValueFile.PreviousDebit = 0;
         Status = WriteFileControlBlock(fileNumsByIndexArray[fileIdx], &fileData);
         if(Status != STATUS_OPERATION_OK) {
             break;

@@ -271,56 +271,6 @@ void StopTransaction(void) {
     SynchronizePICCInfo();
 }
 
-void SynchronizeFileCopies(uint8_t FileNum, bool Rollback) {
-    DESFireFileTypeSettings File;
-    uint8_t DataAreaBlockId;
-
-    ReadFileControlBlock(FileNum, &File);
-    DataAreaBlockId = GetFileDataAreaBlockId(FileNum);
-
-    switch (File.FileType) {
-    case DESFIRE_FILE_VALUE_DATA:
-        if (Rollback) {
-            File.ValueFile.DirtyValue = File.ValueFile.CleanValue;
-        }
-        else {
-            File.ValueFile.CleanValue = File.ValueFile.DirtyValue;
-        }
-        WriteFileControlBlock(FileNum, &File);
-        break;
-
-    case DESFIRE_FILE_BACKUP_DATA:
-        if (Rollback) {
-            CopyBlockBytes(DataAreaBlockId, DataAreaBlockId + File.BackupFile.BlockCount, File.BackupFile.BlockCount);
-        }
-        else {
-            CopyBlockBytes(DataAreaBlockId + File.BackupFile.BlockCount, DataAreaBlockId, File.BackupFile.BlockCount);
-        }
-        break;
-    }
-}
-
-void FinaliseTransaction(bool Rollback) {
-    uint8_t FileNum;
-    uint16_t DirtyFlags = SelectedApp.DirtyFlags;
-    if (!Picc.TransactionStarted) 
-        return;
-    for (FileNum = 0; FileNum < DESFIRE_MAX_FILES; ++FileNum) {
-        if (DirtyFlags & (1 << FileNum)) {
-            SynchronizeFileCopies(FileNum, Rollback);
-        }
-    }
-    StopTransaction();
-}
-
-void CommitTransaction(void) {
-    FinaliseTransaction(false);
-}
-
-void AbortTransaction(void) {
-    FinaliseTransaction(true);
-}
-
 /* Exposed transfer API: standard/backup data files */
 
 TransferStatus ReadDataFileTransfer(uint8_t* Buffer) {
@@ -391,8 +341,6 @@ uint8_t WriteDataFileInternal(uint8_t* Buffer, uint16_t ByteCount) {
         DesfireState = DESFIRE_WRITE_DATA_FILE;
         break;
     default:
-        /* In case anything goes wrong, abort things */
-        AbortTransaction();
         break;
     }
     return Status;
