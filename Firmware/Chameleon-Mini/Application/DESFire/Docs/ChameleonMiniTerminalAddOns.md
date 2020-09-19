@@ -28,7 +28,6 @@ DF_SETHDR <HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <
 ```
 Likewise, as promised, we can modify the tag header information emulated by the tag as follows:
 ```bash
-# TODO: Check this exact syntax ??? 
 DF_SETHDR=HardwareVersion xxxx
 DF_SETHDR=SoftwareVersion xxxx
 DF_SETHDR=BatchNumber xxxxxxxxxx
