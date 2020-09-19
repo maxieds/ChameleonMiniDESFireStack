@@ -33,6 +33,10 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }   
 
+    uint8_t srcDataBuffer[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+    };
     if(CreateStandardDataFile(nfcPnd, 0x00, 0x00, 0x0f, 4)) {
         fprintf(stdout, "    -- !! Error creating standard data file !!\n");
         return EXIT_FAILURE;
@@ -65,6 +69,23 @@ int main(int argc, char **argv) {
         fprintf(stdout, "    -- !! Error reading initial contents of file !!\n");
         return EXIT_FAILURE;
     }
+    else if(WriteDataCommand(nfcPnd, 0x00, 0, 4, srcDataBuffer)) {
+        fprintf(stdout, "    -- !! Error write data command !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(ReadDataCommand(nfcPnd, 0x00, 0, 4)) {
+        fprintf(stdout, "    -- !! Error reading initial contents of file !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(WriteDataCommand(nfcPnd, 0x00, 2, 2, srcDataBuffer + 12)) {
+        fprintf(stdout, "    -- !! Error write data command !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(ReadDataCommand(nfcPnd, 0x00, 0, 4)) {
+        fprintf(stdout, "    -- !! Error reading initial contents of file !!\n");
+        return EXIT_FAILURE;
+    }
+
     FreeNFCDeviceDriver(&nfcCtxt, &nfcPnd);
     return EXIT_SUCCESS;
 

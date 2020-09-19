@@ -1182,4 +1182,49 @@ static inline int ReadDataCommand(nfc_device *nfcConnDev, uint8_t fileNo,
     }
 }
 
+static inline int WriteDataCommand(nfc_device *nfcConnDev, uint8_t fileNo, 
+                                   uint16_t writeDataOffset, uint16_t writeDataLength, 
+                                   uint8_t *writeDataBuf) {
+    if(nfcConnDev == NULL) {
+        return INVALID_PARAMS_ERROR;
+    }
+    else if(writeDataLength > 52 || writeDataOffset > 52) {
+        return DATA_LENGTH_ERROR;
+    }
+    size_t cmdBufSize = 6 + 1 + 3 + 3 + writeDataLength;
+    uint8_t CMD[cmdBufSize];
+    CMD[0] = 0x90;
+    CMD[1] = 0x3d;
+    memset(CMD + 2, 0x00, cmdBufSize - 2);
+    CMD[4] = cmdBufSize - 6;
+    CMD[5] = fileNo;
+    Int24ToByteBuffer(CMD + 6, writeDataOffset);
+    Int24ToByteBuffer(CMD + 9, writeDataLength);
+    memcpy(CMD + 12, writeDataBuf, writeDataLength);
+    if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, ">>> WriteData command:\n");
+        fprintf(stdout, "    -> ");
+        print_hex(CMD, cmdBufSize);
+    }
+    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
+    bool rxDataStatus = false;
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMD, cmdBufSize, rxDataStorage);
+    if(rxDataStatus) {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    <- ");
+            print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        }
+        return EXIT_SUCCESS;
+    }
+    else {
+        if(PRINT_STATUS_EXCHANGE_MESSAGES) {
+            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
+        }
+        return EXIT_FAILURE;
+    }
+}
+
+
+
+
 #endif

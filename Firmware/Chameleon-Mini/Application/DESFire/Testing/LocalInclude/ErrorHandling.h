@@ -46,10 +46,7 @@ typedef enum {
      GENERIC_OTHER_ERROR,
      INVALID_PARAMS_ERROR,
      AES_AUTH_FAILED,
-     AES_AUTH_FAILED_STEP1,
-     AES_AUTH_FAILED_STEP2,
-     AES_AUTH_FAILED_STEP3,
-     AES_AUTH_FAILED_STEP4,
+     DATA_LENGTH_ERROR,
      LAST_ERROR,
 } ErrorType_t;
 
@@ -59,10 +56,7 @@ static inline const char *LOCAL_ERROR_MSGS[] = {
      [GENERIC_OTHER_ERROR]         = "Unspecified (generic) error",
      [INVALID_PARAMS_ERROR]        = "Invalid parameters",
      [AES_AUTH_FAILED]             = "AES auth procedure failed (generic)",
-     [AES_AUTH_FAILED_STEP1]       = "AES auth failed ... reason",
-     [AES_AUTH_FAILED_STEP2]       = "AES auth failed ... reason",
-     [AES_AUTH_FAILED_STEP3]       = "AES auth failed ... reason",
-     [AES_AUTH_FAILED_STEP4]       = "AES auth failed ... reason",
+     [DATA_LENGTH_ERROR]           = "Data length error (buffer size too large)",
      [LAST_ERROR]                  = NULL,
 };
 

@@ -351,19 +351,16 @@ uint8_t ReadDataFileSetup(uint8_t FileIndex, uint8_t CommSettings, uint16_t Offs
 }
 
 uint8_t WriteDataFileSetup(uint8_t FileIndex, uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length) {
+    memset(&TransferState, PICC_EMPTY_BYTE, sizeof(TransferState));
     /* Verify boundary conditions */
-    if (Offset + Length > ReadDataFileSize(SelectedApp.Slot, FileIndex)) {
+    uint16_t fileSize = ReadDataFileSize(SelectedApp.Slot, FileIndex);
+    if (Offset + Length > fileSize) {
         return STATUS_BOUNDARY_ERROR;
     }
     /* Setup data sink */
     TransferState.WriteData.BytesLeft = Length;
     TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
-    /* TODO: Dirty data location depends on the file type: correct the offset as needed? */
-    if(FileType == DESFIRE_FILE_BACKUP_DATA) {
-        Offset += SelectedFile.File.BackupFile.BlockCount * DESFIRE_EEPROM_BLOCK_SIZE;
-    }
-    TransferState.WriteData.Sink.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * 
-                                           DESFIRE_EEPROM_BLOCK_SIZE + Offset;
+    TransferState.WriteData.Sink.Pointer = GetFileDataAreaBlockId(FileIndex);
     /* Setup data filter */
     return WriteDataFilterSetup(CommSettings);
 }
@@ -387,23 +384,22 @@ uint8_t WriteDataFileInternal(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t Status;
     Status = WriteDataFileTransfer(Buffer, ByteCount);
     switch(Status) {
-    default:
-        /* In case anything goes wrong, abort things */
-        AbortTransaction();
-        /* Fall through */
     case STATUS_OPERATION_OK:
         DesfireState = DESFIRE_IDLE;
         break;
     case STATUS_ADDITIONAL_FRAME:
         DesfireState = DESFIRE_WRITE_DATA_FILE;
         break;
+    default:
+        /* In case anything goes wrong, abort things */
+        AbortTransaction();
+        break;
     }
     return Status;
 }
 
 uint16_t WriteDataFileIterator(uint8_t* Buffer, uint16_t ByteCount) {
-    Buffer[0] = WriteDataFileInternal(&Buffer[1], ByteCount - 1);
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return WriteDataFileInternal(Buffer, ByteCount);
 }
 
 uint8_t CreateFileCommonValidation(uint8_t FileNum) {

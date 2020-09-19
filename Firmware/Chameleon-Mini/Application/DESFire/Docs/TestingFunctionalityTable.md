@@ -35,7 +35,9 @@
 | CMD_GET_ISO_FILE_IDS | 0x61 | | :x: | |
 | CMD_READ_DATA |  0xBD | | :ballot_box_with_check: | 
   The data for std/backup files is uninitialized (any bits) until the user sets the data with WriteData |
-| CMD_WRITE_DATA |  0x3D | | :question: | |
+| CMD_WRITE_DATA |  0x3D | | :ballot_box_with_check: | 
+  Only supports write command operations with <= 52 bytes of data at a time. 
+  Offset parameters can be used to write lengthier files. |
 | CMD_GET_VALUE | 0x6C | | :question: | |
 | CMD_CREDIT | 0x0C | | | |
 | CMD_DEBIT | 0xDC | | | |
@@ -71,3 +73,6 @@
   key count in the AID, and other accounting details ...
 * Currently, all of the file transfers (read/write) are done in plaintext ...
 * The ``ReadData`` command ``offset`` input has no action at this point (TODO later) ...
+* How to accurately handle BackupDataFile types? 
+
+

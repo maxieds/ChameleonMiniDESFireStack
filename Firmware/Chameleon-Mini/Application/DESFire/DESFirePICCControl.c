@@ -94,9 +94,7 @@ void SynchronizePICCInfo(void) {
 TransferStatus PiccToPcdTransfer(uint8_t* Buffer) {
     TransferStatus Status;
     uint8_t XferBytes;
-    /* Only read if required */
     if (TransferState.ReadData.BytesLeft) {
-        /* Figure out how much to read */
         if(TransferState.ReadData.BytesLeft > DESFIRE_MAX_PAYLOAD_SIZE) {
             XferBytes = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_PAYLOAD_SIZE) * DESFIRE_EEPROM_BLOCK_SIZE;
         }
@@ -130,10 +128,10 @@ TransferStatus PiccToPcdTransfer(uint8_t* Buffer) {
     return Status;
 }
 
-uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count)
-{
-     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, Count);
-     return STATUS_OPERATION_OK;
+/* TODO: Currently, everything is transfered in plaintext, without checksums */
+uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count) {
+    TransferState.WriteData.Sink.Func(Buffer, Count);
+    return STATUS_OPERATION_OK;
 }
 
 /* Setup routines */
@@ -157,7 +155,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
            memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
            SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
            break;
-       case DESFIRE_COMMS_CIPHERTEXT_AES128: // TODO
+       case DESFIRE_COMMS_CIPHERTEXT_AES128:
        default:
            return STATUS_PARAMETER_ERROR;
     }
@@ -166,7 +164,6 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 
 uint8_t WriteDataFilterSetup(uint8_t CommSettings)
 {
-    memset(&TransferState, PICC_EMPTY_BYTE, sizeof(TransferState));
     switch (CommSettings) {
        case DESFIRE_COMMS_PLAINTEXT:
            break;
@@ -185,7 +182,6 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings)
            memset(SessionIV, 0, sizeof(SessionIVByteSize));
            SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
            break;
-       // TODO: AES communication ... 
        case DESFIRE_COMMS_CIPHERTEXT_AES128:
        default:
            return STATUS_PARAMETER_ERROR;
