@@ -134,7 +134,6 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         if(ReturnBytes > 0) {
             LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
         }
-        DesfireState = DESFIRE_IDLE;
         return ReturnBytes;
     }
    
@@ -168,6 +167,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         break;
     case DESFIRE_WRITE_DATA_FILE:
         ReturnBytes = WriteDataFileInternal(&Buffer[1], ByteCount - 1);
+        break;
     default:
         /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
