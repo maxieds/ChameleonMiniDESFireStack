@@ -33,7 +33,8 @@
 | CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :wavy_dash: | GetFileSettings still not returning correct data |
 | CMD_DELETE_FILE | 0xDF | | :ballot_box_with_check: | |
 | CMD_GET_ISO_FILE_IDS | 0x61 | | :x: | |
-| CMD_READ_DATA |  0xBD | | :question: | |
+| CMD_READ_DATA |  0xBD | | :ballot_box_with_check: | 
+  The data for std/backup files is uninitialized (any bits) until the user sets the data with WriteData |
 | CMD_WRITE_DATA |  0x3D | | :question: | |
 | CMD_GET_VALUE | 0x6C | | :question: | |
 | CMD_CREDIT | 0x0C | | | |

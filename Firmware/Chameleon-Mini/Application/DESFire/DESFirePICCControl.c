@@ -139,7 +139,6 @@ uint8_t PcdToPiccTransfer(uint8_t* Buffer, uint8_t Count)
 /* Setup routines */
 
 uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
-    memset(&TransferState, PICC_EMPTY_BYTE, sizeof(TransferState));
     switch (CommSettings) {
        case DESFIRE_COMMS_PLAINTEXT:
            break;

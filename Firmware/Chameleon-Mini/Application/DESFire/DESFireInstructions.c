@@ -1201,11 +1201,11 @@ uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount) {
     if(Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    Buffer[0] = STATUS_OPERATION_OK;
-    Buffer[1] = TransferState.ReadData.BytesLeft;
-    Buffer[2] = (uint16_t) Length;
-    Buffer[3] = (uint8_t) Length;
-    return 4;
+    //Buffer[0] = STATUS_OPERATION_OK;
+    //Buffer[1] = TransferState.ReadData.BytesLeft;
+    //Buffer[2] = (uint16_t) Length;
+    //Buffer[3] = (uint8_t) Length;
+    //return 4;
     return ReadDataFileIterator(Buffer);
 }
 

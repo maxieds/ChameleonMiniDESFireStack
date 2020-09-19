@@ -44,7 +44,11 @@ int main(int argc, char **argv) {
     else if(GetFileIds(nfcPnd)) {
         fprintf(stdout, "    -- !! Error listing the file IDs !!\n");
         return EXIT_FAILURE;
-    }   
+    }    
+    else if(ReadDataCommand(nfcPnd, 0x00, 0, 4)) {
+        fprintf(stdout, "    -- !! Error reading initial contents of file !!\n");
+        return EXIT_FAILURE;
+    }
     else if(DeleteFile(nfcPnd, 0x01)) {
         fprintf(stdout, "    -- !! Error deleting newly created file !!\n");
         return EXIT_FAILURE;
@@ -57,7 +61,10 @@ int main(int argc, char **argv) {
         fprintf(stdout, "    -- !! Error reading initial contents of file !!\n");
         return EXIT_FAILURE;
     }
-
+    else if(ReadDataCommand(nfcPnd, 0x00, 2, 2)) {
+        fprintf(stdout, "    -- !! Error reading initial contents of file !!\n");
+        return EXIT_FAILURE;
+    }
     FreeNFCDeviceDriver(&nfcCtxt, &nfcPnd);
     return EXIT_SUCCESS;
 

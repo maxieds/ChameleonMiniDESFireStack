@@ -1,0 +1,56 @@
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 01 00 34 | 0f 03 00 
+    <- 91 ae 
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 01 00 34 | 00 
+    <- 91 a0 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    -- Error transceiving Bytes: RF Transmission Error
+    -- !! Unable to transfer bytes !!
+    -- !! Error authenticating with AES !!
+mathm1703:Testing mschmidt34$ ./Bin/TestDataManipulationCommandsSupport.exe 
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 01 00 34 | 0f 03 00 
+    <- 91 ae 
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 01 00 34 | 00 
+    <- 91 a0 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- cb d1 09 d2 97 42 df 9f | 60 c0 01 9d 2b a0 85 43 | 91 af 
+    -- RNDA = 2e 4c a6 ed d5 16 c5 11 
+    -- RNDB = 70 cc c8 61 bc 6d f3 a9 
+    -- CHAL = 2e 4c a6 ed d5 16 c5 11 | a9 70 cc c8 61 bc 6d f3 
+    -> 90 af 00 00 10 2d ec e9 | 29 80 f9 00 b2 c2 a4 14 | 1a 07 31 db d4 00 
+    <- 4c 3e d3 65 ed 16 d9 1a | d9 ac c2 d1 7c 3f de f9 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateStdDataFile command:
+    -> 90 cd 00 00 07 00 00 0f | 00 04 00 00 00 
+    <- 91 00 
+
+>>> CreateBackupDataFile command:
+    -> 90 cb 00 00 07 01 00 0f | 00 08 00 00 00 
+    <- 91 00 
+
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 00 01 91 00 
+>>> ReadData command:
+    -> 90 bd 00 00 07 00 00 00 | 00 04 00 00 00 
+    <- 00 a2 a7 82 91 00 
+>>> DeleteFile command:
+    -> 90 df 00 00 01 01 00 
+    <- 91 00 
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 00 91 00 
+>>> ReadData command:
+    -> 90 bd 00 00 07 00 00 00 | 00 04 00 00 00 
+    <- 00 a2 a7 82 91 00 
+>>> ReadData command:
+    -> 90 bd 00 00 07 00 02 00 | 00 02 00 00 00 
+    <- 00 a2 91 00

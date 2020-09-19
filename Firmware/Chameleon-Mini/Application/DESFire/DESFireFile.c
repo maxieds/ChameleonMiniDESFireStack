@@ -125,6 +125,7 @@ uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings,
               if(File->FileDataAddress == 0) {
                   return STATUS_OUT_OF_EEPROM_ERROR;
               }
+              // The file data is considered to be uninitialized until the user sets it. 
           }
           else {
               File->FileDataAddress = 0;
@@ -331,6 +332,7 @@ uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount) {
 }
 
 uint8_t ReadDataFileSetup(uint8_t FileIndex, uint8_t CommSettings, uint16_t Offset, uint16_t Length) {
+    memset(&TransferState, PICC_EMPTY_BYTE, sizeof(TransferState));
     uint16_t fileSize = ReadDataFileSize(SelectedApp.Slot, FileIndex);
     /* Setup data source */
     TransferState.ReadData.Source.Func = &ReadDataEEPROMSource;
