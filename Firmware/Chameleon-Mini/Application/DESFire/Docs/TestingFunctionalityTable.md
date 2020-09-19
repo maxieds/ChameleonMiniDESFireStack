@@ -4,7 +4,7 @@
 
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :question: :grey_question: :interrobang: | |
+| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :interrobang: | |
 | CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :question: | |
 | CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |    
@@ -27,7 +27,7 @@
 | CMD_GET_FILE_SETTINGS | 0xF5 | | :ballot_box_with_check: | |
 | CMD_CHANGE_FILE_SETTINGS | 0x5F | | :x: | |
 | CMD_CREATE_STDDATA_FILE |  0xCD | | :ballot_box_with_check: | |
-| CMD_CREATE_BACKUPDATA_FILE |  0xCB | :ballot_box_with_check: | | |
+| CMD_CREATE_BACKUPDATA_FILE |  0xCB | | :ballot_box_with_check: | |
 | CMD_CREATE_VALUE_FILE |  0xCC | | :ballot_box_with_check: | |
 | CMD_CREATE_LINEAR_RECORD_FILE | 0xC1 | | :wavy_dash: | GetFileSettings still not returning correct data |
 | CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :wavy_dash: | GetFileSettings still not returning correct data |
