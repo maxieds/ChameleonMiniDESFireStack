@@ -1288,7 +1288,6 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t CommSettings;
     uint16_t AccessRights;
     TransferStatus XferStatus;
-
     /* Validate command length */
     if (ByteCount != 1 + 1) {
         Status = STATUS_LENGTH_ERROR;
@@ -1303,34 +1302,28 @@ uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount) {
     AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
     CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
     /* Verify authentication: read or read&write required */
-    switch (ValidateAuthentication(AccessRights, 
-            VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ | VALIDATE_ACCESS_WRITE)) {
-    case VALIDATED_ACCESS_DENIED:
-        Status = STATUS_AUTHENTICATION_ERROR;
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
-        CommSettings = DESFIRE_COMMS_PLAINTEXT;
-        /* Fall through */
-    case VALIDATED_ACCESS_GRANTED:
-        /* Carry on */
-        break;
+    switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
+        case VALIDATED_ACCESS_DENIED:
+            Status = STATUS_AUTHENTICATION_ERROR;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
     }
-
     /* Validate the file type */
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     if(fileType != DESFIRE_FILE_VALUE_DATA) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
     /* Setup and start the transfer */
-    Status = ReadDataFileSetup(fileIndex, CommSettings, 0, 4);
-    if (Status) {
-        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-    }
-    XferStatus = ReadDataFileTransfer(&Buffer[1]);
+    /* TODO: Not currently using any encryption for transfer (see datasheet) */
+    DESFireFileTypeSettings fileData;
+    ReadFileControlBlock(FileNum, &fileData);
     Buffer[0] = STATUS_OPERATION_OK;
-    return DESFIRE_STATUS_RESPONSE_SIZE + XferStatus.BytesProcessed;
+    Int32ToByteBuffer(Buffer + 1, fileData.ValueFile.CleanValue);
+    return DESFIRE_STATUS_RESPONSE_SIZE + 4;
 }
 
 uint16_t EV0CmdCredit(uint8_t* Buffer, uint16_t ByteCount) {
@@ -1374,15 +1367,80 @@ uint16_t EV0CmdClearRecords(uint8_t* Buffer, uint16_t ByteCount) {
  */
 
 uint16_t EV0CmdCommitTransaction(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO 
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount != 1) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* Loop over all of the value files (backup files?) in the currently 
+     * selected application, and update the uncommitted credit/debit 
+     * changes made since the last transaction was resolved. 
+     */
+    uint16_t fileNumsArrayAddr = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, SelectedApp.Slot);
+    uint8_t fileNumsByIndexArray[DESFIRE_MAX_FILES];
+    ReadBlockBytes(fileNumsByIndexArray, fileNumsArrayAddr, DESFIRE_MAX_FILES);
+    Status = STATUS_OPERATION_OK;
+    for(uint8_t fileIdx = 0; fileIdx < DESFIRE_MAX_FILES; ++fileIdx) {
+        if(fileNumsByIndexArray[fileIdx] == DESFIRE_FILE_NOFILE_INDEX) {
+            continue;
+        }
+        else if(ReadFileType(SelectedApp.Slot, fileIdx) != DESFIRE_FILE_VALUE_DATA) {
+            continue;
+        }
+        DESFireFileTypeSettings fileData;
+        Status = ReadFileControlBlock(fileNumsByIndexArray[fileIdx], &fileData);
+        if(Status != STATUS_OPERATION_OK) {
+            break;
+        }
+        fileData.ValueFile.CleanValue -= fileData.ValueFile.PreviousDebit;
+        fileData.ValueFile.PreviousDebit = 0;
+        fileData.ValueFile.DirtyValue = fileData.ValueFile.CleanValue;
+        Status = WriteFileControlBlock(fileNumsByIndexArray[fileIdx], &fileData);
+        if(Status != STATUS_OPERATION_OK) {
+            break;
+        }
+    }
+    Picc.TransactionStarted = 0x00;
+    SynchronizePICCInfo();
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    uint8_t Status;
+    if(ByteCount != 1) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    /* Loop over all of the value files (backup files?) in the currently 
+     * selected application, and remove/abort the uncommitted credit/debit 
+     * changes made since the last transaction was resolved. 
+     */
+    uint16_t fileNumsArrayAddr = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, SelectedApp.Slot);
+    uint8_t fileNumsByIndexArray[DESFIRE_MAX_FILES];
+    ReadBlockBytes(fileNumsByIndexArray, fileNumsArrayAddr, DESFIRE_MAX_FILES);
+    Status = STATUS_OPERATION_OK;
+    for(uint8_t fileIdx = 0; fileIdx < DESFIRE_MAX_FILES; ++fileIdx) {
+        if(fileNumsByIndexArray[fileIdx] == DESFIRE_FILE_NOFILE_INDEX) {
+            continue;
+        }
+        else if(ReadFileType(SelectedApp.Slot, fileIdx) != DESFIRE_FILE_VALUE_DATA) {
+            continue;
+        }
+        DESFireFileTypeSettings fileData;
+        Status = ReadFileControlBlock(fileNumsByIndexArray[fileIdx], &fileData);
+        if(Status != STATUS_OPERATION_OK) {
+            break;
+        }
+        fileData.ValueFile.PreviousDebit = 0;
+        fileData.ValueFile.DirtyValue = fileData.ValueFile.CleanValue;
+        Status = WriteFileControlBlock(fileNumsByIndexArray[fileIdx], &fileData);
+        if(Status != STATUS_OPERATION_OK) {
+            break;
+        }
+    }
+    Picc.TransactionStarted = 0x00;
+    SynchronizePICCInfo();
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 /* 
@@ -1406,9 +1464,6 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     KeyId = Buffer[1];
     if(!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
-        //Buffer[1] = ReadMaxKeyCount(SelectedApp.Slot);
-        //Buffer[2] = SelectedApp.Slot;
-        //Buffer[3] = SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     } 
     /* Make sure that this key is AES, and figure out its byte size */

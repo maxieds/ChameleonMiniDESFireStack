@@ -33,20 +33,17 @@
 | CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :wavy_dash: | GetFileSettings still not returning correct data |
 | CMD_DELETE_FILE | 0xDF | | :ballot_box_with_check: | |
 | CMD_GET_ISO_FILE_IDS | 0x61 | | :x: | |
-| CMD_READ_DATA |  0xBD | | :ballot_box_with_check: | 
-  The data for std/backup files is uninitialized (any bits) until the user sets the data with WriteData |
-| CMD_WRITE_DATA |  0x3D | | :ballot_box_with_check: | 
-  Only supports write command operations with <= 52 bytes of data at a time. 
-  Offset parameters can be used to write lengthier files. |
-| CMD_GET_VALUE | 0x6C | | :question: | |
-| CMD_CREDIT | 0x0C | | | |
-| CMD_DEBIT | 0xDC | | | |
-| CMD_LIMITED_CREDIT | 0x1C | | | |
-| CMD_WRITE_RECORD | 0x3B | | | |
-| CMD_READ_RECORDS | 0xBB | | | |
-| CMD_CLEAR_RECORD_FILE | 0xEB | | | |
-| CMD_COMMIT_TRANSACTION | 0xC7 | | | |
-| CMD_ABORT_TRANSACTION | 0xA7 | | | |               |
+| CMD_READ_DATA |  0xBD | | :ballot_box_with_check: | The data for std/backup files is uninitialized (any bits) until the user sets the data with WriteData |
+| CMD_WRITE_DATA |  0x3D | | :ballot_box_with_check: | Only supports write command operations with <= 52 bytes of data at a time. Offset parameters can be used to write lengthier files. |
+| CMD_GET_VALUE | 0x6C | | :ballot_box_with_check: | |
+| CMD_CREDIT | 0x0C | | :ballot_box_with_check: | |
+| CMD_DEBIT | 0xDC | | :ballot_box_with_check: | |
+| CMD_LIMITED_CREDIT | 0x1C | | :ballot_box_with_check: | |
+| CMD_WRITE_RECORD | 0x3B | | :question: | |
+| CMD_READ_RECORDS | 0xBB | | :question: | |
+| CMD_CLEAR_RECORD_FILE | 0xEB | | :question: | |
+| CMD_COMMIT_TRANSACTION | 0xC7 | | :ballot_box_with_check: | |
+| CMD_ABORT_TRANSACTION | 0xA7 | | :ballot_box_with_check: | |               |
 
 ## :x: ISO7816 instruction and subcommands support 
 
@@ -75,4 +72,15 @@
 * The ``ReadData`` command ``offset`` input has no action at this point (TODO later) ...
 * How to accurately handle BackupDataFile types? 
 
+```cpp
+case DESFIRE_FILE_BACKUP_DATA:
+        if (Rollback) {
+            CopyBlockBytes(DataAreaBlockId, DataAreaBlockId + File.BackupFile.BlockCount, File.BackupFile.BlockCount);
+        }
+        else {
+            CopyBlockBytes(DataAreaBlockId + File.BackupFile.BlockCount, DataAreaBlockId, File.BackupFile.BlockCount);
+        }
+        break;
+    }
+```
 
