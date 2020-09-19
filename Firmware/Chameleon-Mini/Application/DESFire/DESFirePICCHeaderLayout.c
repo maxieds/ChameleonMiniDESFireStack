@@ -38,7 +38,7 @@ versions of the code at free will.
 #include "DESFirePICCControl.h"
 #include "DESFireLogging.h"
 
-const PROGMEM const char PPRINT_INDENT_LEVELS[][3] = {
+const const char PPRINT_INDENT_LEVELS[][3] = {
      "", 
      "   ", 
      "      ",
@@ -48,20 +48,20 @@ BYTE PPrintIndentLevel = 0;
 SIZET PrettyPrintPICCHeaderData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose) {
      SIZET charsWritten = 0x00;
      charsWritten  = snprintf_P(outputBuffer, maxLength, 
-                                PSTR("%s(UID) %s\n"), 
+                                PSTR("%s(UID) %s\r\n"), 
                                 PPRINT_INDENT_LEVELS[PPrintIndentLevel],
                                 GetHexBytesString(Picc.Uid, DESFIRE_UID_SIZE));
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                PSTR("%s(VERSION) HW=%02x.%02x, SW=%02x.%02x\n"), 
+                                PSTR("%s(VERSION) HW=%02x.%02x, SW=%02x.%02x\r\n"), 
                                 PPRINT_INDENT_LEVELS[PPrintIndentLevel],
                                 Picc.HwVersionMajor, Picc.HwVersionMinor, 
                                 Picc.SwVersionMajor, Picc.SwVersionMinor);
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                PSTR("%s(BATCH) %s\n"), 
+                                PSTR("%s(BATCH) %s\r\n"), 
                                 PPRINT_INDENT_LEVELS[PPrintIndentLevel],
                                 GetHexBytesString(Picc.BatchNumber, 5));
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                PSTR("%s(DATE) %02x/%02x\n"), 
+                                PSTR("%s(DATE) %02x/%02x\r\n"), 
                                 PPRINT_INDENT_LEVELS[PPrintIndentLevel],
                                 Picc.ProductionWeek, Picc.ProductionYear);
      return charsWritten;
@@ -78,7 +78,7 @@ SIZET PrettyPrintPICCFile(SelectedAppCacheType *appData, uint8_t fileIndex,
          BYTE fileCommSettings = ReadFileCommSettings(appData->Slot, fileIndex);
          SIZET fileAccessRights = ReadFileAccessRights(appData->Slot, fileIndex);
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                    PSTR("%s-> %02x [Comm=%s -- %s]\n"), 
+                                    PSTR("%s-> %02x [Comm=%s -- %s]\r\n"), 
                                     PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
                                     fileNumber, 
                                     GetCommSettingsDesc(fileCommSettings), 
@@ -86,7 +86,7 @@ SIZET PrettyPrintPICCFile(SelectedAppCacheType *appData, uint8_t fileIndex,
     }
     else {
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                    PSTR("%s-> %02x\n"), 
+                                    PSTR("%s-> %02x\r\n"), 
                                     PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
                                     fileNumber);
     }
@@ -97,7 +97,7 @@ SIZET PrettyPrintPICCFilesFull(SelectedAppCacheType *appData, BYTE *outputBuffer
     SIZET charsWritten = 0x00;
     BYTE fileIndex;
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("%s[Files -- %d total]\n"), 
+                               PSTR("%s[Files -- %d total]\r\n"), 
                                PPRINT_INDENT_LEVELS[PPrintIndentLevel], appData->FileCount);
     for(fileIndex = 0; fileIndex < DESFIRE_MAX_FILES; fileIndex++) {
          ++PPrintIndentLevel;
@@ -142,7 +142,7 @@ SIZET PrettyPrintPICCKey(SelectedAppCacheType *appData, uint8_t keyIndex,
                                     PSTR(" -- %02d"), keySettings);
     }
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("]\n"));
+                               PSTR("]\r\n"));
     return charsWritten;
 }
 
@@ -150,7 +150,7 @@ SIZET PrettyPrintPICCKeysFull(SelectedAppCacheType *appData, BYTE *outputBuffer,
     SIZET charsWritten = 0x00;
     BYTE keyIndex;
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("%s[Keys -- %d total]\n"), 
+                               PSTR("%s[Keys -- %d total]\r\n"), 
                                PPRINT_INDENT_LEVELS[PPrintIndentLevel], appData->KeyCount);
     for(keyIndex = 0; keyIndex < DESFIRE_MAX_KEYS; keyIndex++) {
          ++PPrintIndentLevel;
@@ -183,7 +183,7 @@ SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbo
               continue;
          }
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                    PSTR("%s== AID 0x%02x%02x%02x\n"), 
+                                    PSTR("%s== AID 0x%02x%02x%02x\r\n"), 
                                     PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
                                     curAID[0], curAID[1], curAID[2]);
          ++PPrintIndentLevel;
@@ -197,12 +197,12 @@ SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbo
 SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose) {
     BYTE charsWritten = 0x00;
     charsWritten += snprintf_P(outputBuffer, maxLength, 
-                               PSTR("**** DESFIRE HEADER DATA ****\n"));
+                               PSTR("**** DESFIRE HEADER DATA ****\r\n"));
     ++PPrintIndentLevel;
     charsWritten += PrettyPrintPICCHeaderData(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
     PPrintIndentLevel--;
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("**** DESFIRE INTERNAL STORAGE ****\n"));
+                               PSTR("**** DESFIRE INTERNAL STORAGE ****\r\n"));
     ++PPrintIndentLevel;
     charsWritten += PrettyPrintPICCAppDirsFull(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
     return charsWritten;

@@ -139,12 +139,9 @@ CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InPar
 CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
      snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
                 PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
-                     "based on %s from "
-                     "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.git.\n"
-                     "Revision: %s\nLicense: GPLv3\n" 
-                     "This is free software; see the source for copying conditions. "
-                     "There is NO warranty; not even for MERCHANTABILITY nor "
-                     "FITNESS FOR A PARTICULAR PURPOSE."), 
+                     "based on %s from \r\n"
+                     "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.git.\r\n"
+                     "Revision: %s\r\n"),
                 DESFIRE_FIRMWARE_BUILD_TIMESTAMP, 
                 DESFIRE_FIRMWARE_GIT_COMMIT_ID, 
                 DESFIRE_FIRMWARE_REVISION);
@@ -154,16 +151,16 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
     switch(LocalLoggingMode) {
          case OFF:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("OFF"));
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "OFF");
               break;
          case NORMAL:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("NORMAL"));
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "NORMAL");
               break;
          case VERBOSE:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("VERBOSE"));
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "VERBOSE");
               break;
          case DEBUGGING:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), PSTR("DEBUGGING"));
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "DEBUGGING");
               break;
          default:
               break;
