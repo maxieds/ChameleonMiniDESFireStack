@@ -1101,6 +1101,7 @@ uint16_t EV0CmdGetFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
         outBufPtr[3] = (uint8_t) ((accessRights >> 8) & 0x00ff);
         outBufPtr[4] = (uint8_t) (fileSize & 0x00ff);
         outBufPtr[5] = (uint8_t) ((fileSize >> 8) & 0x00ff);
+        outBufPtr[6] = 0x00; // MSB of file size
         outBufPtr[7] = 0x00;
         appendedFileDataSize = 1 + 1 + 2 + 3;
     }
@@ -1109,10 +1110,10 @@ uint16_t EV0CmdGetFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
         outBufPtr[1] = commSettings;
         outBufPtr[2] = (uint8_t) (accessRights & 0x00ff);
         outBufPtr[3] = (uint8_t) ((accessRights >> 8) & 0x00ff);
-        Int32ToByteBuffer(outBufPtr, fileStorageData.ValueFile.LowerLimit);
-        Int32ToByteBuffer(outBufPtr + 4, fileStorageData.ValueFile.UpperLimit);
-        Int32ToByteBuffer(outBufPtr + 8, fileStorageData.ValueFile.CleanValue);
-        outBufPtr[12] = fileStorageData.ValueFile.LimitedCreditEnabled;
+        Int32ToByteBuffer(outBufPtr + 4, fileStorageData.ValueFile.LowerLimit);
+        Int32ToByteBuffer(outBufPtr + 8, fileStorageData.ValueFile.UpperLimit);
+        Int32ToByteBuffer(outBufPtr + 12, fileStorageData.ValueFile.CleanValue);
+        outBufPtr[16] = fileStorageData.ValueFile.LimitedCreditEnabled;
         appendedFileDataSize = 1 + 1 + 2 + 4 + 4 + 4 + 1;
     }
     else if(fileType == DESFIRE_FILE_LINEAR_RECORDS || 
@@ -1121,9 +1122,9 @@ uint16_t EV0CmdGetFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
         outBufPtr[1] = commSettings;
         outBufPtr[2] = (uint8_t) (accessRights & 0x00ff);
         outBufPtr[3] = (uint8_t) ((accessRights >> 8) & 0x00ff);
-        Int24ToByteBuffer(outBufPtr, GET_LE24(fileStorageData.RecordFile.RecordSize));
-        Int24ToByteBuffer(outBufPtr + 3, GET_LE24(fileStorageData.RecordFile.MaxRecordCount));
-        Int24ToByteBuffer(outBufPtr + 6, GET_LE24(fileStorageData.RecordFile.CurrentNumRecords));
+        Int24ToByteBuffer(outBufPtr + 4, GET_LE24(fileStorageData.RecordFile.RecordSize));
+        Int24ToByteBuffer(outBufPtr + 7, GET_LE24(fileStorageData.RecordFile.MaxRecordCount));
+        Int24ToByteBuffer(outBufPtr + 10, GET_LE24(fileStorageData.RecordFile.CurrentNumRecords));
         appendedFileDataSize = 1 + 1 + 2 + 3 + 3 + 3;
     }
     else {

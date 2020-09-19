@@ -111,7 +111,10 @@ uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings,
      if(fileIndex < DESFIRE_MAX_FILES) {
           return STATUS_DUPLICATE_ERROR;
      }
-     fileIndex = SelectedApp.FileCount;
+     fileIndex = LookupNextFreeFileSlot(SelectedApp.Slot);
+     if(fileIndex >= DESFIRE_MAX_FILES) {
+          return STATUS_APP_COUNT_ERROR;
+     }
      SIZET fileSettingsBlockId = AllocateBlocks(DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireFileTypeSettings)));
      if(fileSettingsBlockId == 0) {
           return STATUS_OUT_OF_EEPROM_ERROR;

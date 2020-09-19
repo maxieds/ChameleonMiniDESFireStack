@@ -931,7 +931,7 @@ static inline int CreateValueFile(nfc_device *nfcConnDev, uint8_t fileNo, uint8_
     Int32ToByteBuffer(CMD + 9, LowerLimit);
     Int32ToByteBuffer(CMD + 13, UpperLimit);
     Int32ToByteBuffer(CMD + 17, Value);
-    CMD[22] = LimitedCreditEnabled;
+    CMD[21] = LimitedCreditEnabled;
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> CreateValueFile command:\n");
         fprintf(stdout, "    -> ");

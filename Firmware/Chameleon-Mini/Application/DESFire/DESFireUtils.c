@@ -67,7 +67,7 @@ void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value) {
     byteBuffer[3] = (uint8_t) ((int32Value >> 24) & 0x000000ff);
 }
 
-void Int24ToByteBuffer(uint8_t *byteBuffer, __uint24 int24Value) {
+void Int24ToByteBuffer(uint8_t *byteBuffer, uint32_t int24Value) {
     if(byteBuffer == NULL) {
         return;
     }

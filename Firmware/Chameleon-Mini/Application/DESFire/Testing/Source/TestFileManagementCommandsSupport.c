@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     }   
 
     uint8_t aidToCreate[] = { 0x01, 0x00, 0x34 };
-    if(CreateApplication(nfcPnd, aidToCreate, 0x0f, 0x03)) {
+    if(CreateApplication(nfcPnd, aidToCreate, 0x0f, 0x06)) {
         fprintf(stdout, "    -- !! Error creating new AID !!\n");
         return EXIT_FAILURE;
     }

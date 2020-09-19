@@ -380,6 +380,22 @@ BYTE LookupFileNumberByIndex(uint8_t AppSlot, BYTE FileIndex) {
      return fileNumbersHashmap[FileIndex];
 }
 
+BYTE LookupNextFreeFileSlot(uint8_t AppSlot) {
+     if(AppSlot >= DESFIRE_MAX_SLOTS) {
+          return;
+     }
+     SIZET fileNumbersHashmapBlockId = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, AppSlot);
+     BYTE fileNumbersHashmap[DESFIRE_MAX_FILES];
+     ReadBlockBytes(fileNumbersHashmap, fileNumbersHashmapBlockId, DESFIRE_MAX_FILES);
+     uint8_t nextFreeSlot;
+     for(nextFreeSlot = 0; nextFreeSlot < DESFIRE_MAX_FILES; ++nextFreeSlot) {
+          if(fileNumbersHashmap[nextFreeSlot] == DESFIRE_FILE_NOFILE_INDEX) {
+              return nextFreeSlot;
+          }
+     }
+     return nextFreeSlot;
+}
+
 void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber) {
      if(AppSlot >= DESFIRE_MAX_SLOTS || FileIndex >= DESFIRE_MAX_FILES) {
           return;

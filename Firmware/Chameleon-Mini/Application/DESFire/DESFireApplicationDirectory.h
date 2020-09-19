@@ -186,6 +186,7 @@ BYTE ReadFileCount(uint8_t AppSlot);
 void WriteFileCount(uint8_t AppSlot, BYTE FileCount);
 BYTE LookupFileNumberIndex(uint8_t AppSlot, BYTE FileNumber);
 BYTE LookupFileNumberByIndex(uint8_t AppSlot, BYTE FileIndex);
+BYTE LookupNextFreeFileSlot(uint8_t AppSlot);
 void WriteFileNumberAtIndex(uint8_t AppSlot, uint8_t FileIndex, BYTE FileNumber);
 SIZET ReadFileDataStructAddress(uint8_t AppSlot, uint8_t FileIndex);
 uint8_t ReadFileType(uint8_t AppSlot, uint8_t FileIndex);
