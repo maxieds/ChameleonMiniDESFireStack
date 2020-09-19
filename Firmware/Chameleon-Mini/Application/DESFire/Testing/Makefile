@@ -24,7 +24,8 @@ FILE_BASENAMES=NFCAntiCollisionMod \
 			   TestKeyManagementCommands \
 			   TestApplicationManagementCommands \
 			   TestFileManagementCommandsSupport \
-			   TestDataManipulationCommandsSupport
+			   TestDataManipulationCommandsSupport \
+			   TestDataManipulationCommandsSupport2
 OBJFILES=$(addprefix $(OBJDIR)/, $(addsuffix .$(OBJEXT), $(basename $(FILE_BASENAMES))))
 BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENAMES))))
 

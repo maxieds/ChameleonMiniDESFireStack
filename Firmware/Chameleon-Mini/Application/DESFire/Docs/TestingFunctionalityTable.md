@@ -84,3 +84,5 @@ case DESFIRE_FILE_BACKUP_DATA:
     }
 ```
 
+* Handle how to write values directly to value files (without credit/debit type actions)? 
+

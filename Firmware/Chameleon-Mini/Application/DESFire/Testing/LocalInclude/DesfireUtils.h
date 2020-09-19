@@ -1301,7 +1301,7 @@ static inline int DebitValueFileCommand(nfc_device *nfcConnDev, uint8_t fileNo, 
     memset(CMD + 2, 0x00, cmdBufSize - 2);
     CMD[4] = cmdBufSize - 6;
     CMD[5] = fileNo;
-    Int32ToByteBuffer(CMD + 6, creditAmount);
+    Int32ToByteBuffer(CMD + 6, debitAmount);
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, ">>> Debit(ValueFile) command:\n");
         fprintf(stdout, "    -> ");
