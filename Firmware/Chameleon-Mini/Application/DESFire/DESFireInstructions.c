@@ -1368,7 +1368,8 @@ uint16_t EV0CmdCredit(uint8_t* Buffer, uint16_t ByteCount) {
     }
     /* Make sure that the transaction will fit in the bounds of the tag */
     int32_t nextValueAmount = fileData.ValueFile.DirtyValue + creditAmount;
-    if(nextValueAmount >= fileData.ValueFile.LowerLimit && nextValueAmount <= fileData.ValueFile.UpperLimit) {
+    if(nextValueAmount < fileData.ValueFile.LowerLimit || 
+       nextValueAmount > fileData.ValueFile.UpperLimit) {
         Status = STATUS_BOUNDARY_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -1420,8 +1421,8 @@ uint16_t EV0CmdDebit(uint8_t* Buffer, uint16_t ByteCount) {
     }
     /* Make sure that the transaction will fit in the bounds of the tag */
     int32_t nextValueAmount = fileData.ValueFile.DirtyValue - debitAmount;
-    if(nextValueAmount >= fileData.ValueFile.LowerLimit && 
-       nextValueAmount <= fileData.ValueFile.UpperLimit) {
+    if(nextValueAmount < fileData.ValueFile.LowerLimit || 
+       nextValueAmount > fileData.ValueFile.UpperLimit) {
         Status = STATUS_BOUNDARY_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -1467,8 +1468,8 @@ uint16_t EV0CmdLimitedCredit(uint8_t* Buffer, uint16_t ByteCount) {
     }
     /* Make sure that the transaction will fit in the bounds of the tag */
     int32_t nextValueAmount = fileData.ValueFile.DirtyValue + creditAmount;
-    if(nextValueAmount >= fileData.ValueFile.LowerLimit && 
-       nextValueAmount <= fileData.ValueFile.UpperLimit) {
+    if(nextValueAmount < fileData.ValueFile.LowerLimit || 
+       nextValueAmount > fileData.ValueFile.UpperLimit) {
         Status = STATUS_BOUNDARY_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
