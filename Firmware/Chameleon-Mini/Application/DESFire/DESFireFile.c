@@ -55,7 +55,7 @@ uint16_t GetFileSizeFromFileType(DESFireFileTypeSettings *File) {
           case DESFIRE_FILE_VALUE_DATA:
                return sizeof(int32_t); // 4
           case DESFIRE_FILE_LINEAR_RECORDS:
-               return (File->LinearRecordFile.BlockCount) * DESFIRE_EEPROM_BLOCK_SIZE;
+               return (File->RecordFile.BlockCount) * DESFIRE_EEPROM_BLOCK_SIZE;
           case DESFIRE_FILE_CIRCULAR_RECORDS:
           default:
                break;
@@ -186,7 +186,6 @@ uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRi
                         int32_t LowerLimit, int32_t UpperLimit, int32_t Value, 
                         bool LimitedCreditEnabled) {
      uint8_t Status;
-     uint8_t BlockCount = DESFIRE_BYTES_TO_BLOCKS(4);
      memset(&SelectedFile, PICC_EMPTY_BYTE, sizeof(SelectedFileCacheType));
      SelectedFile.File.FileType = DESFIRE_FILE_VALUE_DATA;
      SelectedFile.File.ValueFile.LowerLimit = LowerLimit;
@@ -205,6 +204,29 @@ uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRi
           return STATUS_FILE_NOT_FOUND;
      }
      return STATUS_OPERATION_OK;
+}
+
+uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
+                         uint8_t *RecordSize, uint8_t *MaxRecordSize) {
+    uint8_t Status;
+     memset(&SelectedFile, PICC_EMPTY_BYTE, sizeof(SelectedFileCacheType));
+     SelectedFile.File.FileType = FileType;
+     SelectedFile.File.RecordFile.BlockCount = 0;
+     SelectedFile.File.RecordFile.ClearPending = 0;
+     memcpy(SelectedFile.File.RecordFile.RecordSize, RecordSize, 3);
+     memcpy(SelectedFile.File.RecordFile.MaxRecordCount, MaxRecordSize, 3);
+     uint16_t maxRecords = MaxRecordSize[0] | (MaxRecordSize[1] << 8);
+     SelectedFile.File.FileSize = maxRecords; // TODO: Record size == 1 byte ???
+     Status = CreateFileHeaderData(FileNum, CommSettings, AccessRights, &(SelectedFile.File));
+     if(Status != STATUS_OPERATION_OK) {
+          return Status;
+     }
+     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
+     if(fileIndex >= DESFIRE_MAX_FILES) {
+          return STATUS_FILE_NOT_FOUND;
+     }
+    
+    return STATUS_OPERATION_OK;
 }
 
 uint8_t DeleteFile(uint8_t fileIndex) {

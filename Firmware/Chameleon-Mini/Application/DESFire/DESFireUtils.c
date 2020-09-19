@@ -57,6 +57,25 @@ void ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BY
      memcpy(destArr + arrASize, arrB, arrBSize);
 }
 
+void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value) {
+    if(byteBuffer == NULL) {
+        return;
+    }
+    byteBuffer[0] = (uint8_t) (int32Value & 0x000000ff);
+    byteBuffer[1] = (uint8_t) ((int32Value >> 8) & 0x000000ff);
+    byteBuffer[2] = (uint8_t) ((int32Value >> 16) & 0x000000ff);
+    byteBuffer[3] = (uint8_t) ((int32Value >> 24) & 0x000000ff);
+}
+
+void Int24ToByteBuffer(uint8_t *byteBuffer, __uint24 int24Value) {
+    if(byteBuffer == NULL) {
+        return;
+    }
+    byteBuffer[0] = (uint8_t) (int24Value & 0x0000ff);
+    byteBuffer[1] = (uint8_t) ((int24Value >> 8) & 0x0000ff);
+    byteBuffer[2] = (uint8_t) ((int24Value >> 16) & 0x0000ff);
+}
+
 void DebugPrintP(const char *fmt, ...) {
     char Format[80];
     char Buffer[80];

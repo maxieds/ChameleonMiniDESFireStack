@@ -508,6 +508,7 @@ void SelectAppBySlot(uint8_t AppSlot) {
     SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[AppSlot];
     ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;
+    SynchronizeAppDir();
 }
 
 void GetAppData(uint8_t appSlot, SelectedAppCacheType *destData) {
@@ -622,7 +623,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     else {
          SIZET fileAccessRightsData[DESFIRE_MAX_FILES];
-         memset(fileAccessRightsData, 0xee, sizeof(SIZET) * DESFIRE_MAX_FILES);
+         memset(fileAccessRightsData, 0x0f, sizeof(SIZET) * DESFIRE_MAX_FILES);
          WriteBlockBytes(fileAccessRightsData, appCacheData.FileAccessRights, sizeof(SIZET) * DESFIRE_MAX_FILES);
     }
     appCacheData.KeyVersionsArray = AllocateBlocks(APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE);

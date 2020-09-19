@@ -88,8 +88,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
             uint8_t RecordSize[3];
             uint8_t CurrentNumRecords[3];
             uint8_t MaxRecordCount[3];
-        } LinearRecordFile;
-        // TODO: CyclicRecordFile type 
+        } RecordFile;
     };
 } DESFireFileTypeSettings;
 
@@ -115,6 +114,8 @@ uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t Acces
 uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
                         int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled);
+uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
+                         uint8_t *RecordSize, uint8_t *MaxRecordSize);
 uint8_t DeleteFile(uint8_t FileIndex);
 
 /* Transactions */

@@ -51,6 +51,8 @@ void ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BY
 
 void ShortToByteArray(SIZET shortValue, BYTE *outputArr);
 void IntegerToByteArray(UINT intValue, BYTE *outputArr);
+void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value);
+void Int24ToByteBuffer(uint8_t *byteBuffer, __uint24 int24Value);
 
 void ByteToBinaryString(BYTE byteValue, char *destStrBuf, SIZET maxDestSize);
 void ByteArrayToBinaryString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);

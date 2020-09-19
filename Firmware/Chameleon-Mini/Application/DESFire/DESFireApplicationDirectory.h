@@ -73,7 +73,7 @@ versions of the code at free will.
 #define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_FILES)
-     #define DESFIRE_MAX_FILES                      (4)
+     #define DESFIRE_MAX_FILES                      (6)
 #elif defined(DESFIRE_CUSTOM_MAX_FILES)
      #define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
 #else

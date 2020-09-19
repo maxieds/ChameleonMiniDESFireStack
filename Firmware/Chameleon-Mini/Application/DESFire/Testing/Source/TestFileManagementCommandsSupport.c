@@ -41,8 +41,16 @@ int main(int argc, char **argv) {
         fprintf(stdout, "    -- !! Error creating backup data file !!\n");
         return EXIT_FAILURE;
     }
-    else if(CreateValueFile(nfcPnd, 0x05, 0x00, 0x0f, 0, 256, 128, 0x01)) {
+    else if(CreateValueFile(nfcPnd, 0x02, 0x00, 0x0f, 0, 256, 128, 0x01)) {
         fprintf(stdout, "    -- !! Error creating value file !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(CreateLinearRecordFile(nfcPnd, 0x03, 0x00, 0x0f, 4, 12)) {
+        fprintf(stdout, "    -- !! Error creating linear record file !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(CreateCyclicRecordFile(nfcPnd, 0x04, 0x00, 0x0f, 1, 5)) {
+        fprintf(stdout, "    -- !! Error creating cyclic record file !!\n");
         return EXIT_FAILURE;
     }
     else if(GetFileIds(nfcPnd)) {
@@ -55,6 +63,13 @@ int main(int argc, char **argv) {
     }
     else if(GetFileIds(nfcPnd)) {
         fprintf(stdout, "    -- !! Error listing the file IDs !!\n");
+        return EXIT_FAILURE;
+    }
+    else if(GetFileSettings(nfcPnd, 0x00) || 
+            GetFileSettings(nfcPnd, 0x02) || 
+            GetFileSettings(nfcPnd, 0x03) || 
+            GetFileSettings(nfcPnd, 0x04)) {
+        fprintf(stdout, "    -- !! Error retrieving file settings !!\n");
         return EXIT_FAILURE;
     }
 

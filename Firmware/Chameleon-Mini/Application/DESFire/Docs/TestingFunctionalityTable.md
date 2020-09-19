@@ -24,13 +24,13 @@
 | CMD_GET_VERSION | 0x60 | | :ballot_box_with_check: | |
 | CMD_GET_CARD_UID | 0x51 | | :ballot_box_with_check: | |
 | CMD_GET_FILE_IDS |  0x6F | | :ballot_box_with_check: | |
-| CMD_GET_FILE_SETTINGS | 0xF5 | | :x: | |
+| CMD_GET_FILE_SETTINGS | 0xF5 | | :ballot_box_with_check: | |
 | CMD_CHANGE_FILE_SETTINGS | 0x5F | | :x: | |
 | CMD_CREATE_STDDATA_FILE |  0xCD | | :ballot_box_with_check: | |
 | CMD_CREATE_BACKUPDATA_FILE |  0xCB | :ballot_box_with_check: | | |
 | CMD_CREATE_VALUE_FILE |  0xCC | | :ballot_box_with_check: | |
-| CMD_CREATE_LINEAR_RECORD_FILE | 0xC1 | | :x: | |
-| CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :x: | |
+| CMD_CREATE_LINEAR_RECORD_FILE | 0xC1 | | :ballot_box_with_check: | |
+| CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :ballot_box_with_check: | |
 | CMD_DELETE_FILE | 0xDF | | :ballot_box_with_check: | |
 | CMD_GET_ISO_FILE_IDS | 0x61 | | :x: | |
 | CMD_READ_DATA |  0xBD | | :question: | |

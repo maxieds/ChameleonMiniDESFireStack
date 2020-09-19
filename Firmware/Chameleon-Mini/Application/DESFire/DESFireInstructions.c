@@ -885,7 +885,6 @@ uint16_t EV0CmdCreateStandardDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     if (Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    /* Validate the file size */
     FileSize = GET_LE24(&Buffer[5]);
     Status = CreateStandardFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -911,7 +910,6 @@ uint16_t EV0CmdCreateBackupDataFile(uint8_t* Buffer, uint16_t ByteCount) {
     if (Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    /* Validate the file size */
     FileSize = GET_LE24(&Buffer[5]);
     Status = CreateBackupFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -935,7 +933,6 @@ uint16_t EV0CmdCreateValueFile(uint8_t* Buffer, uint16_t ByteCount) {
     if (Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }    
-    /* Validate the file size */
     CommSettings = Buffer[2];
     AccessRights = Buffer[3] | (Buffer[4] << 8);
     LowerLimit = GET_LE32(&Buffer[5]);
@@ -948,12 +945,56 @@ uint16_t EV0CmdCreateValueFile(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdCreateLinearRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
+    if(ByteCount != 1 + 1 + 1 + 2 + 3 + 3) {
+        Buffer[0] = STATUS_LENGTH_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t Status = CreateFileCommonValidation(fileNumber);
+    if(Status != STATUS_OPERATION_OK) {
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t commSettings = Buffer[2];
+    uint16_t accessRights = Buffer[3] | (Buffer[4] << 8);
+    uint8_t *recordSizeBytes = &Buffer[5];
+    uint8_t *maxRecordsBytes = &Buffer[8];
+    uint16_t recordSize = recordSizeBytes[3] | (recordSizeBytes[4] << 8);
+    uint16_t maxRecords = maxRecordsBytes[3] | (maxRecordsBytes[4] << 8);
+    if(recordSize > maxRecords || maxRecords == 0) {
+        Buffer[0] = STATUS_BOUNDARY_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    uint8_t fileType = DESFIRE_FILE_LINEAR_RECORDS;
+    Status = CreateRecordFile(fileType, fileNumber, commSettings, accessRights, 
+                              recordSizeBytes, maxRecordsBytes);
+    Buffer[0] = Status;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t EV0CmdCreateCyclicRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
+    if(ByteCount != 1 + 1 + 1 + 2 + 3 + 3) {
+        Buffer[0] = STATUS_LENGTH_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t Status = CreateFileCommonValidation(fileNumber);
+    if(Status != STATUS_OPERATION_OK) {
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
+    uint8_t commSettings = Buffer[2];
+    uint16_t accessRights = Buffer[3] | (Buffer[4] << 8);
+    uint8_t *recordSizeBytes = &Buffer[5];
+    uint8_t *maxRecordsBytes = &Buffer[8];
+    uint16_t recordSize = recordSizeBytes[3] | (recordSizeBytes[4] << 8);
+    uint16_t maxRecords = maxRecordsBytes[3] | (maxRecordsBytes[4] << 8);
+    if(recordSize > maxRecords || maxRecords == 0) {
+        Buffer[0] = STATUS_BOUNDARY_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    uint8_t fileType = DESFIRE_FILE_CIRCULAR_RECORDS;
+    Status = CreateRecordFile(fileType, fileNumber, commSettings, accessRights, 
+                              recordSizeBytes, maxRecordsBytes);
+    Buffer[0] = Status;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
@@ -1019,9 +1060,78 @@ uint16_t EV0CmdGetFileIds(uint8_t* Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdGetFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    
+    if(ByteCount != 1 + 1) {
+        Buffer[0] = STATUS_LENGTH_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    else if(!Authenticated) {
+        Buffer[0] = STATUS_AUTHENTICATION_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    uint8_t fileNumber = Buffer[1];
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
+    if(!KeyIdValid(SelectedApp.Slot, fileIndex)) {
+        Buffer[0] = STATUS_FILE_NOT_FOUND;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    uint16_t accessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t Status;
+    switch(ValidateAuthentication(accessRights, VALIDATE_ACCESS_READ | VALIDATE_ACCESS_READWRITE)) {
+        case VALIDATED_ACCESS_DENIED:
+            Status = STATUS_PERMISSION_DENIED;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            ActiveCommMode = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
+    }
+    uint8_t appendedFileDataSize = 0x00;
+    uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
+    uint8_t commSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    DESFireFileTypeSettings fileStorageData;
+    ReadFileControlBlock(fileNumber, &fileStorageData);
+    uint16_t fileSize = fileStorageData.FileSize;
+    uint8_t *outBufPtr = &Buffer[1];
+    if(fileType == DESFIRE_FILE_STANDARD_DATA || 
+       fileType == DESFIRE_FILE_BACKUP_DATA) {
+        outBufPtr[0] = fileType;
+        outBufPtr[1] = commSettings;
+        outBufPtr[2] = (uint8_t) (accessRights & 0x00ff);
+        outBufPtr[3] = (uint8_t) ((accessRights >> 8) & 0x00ff);
+        outBufPtr[4] = (uint8_t) (fileSize & 0x00ff);
+        outBufPtr[5] = (uint8_t) ((fileSize >> 8) & 0x00ff);
+        outBufPtr[7] = 0x00;
+        appendedFileDataSize = 1 + 1 + 2 + 3;
+    }
+    else if(fileType == DESFIRE_FILE_VALUE_DATA) {
+        outBufPtr[0] = fileType;
+        outBufPtr[1] = commSettings;
+        outBufPtr[2] = (uint8_t) (accessRights & 0x00ff);
+        outBufPtr[3] = (uint8_t) ((accessRights >> 8) & 0x00ff);
+        Int32ToByteBuffer(outBufPtr, fileStorageData.ValueFile.LowerLimit);
+        Int32ToByteBuffer(outBufPtr + 4, fileStorageData.ValueFile.UpperLimit);
+        Int32ToByteBuffer(outBufPtr + 8, fileStorageData.ValueFile.CleanValue);
+        outBufPtr[12] = fileStorageData.ValueFile.LimitedCreditEnabled;
+        appendedFileDataSize = 1 + 1 + 2 + 4 + 4 + 4 + 1;
+    }
+    else if(fileType == DESFIRE_FILE_LINEAR_RECORDS || 
+            fileType == DESFIRE_FILE_CIRCULAR_RECORDS) {
+        outBufPtr[0] = fileType;
+        outBufPtr[1] = commSettings;
+        outBufPtr[2] = (uint8_t) (accessRights & 0x00ff);
+        outBufPtr[3] = (uint8_t) ((accessRights >> 8) & 0x00ff);
+        Int24ToByteBuffer(outBufPtr, GET_LE24(fileStorageData.RecordFile.RecordSize));
+        Int24ToByteBuffer(outBufPtr + 3, GET_LE24(fileStorageData.RecordFile.MaxRecordCount));
+        Int24ToByteBuffer(outBufPtr + 6, GET_LE24(fileStorageData.RecordFile.CurrentNumRecords));
+        appendedFileDataSize = 1 + 1 + 2 + 3 + 3 + 3;
+    }
+    else {
+        Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
+        return ;
+    }
+    Buffer[0] = STATUS_OPERATION_OK;
+    return DESFIRE_STATUS_RESPONSE_SIZE + appendedFileDataSize;
 }
 
 uint16_t EV0CmdChangeFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
