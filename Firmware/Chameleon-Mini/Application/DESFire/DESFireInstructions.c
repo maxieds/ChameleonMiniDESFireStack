@@ -1563,10 +1563,10 @@ uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount) {
     /* We are only able to read chunks of data starting at a round block offset */
     DesfireState = DESFIRE_WRITE_DATA_FILE;
     uint8_t offsetBlocks = DESFIRE_BYTES_TO_BLOCKS(Offset);
-    uint16_t effectiveOffset = offsetBlocks * DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t effectiveOffset = Offset % DESFIRE_EEPROM_BLOCK_SIZE;
     uint16_t bufReadOffset = Offset - effectiveOffset;
     uint16_t dataXferLength = ByteCount - 8;
-    uint16_t dataWriteAddr = GetFileDataAreaBlockId(fileIndex) + offsetBlocks;
+    uint16_t dataWriteAddr = GetFileDataAreaBlockId(fileIndex) + offsetBlocks - 1;
     uint8_t priorFileData[effectiveOffset];
     ReadBlockBytes(priorFileData, dataWriteAddr, effectiveOffset);
     memmove(&Buffer[8] + effectiveOffset, &Buffer[0], dataXferLength);
@@ -1575,7 +1575,8 @@ uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount) {
     WriteBlockBytes(&Buffer[0], dataWriteAddr, dataXferLength);
     TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
     TransferState.WriteData.Sink.Pointer = dataWriteAddr + DESFIRE_BYTES_TO_BLOCKS(dataXferLength);
-    return STATUS_OPERATION_OK;
+    Status = STATUS_OPERATION_OK;
+    return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
 
 uint16_t EV0CmdClearRecords(uint8_t* Buffer, uint16_t ByteCount) {

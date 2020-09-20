@@ -40,7 +40,7 @@
 | CMD_DEBIT | 0xDC | | :ballot_box_with_check: | |
 | CMD_LIMITED_CREDIT | 0x1C | | :ballot_box_with_check: | |
 | CMD_WRITE_RECORD | 0x3B | | :question: | |
-| CMD_READ_RECORDS | 0xBB | | :question: | |
+| CMD_READ_RECORDS | 0xBB | | :wavy_dash: | |
 | CMD_CLEAR_RECORD_FILE | 0xEB | | :question: | |
 | CMD_COMMIT_TRANSACTION | 0xC7 | | :ballot_box_with_check: | |
 | CMD_ABORT_TRANSACTION | 0xA7 | | :ballot_box_with_check: | |               |
@@ -85,4 +85,5 @@ case DESFIRE_FILE_BACKUP_DATA:
 ```
 
 * Handle how to write values directly to value files (without credit/debit type actions)? 
+* WriteRecordFile only handles/reads off continued chunks in round block sizes. How to handle this? 
 

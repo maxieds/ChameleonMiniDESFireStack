@@ -1,4 +1,4 @@
-/* TestAuthenticateAES.c */
+/* TestAuthenticateAES128.c */
 
 #include "LibNFCUtils.h"
 #include "LibNFCWrapper.h"

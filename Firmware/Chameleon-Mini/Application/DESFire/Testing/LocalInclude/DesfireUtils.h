@@ -1453,7 +1453,7 @@ static inline int ReadRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo,
             uint8_t CMDCONT[] = { 0x90, 0xaf, 0x00, 0x00, 0x00, 0x00 };
             if(PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    -> ");
-                print_hex(CMDCONT, cmdBufSize);
+                print_hex(CMDCONT, sizeof(CMDCONT));
             }       
             rxDataStatus = libnfcTransmitBytes(nfcConnDev, CMDCONT, sizeof(CMDCONT), rxDataStorage);
         }
