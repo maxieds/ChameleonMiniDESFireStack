@@ -64,6 +64,7 @@ typedef struct LogBlockListNode {
 
 extern LogBlockListNode *LogBlockListBegin;
 extern LogBlockListNode *LogBlockListEnd;
+extern uint8_t LogBlockListElementCount;
 
 #define LIVE_LOGGER_POST_TICKS               (3)
 extern uint8_t LiveLogModePostTickCount;
@@ -106,6 +107,7 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
               else {
                   LogBlockListBegin = LogBlockListEnd = logBlock;
               }
+              ++LogBlockListElementCount;
           }
           else {
               status = false;
@@ -128,6 +130,7 @@ FreeLogBlocks(void) {
            logBlockCurrent = logBlockNext;
       }
       LogBlockListBegin = LogBlockListEnd = NULL;
+      LogBlockListElementCount = 0;
 }
 
 INLINE bool 
@@ -147,9 +150,10 @@ LiveLogTick(void) {
      //ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
      //ATOMIC_BLOCK(ATOMIC_FORCEON) {
           //Endpoint_ClearIN();
-          TerminalFlushBuffer();
+          //TerminalFlushBuffer();
           LogBlockListNode *logBlockCurrent = LogBlockListBegin;
-          while(logBlockCurrent != NULL) {
+          while(logBlockCurrent != NULL && LogBlockListElementCount > 0) {
+              TerminalFlushBuffer();
               TerminalSendBlock(logBlockCurrent->logBlockStart, logBlockCurrent->logBlockSize);
               TerminalFlushBuffer();
               logBlockCurrent = logBlockCurrent->nextBlock;
