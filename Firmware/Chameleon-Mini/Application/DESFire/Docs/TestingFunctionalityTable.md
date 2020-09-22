@@ -4,7 +4,7 @@
 
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :interrobang: | |
+| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | Works with the ``-DDESFIRE_QUICK_DES_CRYPTO`` Makefile ``SETTINGS`` compiler flag set to enable "quicker" DES crypto. |
 | CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :question: | |
 | CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |    

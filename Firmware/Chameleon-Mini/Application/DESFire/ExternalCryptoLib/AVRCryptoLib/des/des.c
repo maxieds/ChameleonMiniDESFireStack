@@ -37,6 +37,11 @@
     #undef  PROGMEM
     #define PROGMEM
 #endif
+#ifdef DESFIRE_QUICK_DES_CRYPTO
+    #define QPROGMEM
+#else
+    #define QPROGMEM              PROGMEM
+#endif
 
 const uint8_t DES_sbox[256] PROGMEM = {
   /* S-box 1 */
@@ -81,7 +86,7 @@ const uint8_t DES_sbox[256] PROGMEM = {
   0x21, 0xE7, 0x4A, 0x8D, 0xFC, 0x90, 0x35, 0x6B
 };
 
-const uint8_t e_permtab[] PROGMEM = {
+const uint8_t e_permtab[] QPROGMEM = {
 	 4,  6, 					/* 4 bytes in 6 bytes out*/
 	32,  1,  2,  3,  4,  5,
 	 4,  5,  6,  7,  8,  9,
@@ -93,7 +98,7 @@ const uint8_t e_permtab[] PROGMEM = {
 	28, 29, 30, 31, 32,  1
 };
 
-const uint8_t p_permtab[] PROGMEM = {
+const uint8_t p_permtab[] QPROGMEM = {
 	 4,  4,						/* 32 bit -> 32 bit */
 	16,  7, 20, 21,
 	29, 12, 28, 17,
@@ -105,7 +110,7 @@ const uint8_t p_permtab[] PROGMEM = {
 	22, 11,  4, 25
 };
 
-const uint8_t ip_permtab[] PROGMEM = {
+const uint8_t ip_permtab[] QPROGMEM = {
 	 8,  8,						/* 64 bit -> 64 bit */
 	58, 50, 42, 34, 26, 18, 10, 2,
 	60, 52, 44, 36, 28, 20, 12, 4,
@@ -117,7 +122,7 @@ const uint8_t ip_permtab[] PROGMEM = {
 	63, 55, 47, 39, 31, 23, 15, 7
 };
 
-const uint8_t inv_ip_permtab[] PROGMEM = {
+const uint8_t inv_ip_permtab[] QPROGMEM = {
 	 8, 8,						/* 64 bit -> 64 bit */
 	40, 8, 48, 16, 56, 24, 64, 32,
 	39, 7, 47, 15, 55, 23, 63, 31,
@@ -129,7 +134,7 @@ const uint8_t inv_ip_permtab[] PROGMEM = {
 	33, 1, 41,  9, 49, 17, 57, 25
 };
 
-const uint8_t pc1_permtab[] PROGMEM = {
+const uint8_t pc1_permtab[] QPROGMEM = {
 	 8,  7, 					/* 64 bit -> 56 bit*/
 	57, 49, 41, 33, 25, 17,  9,
 	 1, 58, 50, 42, 34, 26, 18,
@@ -141,7 +146,7 @@ const uint8_t pc1_permtab[] PROGMEM = {
 	21, 13,  5, 28, 20, 12,  4
 };
 
-const uint8_t pc2_permtab[] PROGMEM = {
+const uint8_t pc2_permtab[] QPROGMEM = {
 	 7,	 6, 					/* 56 bit -> 48 bit */
 	14, 17, 11, 24,  1,  5,
 	 3, 28, 15,  6, 21, 10,
@@ -153,7 +158,7 @@ const uint8_t pc2_permtab[] PROGMEM = {
 	46, 42, 50, 36, 29, 32
 };
 
-const uint8_t splitin6bitword_permtab[] PROGMEM = {
+const uint8_t splitin6bitword_permtab[] QPROGMEM = {
 	 8,  8, 					/* 64 bit -> 64 bit */
 	64, 64,  1,  6,  2,  3,  4,  5, 
 	64, 64,  7, 12,  8,  9, 10, 11, 
@@ -165,7 +170,7 @@ const uint8_t splitin6bitword_permtab[] PROGMEM = {
 	64, 64, 43, 48, 44, 45, 46, 47 
 };
 
-const uint8_t shiftkey_permtab[] PROGMEM = {
+const uint8_t shiftkey_permtab[] QPROGMEM = {
 	 7,  7, 					/* 56 bit -> 56 bit */
 	 2,  3,  4,  5,  6,  7,  8,  9,
 	10, 11, 12, 13, 14, 15, 16, 17,
@@ -177,7 +182,7 @@ const uint8_t shiftkey_permtab[] PROGMEM = {
 	54, 55, 56, 29
 };
 
-const uint8_t shiftkeyinv_permtab[] PROGMEM = {
+const uint8_t shiftkeyinv_permtab[] QPROGMEM = {
 	 7,  7,
 	28,  1,  2,  3,  4,  5,  6,  7,
 	 8,  9, 10, 11, 12, 13, 14, 15,
@@ -215,13 +220,21 @@ const uint8_t shiftkeyinv_permtab[] PROGMEM = {
 void permute(const uint8_t *ptable, const uint8_t *in, uint8_t *out){
 	uint8_t ob; /* in-bytes and out-bytes */
 	uint8_t byte, bit; /* counter for bit and byte */
-	ob = pgm_read_byte(&ptable[1]);
-	ptable = &(ptable[2]);
+    #ifdef DESFIRE_QUICK_DES_CRYPTO
+	ob = ptable[1];
+    #else
+    ob = pgm_read_byte(&ptable[1]);
+    #endif
+    ptable = &(ptable[2]);
 	for(byte=0; byte<ob; ++byte){
 		uint8_t x,t=0;
 		for(bit=0; bit<8; ++bit){
-			x = pgm_read_byte(ptable++) -1 ;
-				t <<= 1;
+            #ifdef DESFIRE_QUICK_DES_CRYPTO
+            x = (ptable++)[0] - 1;
+            #else
+            x = pgm_read_byte(ptable++) - 1;
+            #endif
+            t <<= 1;
 			if((in[x/8]) & (0x80>>(x%8)) ){
 				t|=0x01;
 			}

@@ -1,0 +1,26 @@
+>>> TestVanillaDESEncryptionRoutines [non-DESFire command]:
+    -- : PT = 00 11 22 33 44 55 66 77 
+    -- : CT = 3e f0 a8 91 cf 8e d9 90 
+    -- : CT = 3e f0 a8 91 cf 8e d9 90 
+    -- : PT = 00 11 22 33 44 55 66 77 
+    -- CT matches.
+    -- Decrypted PT from CT matches.
+
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> GetApplicationIds command:
+    -> 90 6a 00 00 00 00 
+    <- 91 00 
+
+>>> Start Legacy Authenticate (DES):
+    -> 90 0a 00 00 01 00 00 
+    <- d3 17 03 6f e6 1b e2 bb | 91 af 
+    -> 90 af 00 00 10 75 b4 9a | 00 b1 23 c5 b9 b9 98 95 | 6c 07 d6 9b f3 00 
+    -- RNDA = 99 ef cf 08 86 8e cc c5 
+    -- RNDB = 26 75 05 1b 42 ba b3 c8 
+    <- 80 a3 8d 14 ee 7c f6 b7 | 91 00 
+    -- DCRA = 99 ef cf 08 86 8e cc c5 
+       ... AUTH OK! :)
+

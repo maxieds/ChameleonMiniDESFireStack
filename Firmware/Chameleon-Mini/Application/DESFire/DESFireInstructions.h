@@ -95,8 +95,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_CONTINUE =  0xAF,
     
     /* ISO7816 Command Set Support: */
-    // NOTE: See p. 72 of the data sheet for response codes 
-    //       and detailed descriptions of the parameters:
     CMD_ISO7816_SELECT = 0xA4, 
     CMD_ISO7816_GET_CHALLENGE = 0x84, 
     CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82, 

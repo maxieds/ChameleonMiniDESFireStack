@@ -1578,12 +1578,6 @@ uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount) {
     }
     dataXferLength += effectiveOffset;
     WriteBlockBytes(&Buffer[0], dataWriteAddr, dataXferLength);
-    //
-    //Buffer[0] = dataWriteAddr & 0x00ff;
-    //Buffer[1] = (dataWriteAddr >> 8) & 0x00ff;
-    //Buffer[2] = offsetBlocks;
-    LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, &Buffer[0], dataXferLength);
-    //
     TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
     TransferState.WriteData.Sink.Pointer = dataWriteAddr + DESFIRE_BYTES_TO_BLOCKS(dataXferLength);
     Status = STATUS_OPERATION_OK;
@@ -1718,7 +1712,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     InitAESCryptoKeyData(&AESCryptoIVBuffer);
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-    *Key = AESCryptoSessionKey;
+    Key = &SessionKey;
 
     /* Indicate that we are in AES key authentication land */
     DesfireCommandState.KeyId = KeyId;
@@ -1747,8 +1741,8 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
+    uint8_t rndBPadded[CRYPTO_CHALLENGE_RESPONSE_BYTES];
+    memset(rndBPadded, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, 
                       &Buffer[1], *Key);
