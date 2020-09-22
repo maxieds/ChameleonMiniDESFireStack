@@ -11,6 +11,17 @@ by visiting [this site](https://patreon.com/maxieds).
 Much credit should also be attributed to the difficult implementations adapted from Java / Android
 cited below.
 
+## Direct funding sources for this project
+
+The author would like to thank the following direct sources of funding and support 
+for development of this project:
+* Professor [Josephine Yu](http://people.math.gatech.edu/~jyu67/) and the 
+  [School of Mathematics](https://math.gatech.edu) at the 
+  Georgia Institute of Technology for allowing me to work on this as a secondary 
+  project as a Ph.D. candidate over the Summer and Fall of 2020. 
+* The [KAOS manufacturers](https://shop.kasper.it) for providing support in the form of discounted Chameleon RevG 
+  devices to support my active development on the project. 
+
 ## Sources of external code and open information about the DESFire specs 
 
 The source code for much of this implementation has been directly adapted, or modified, from mostly Java

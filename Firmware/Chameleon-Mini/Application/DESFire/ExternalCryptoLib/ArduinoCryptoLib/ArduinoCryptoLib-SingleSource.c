@@ -17,16 +17,6 @@ Based in part on the original DESFire code created by
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
 This notice must be retained at the top of all source files where indicated. 
-
-This source code is only licensed for 
-redistribution under for non-commercial users. 
-All commerical use or inclusion of this 
-software requires express written consent of the author (MDS). 
-This restriction pertains to any binary distributions which 
-are derivative works of this software.
-
-The author is free to revoke or modify this license for future 
-versions of the code at free will.
 */
 
 /* ArduinoCryptoLib-SingleSource.c : Include all sources in one file. */

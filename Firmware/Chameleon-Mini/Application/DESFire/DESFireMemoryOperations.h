@@ -17,16 +17,6 @@ Based in part on the original DESFire code created by
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
 This notice must be retained at the top of all source files where indicated. 
-
-This source code is only licensed for 
-redistribution under for non-commercial users. 
-All commerical use or inclusion of this 
-software requires express written consent of the author (MDS). 
-This restriction pertains to any binary distributions which 
-are derivative works of this software.
-
-The author is free to revoke or modify this license for future 
-versions of the code at free will.
 */
 
 /*
@@ -54,22 +44,12 @@ extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count);
 
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
-//#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
-    strncpy(callingFunc, __func__, 32);                            \
-    callingFunc[31] = '\0';                                        \
-    callingLine = __LINE__;                                        \
-    WriteBlockBytesMain(Buffer, StartBlock, Count);
 #define WriteBlockBytes(Buffer, StartBlock, Count)                 \
     WriteBlockBytesMain(Buffer, StartBlock, Count);
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
 
 BYTE AllocateBlocksMain(BYTE BlockCount);
-//#define AllocateBlocks(BlockCount)                              ({ \
-    const char *logCallingFunc2 = PSTR("AB Caller -- %s / %d");    \
-    DEBUG_PRINT_P(logCallingFunc2, __func__, Picc.FirstFreeBlock); \
-    AllocateBlocksMain(BlockCount);                                \
-    })
 #define AllocateBlocks(BlockCount)                                 \
     AllocateBlocksMain(BlockCount);
 
