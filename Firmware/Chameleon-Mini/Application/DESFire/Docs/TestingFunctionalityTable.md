@@ -40,7 +40,7 @@
 | CMD_DEBIT | 0xDC | | :ballot_box_with_check: | |
 | CMD_LIMITED_CREDIT | 0x1C | | :ballot_box_with_check: | |
 | CMD_WRITE_RECORD | 0x3B | | :question: | |
-| CMD_READ_RECORDS | 0xBB | | :wavy_dash: | |
+| CMD_READ_RECORDS | 0xBB | | :ballot_box_with_check: :wavy_dash: | |
 | CMD_CLEAR_RECORD_FILE | 0xEB | | :question: | |
 | CMD_COMMIT_TRANSACTION | 0xC7 | | :ballot_box_with_check: | |
 | CMD_ABORT_TRANSACTION | 0xA7 | | :ballot_box_with_check: | |               |

@@ -13,6 +13,16 @@ specified. If you do not at miniumum have a configuration, ``CONFIG=MF_DESFIRE``
 these commands will not work. Note that LIVE logging should be disabled before attempting to 
 run these commands.
 
+## Selecting a DESFire configuration
+
+```bash
+CONFIG=?
+CONFIG=MF_DESFIRE
+CONFIG=MF_DESFIRE_EV1_2K
+CONFIG=MF_DESFIRE_EV1_4K
+CONFIG=MF_DESFIRE_EV1_8K
+```
+
 ## DF_SETHDR -- Set PICC header information 
 
 Since the UID and other precious manufacturer data are supposed to be unique to 

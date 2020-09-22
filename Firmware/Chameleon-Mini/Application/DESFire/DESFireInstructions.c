@@ -769,7 +769,7 @@ uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    if(PMKRequiredForAppCreateDelete() && !AuthenticatedWithPICCMasterKey) {
+    if(PMKRequiredForAppCreateDelete() != 0x00 && (Authenticated == 0x00 || AuthenticatedWithKey != 0x00)) {
          /* PICC master key authentication is required */
          Status = STATUS_AUTHENTICATION_ERROR;
          return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -948,8 +948,8 @@ uint16_t EV0CmdCreateLinearRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
     uint16_t accessRights = Buffer[3] | (Buffer[4] << 8);
     uint8_t *recordSizeBytes = &Buffer[5];
     uint8_t *maxRecordsBytes = &Buffer[8];
-    uint16_t recordSize = recordSizeBytes[3] | (recordSizeBytes[4] << 8);
-    uint16_t maxRecords = maxRecordsBytes[3] | (maxRecordsBytes[4] << 8);
+    uint16_t recordSize = recordSizeBytes[0] | (recordSizeBytes[1] << 8);
+    uint16_t maxRecords = maxRecordsBytes[0] | (maxRecordsBytes[1] << 8);
     if(recordSize > maxRecords || maxRecords == 0) {
         Buffer[0] = STATUS_BOUNDARY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -975,8 +975,8 @@ uint16_t EV0CmdCreateCyclicRecordFile(uint8_t* Buffer, uint16_t ByteCount) {
     uint16_t accessRights = Buffer[3] | (Buffer[4] << 8);
     uint8_t *recordSizeBytes = &Buffer[5];
     uint8_t *maxRecordsBytes = &Buffer[8];
-    uint16_t recordSize = recordSizeBytes[3] | (recordSizeBytes[4] << 8);
-    uint16_t maxRecords = maxRecordsBytes[3] | (maxRecordsBytes[4] << 8);
+    __uint24 recordSize = GET_LE24(recordSizeBytes);
+    __uint24 maxRecords = GET_LE24(maxRecordsBytes);
     if(recordSize > maxRecords || maxRecords == 0) {
         Buffer[0] = STATUS_BOUNDARY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -1474,6 +1474,8 @@ uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t fileNumber = Buffer[1];
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
     if (fileIndex >= DESFIRE_MAX_FILES) {
+        const char *logMsg = PSTR("Invalid file index = %d / %d ; for FileNum = %d");
+        DEBUG_PRINT_P(logMsg, fileIndex, DESFIRE_MAX_FILES, fileNumber);
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }    
@@ -1495,6 +1497,8 @@ uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     if(fileType != DESFIRE_FILE_LINEAR_RECORDS && 
        fileType != DESFIRE_FILE_CIRCULAR_RECORDS) {
+        const char *logMsg = PSTR("Invalid file type = %d@%d");
+        DEBUG_PRINT_P(logMsg, fileType, fileIndex);
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -1507,6 +1511,8 @@ uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount) {
     uint8_t blockReadOffset = DESFIRE_BYTES_TO_BLOCKS(Offset);
     Status = ReadDataFileSetup(fileIndex, CommSettings, (uint16_t) blockReadOffset, (uint16_t) Length);
     if(Status != STATUS_OPERATION_OK) {
+        const char *logMsg = PSTR("ReadDataFileSetup -- ERROR!");
+        DEBUG_PRINT_P(logMsg);
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }    
     return ReadDataFileIterator(Buffer);
@@ -1545,24 +1551,39 @@ uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+    /* Validate lengths and buffer sizes passed */
+    uint16_t dataXferLength = ByteCount - 8;
+    if(dataXferLength > Length) {
+        Status = STATUS_LENGTH_ERROR;
+        return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+    }
     uint16_t fileSize = ReadDataFileSize(SelectedApp.Slot, fileIndex);
-    if((Offset > fileSize) || (fileSize - Offset < Length)) {
+    if((Offset >= fileSize) || (fileSize - Offset < Length)) {
         Status = STATUS_BOUNDARY_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* We are only able to read chunks of data starting at a round block offset */
     DesfireState = DESFIRE_WRITE_DATA_FILE;
-    uint8_t offsetBlocks = DESFIRE_BYTES_TO_BLOCKS(Offset);
+    uint16_t offsetBlocks = DESFIRE_BYTES_TO_BLOCKS(Offset);
+    if(offsetBlocks > 0) {
+        --offsetBlocks;
+    }
     uint16_t effectiveOffset = Offset % DESFIRE_EEPROM_BLOCK_SIZE;
-    uint16_t bufReadOffset = Offset - effectiveOffset;
-    uint16_t dataXferLength = ByteCount - 8;
-    uint16_t dataWriteAddr = GetFileDataAreaBlockId(fileIndex) + offsetBlocks - 1;
-    uint8_t priorFileData[effectiveOffset];
-    ReadBlockBytes(priorFileData, dataWriteAddr, effectiveOffset);
-    memmove(&Buffer[8] + effectiveOffset, &Buffer[0], dataXferLength);
-    memcpy(&Buffer[0], priorFileData, effectiveOffset);
+    uint8_t dataWriteAddr = GetFileDataAreaBlockId(fileIndex) + offsetBlocks;
+    memmove(&Buffer[effectiveOffset], &Buffer[8], dataXferLength);
+    if(effectiveOffset > 0) {
+        uint8_t priorFileData[effectiveOffset];
+        ReadBlockBytes(priorFileData, dataWriteAddr, effectiveOffset);
+        memcpy(&Buffer[0], priorFileData, effectiveOffset);
+    }
     dataXferLength += effectiveOffset;
     WriteBlockBytes(&Buffer[0], dataWriteAddr, dataXferLength);
+    //
+    //Buffer[0] = dataWriteAddr & 0x00ff;
+    //Buffer[1] = (dataWriteAddr >> 8) & 0x00ff;
+    //Buffer[2] = offsetBlocks;
+    LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, &Buffer[0], dataXferLength);
+    //
     TransferState.WriteData.Sink.Func = &WriteDataEEPROMSink;
     TransferState.WriteData.Sink.Pointer = dataWriteAddr + DESFIRE_BYTES_TO_BLOCKS(dataXferLength);
     Status = STATUS_OPERATION_OK;

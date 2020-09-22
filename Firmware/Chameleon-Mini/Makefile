@@ -173,7 +173,7 @@ SRC         += Application/MifareUltralight.c \
 			Application/Sniff14443A.c
 SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
 			$(DESFIRE_MAINSRC)/ExternalCryptoLib/ArduinoCryptoLib/ArduinoCryptoLib-SingleSource.c \
-			Application/MifareDESFire.c \
+			$(DESFIRE_MAINSRC)/../MifareDESFire.c \
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
 			$(DESFIRE_MAINSRC)/DESFireCrypto.c \
@@ -198,9 +198,7 @@ CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 			   -D__AVR_ATxmega128A4U__ -Werror=implicit-function-declaration
 LD_FLAGS     = $(CC_FLAGS) -lc \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
-			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
-				#-Wl,--defsym=__malloc_heap_start=0,--defsym=__malloc_heap_end=0 \
-			   -Wl,--defsym=__heap_end=0,--defsym=__heap_start=0,--defsym=__malloc_margin=0
+			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES = 
 

@@ -97,17 +97,17 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* ISO7816 Command Set Support: */
     // NOTE: See p. 72 of the data sheet for response codes 
     //       and detailed descriptions of the parameters:
-    CMD_ISO7816_SELECT = 0xa4, 
+    CMD_ISO7816_SELECT = 0xA4, 
     CMD_ISO7816_GET_CHALLENGE = 0x84, 
     CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82, 
     CMD_ISO7816_INTERNAL_AUTHENTICATE = 0x88, 
-    CMD_ISO7816_READ_BINARY = 0xb0, 
-    CMD_ISO7816_UPDATE_BINARY = 0xd6, 
-    CMD_ISO7816_READ_RECORDS = 0xb2,
-    CMD_ISO7816_APPEND_RECORD = 0xe2, 
+    CMD_ISO7816_READ_BINARY = 0xB0, 
+    CMD_ISO7816_UPDATE_BINARY = 0xD6, 
+    CMD_ISO7816_READ_RECORDS = 0xB2,
+    CMD_ISO7816_APPEND_RECORD = 0xE2, 
     
     /* Space for undocumented command codes -- 
-     * need command codes and parameters to make these work moving forward: */
+     * Need command codes and parameters to make these work moving forward: */
     //CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf (for Mifare DESFire Light tags) */
 
 } DESFireCommandType;

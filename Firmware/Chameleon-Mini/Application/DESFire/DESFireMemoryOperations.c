@@ -35,16 +35,30 @@ char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
+        const char *rbbLogMsg = PSTR("RBB Start Block Too Large -- %d -- %d");
+        DEBUG_PRINT_P(rbbLogMsg, StartBlock, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE);
         return;
     }
+    else if(StartBlock == 0) {
+        const char *logWarningMsg = PSTR("WARNING: Reading NULL Address!");
+        DEBUG_PRINT_P(logWarningMsg);
+    }
     MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    //MemoryReadBlock(Buffer, StartBlock, Count);
 }
 
 void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
     if(StartBlock >= MEMORY_SIZE_PER_SETTING) {
+        const char *wbbLogMsg = PSTR("WBB Start Block Too Large -- %d -- %d");
+        DEBUG_PRINT_P(wbbLogMsg, StartBlock, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE);
         return;
     }
+    else if(StartBlock == 0) {
+        const char *logWarningMsg = PSTR("WARNING: Writing NULL! -- %s");
+        DEBUG_PRINT_P(logWarningMsg, __InternalStringBuffer2);
+    }
     MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    //MemoryWriteBlock(Buffer, StartBlock, Count);
 }
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
@@ -65,7 +79,7 @@ uint8_t AllocateBlocksMain(uint8_t BlockCount) {
     uint8_t Block;
     /* Check if we have space */
     Block = Picc.FirstFreeBlock;
-    if (Block + BlockCount < Block) {
+    if(Block + BlockCount < Block) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;

@@ -61,8 +61,8 @@ void InitBlockSizes(void) {
      DESFIRE_PICC_INFO_BLOCK_ID = 0; 
      DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID + 
                                 DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFirePICCInfoType));
-     DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + 
-                                             DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
+     DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID; 
+                                             // + DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
      DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
      DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = DESFIRE_FIRST_FREE_BLOCK_ID;
 }
@@ -86,7 +86,7 @@ TransferStatus PiccToPcdTransfer(uint8_t* Buffer) {
     uint8_t XferBytes;
     if (TransferState.ReadData.BytesLeft) {
         if(TransferState.ReadData.BytesLeft > DESFIRE_MAX_PAYLOAD_SIZE) {
-            XferBytes = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_PAYLOAD_SIZE) * DESFIRE_EEPROM_BLOCK_SIZE;
+            XferBytes = DESFIRE_MAX_PAYLOAD_SIZE;
         }
         else { 
             XferBytes = (uint8_t) TransferState.ReadData.BytesLeft;

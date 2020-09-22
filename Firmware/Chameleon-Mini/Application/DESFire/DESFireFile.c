@@ -59,6 +59,9 @@ uint16_t GetFileSizeFromFileType(DESFireFileTypeSettings *File) {
 
 uint16_t GetFileDataAreaBlockId(uint8_t fileIndex) {
      SIZET fileStructAddr = ReadFileDataStructAddress(SelectedApp.Slot, fileIndex);
+     if(fileStructAddr == 0) {
+         return 0;
+     }
      DESFireFileTypeSettings FileData;
      MemoryReadBlock(&FileData, fileStructAddr, sizeof(DESFireFileTypeSettings));
      return FileData.FileDataAddress;
@@ -120,9 +123,7 @@ uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings,
           else {
               File->FileDataAddress = 0;
           }
-          DESFireFileTypeSettings ftSettings;
-          memcpy(&ftSettings, File, sizeof(DESFireFileTypeSettings));
-          WriteBlockBytes(&ftSettings, fileSettingsBlockId, sizeof(DESFireFileTypeSettings));
+          WriteBlockBytes(File, fileSettingsBlockId, sizeof(DESFireFileTypeSettings));
           SIZET fileAddressArrayBlockId = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, SelectedApp.Slot);
           SIZET fileAddressArray[DESFIRE_MAX_FILES];
           ReadBlockBytes(fileAddressArray, fileAddressArrayBlockId, 2 * DESFIRE_MAX_FILES);
@@ -210,7 +211,7 @@ uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings
      memcpy(SelectedFile.File.RecordFile.RecordSize, RecordSize, 3);
      memcpy(SelectedFile.File.RecordFile.MaxRecordCount, MaxRecordSize, 3);
      uint16_t maxRecords = MaxRecordSize[0] | (MaxRecordSize[1] << 8);
-     SelectedFile.File.FileSize = maxRecords; // TODO: Record size == 1 byte ???
+     SelectedFile.File.FileSize = maxRecords; 
      Status = CreateFileHeaderData(FileNum, CommSettings, AccessRights, &(SelectedFile.File));
      if(Status != STATUS_OPERATION_OK) {
           return Status;
@@ -219,8 +220,7 @@ uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings
      if(fileIndex >= DESFIRE_MAX_FILES) {
           return STATUS_FILE_NOT_FOUND;
      }
-    
-    return STATUS_OPERATION_OK;
+     return STATUS_OPERATION_OK;
 }
 
 uint8_t DeleteFile(uint8_t fileIndex) {
