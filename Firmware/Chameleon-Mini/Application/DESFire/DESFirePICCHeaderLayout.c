@@ -155,7 +155,9 @@ SIZET PrettyPrintPICCAppDir(uint8_t appIndex, BYTE *outputBuffer, SIZET maxLengt
     SIZET charsWritten = 0x00;
     BYTE keyIndex, fileIndex; 
     SelectedAppCacheType appData;
-    GetAppData(appIndex, &appData);
+    if(!GetAppData(appIndex, &appData)) {
+        return charsWritten;
+    }
     charsWritten += PrettyPrintPICCKeysFull(&appData, outputBuffer + charsWritten, 
                                             maxLength - charsWritten, verbose);
     charsWritten += PrettyPrintPICCFilesFull(&appData, outputBuffer + charsWritten, 
@@ -169,9 +171,9 @@ SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbo
     for(appDirIndex = 0; appDirIndex < DESFIRE_MAX_SLOTS; appDirIndex++) {
          DESFireAidType curAID;
          memcpy(curAID, AppDir.AppIds[appDirIndex], MAX_AID_SIZE);
-         if((curAID[0] | curAID[1] | curAID[2]) == 0x00) {
-              continue;
-         }
+         //if((curAID[0] | curAID[1] | curAID[2]) == 0x00) {
+         //     continue;
+         //}
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
                                     PSTR("%s== AID 0x%02x%02x%02x\r\n"), 
                                     PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
@@ -185,6 +187,8 @@ SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbo
 }
 
 SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose) {
+    uint16_t previousTimeoutSetting = GlobalSettings.ActiveSettingPtr->PendingTaskTimeout;
+    GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = 0xffff;
     BYTE charsWritten = 0x00;
     charsWritten += snprintf_P(outputBuffer, maxLength, 
                                PSTR("**** DESFIRE HEADER DATA ****\r\n"));
@@ -195,5 +199,6 @@ SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose
                                PSTR("**** DESFIRE INTERNAL STORAGE ****\r\n"));
     ++PPrintIndentLevel;
     charsWritten += PrettyPrintPICCAppDirsFull(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
+    GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = previousTimeoutSetting;
     return charsWritten;
 }

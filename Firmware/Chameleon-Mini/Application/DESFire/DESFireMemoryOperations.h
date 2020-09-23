@@ -44,18 +44,18 @@ extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count);
 
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
-//#define WriteBlockBytes(Buffer, StartBlock, Count)              ({ \
+#define WriteBlockBytes(Buffer, StartBlock, Count)              ({ \
     snprintf_P(__InternalStringBuffer2, DATA_BUFFER_SIZE_SMALL,    \
              PSTR("%s @ %d"), __func__, __LINE__);                 \
     __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL - 1] = '\0';    \
     WriteBlockBytesMain(Buffer, StartBlock, Count);                \
     })
-#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
+//#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
     WriteBlockBytesMain(Buffer, StartBlock, Count);
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
 
-BYTE AllocateBlocksMain(BYTE BlockCount);
+uint16_t AllocateBlocksMain(uint16_t BlockCount);
 #define AllocateBlocks(BlockCount)                                 \
     AllocateBlocksMain(BlockCount);
 

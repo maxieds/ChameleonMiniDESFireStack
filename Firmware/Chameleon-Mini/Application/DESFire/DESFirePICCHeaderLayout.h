@@ -156,9 +156,9 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t ProductionWeek;
     uint8_t ProductionYear;
     /* Dynamic data: changes during the PICC's lifetime */
-    uint8_t FirstFreeBlock;
-    uint8_t TransactionStarted;
-    uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT;
+    uint16_t FirstFreeBlock;
+    uint8_t TransactionStarted; // USED ???
+    uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT; // USED ???
 } DESFirePICCInfoType;
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
@@ -175,7 +175,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     SIZET KeyVersionsArray;       /* Block offset in EEPROM */
     SIZET KeyTypesArray;          /* Block offset in EEPROM */
     SIZET KeyAddress;             /* Block offset in EEPROM */
-    UINT  DirtyFlags;
+    UINT  DirtyFlags; // USED ???
 } SelectedAppCacheType;
 
 extern BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;

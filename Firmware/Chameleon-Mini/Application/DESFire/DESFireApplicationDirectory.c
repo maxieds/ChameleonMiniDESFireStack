@@ -516,12 +516,16 @@ void SelectAppBySlot(uint8_t AppSlot) {
     SynchronizeAppDir();
 }
 
-void GetAppData(uint8_t appSlot, SelectedAppCacheType *destData) {
+bool GetAppData(uint8_t appSlot, SelectedAppCacheType *destData) {
     if(destData == NULL) {
-         return;
+         return false;
     }
     SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[appSlot];
+    if(appCacheSelectedBlockId == 0) {
+        return false;
+    }
     ReadBlockBytes(&destData, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
+    return true;
 }
 
 uint16_t SelectApp(const DESFireAidType Aid) {

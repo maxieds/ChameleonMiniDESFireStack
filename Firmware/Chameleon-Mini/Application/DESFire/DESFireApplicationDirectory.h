@@ -191,7 +191,7 @@ void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettin
 /* Application selection */
 uint8_t LookupAppSlot(const DESFireAidType Aid);
 void SelectAppBySlot(uint8_t AppSlot);
-void GetAppData(uint8_t appSlot, SelectedAppCacheType *destData);
+bool GetAppData(uint8_t appSlot, SelectedAppCacheType *destData);
 uint16_t SelectApp(const DESFireAidType Aid);
 void SelectPiccApp(void);
 bool IsPiccAppSelected(void);
