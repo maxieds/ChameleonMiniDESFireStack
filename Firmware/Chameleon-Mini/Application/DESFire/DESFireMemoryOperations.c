@@ -77,7 +77,7 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount) {
     uint16_t Block;
     /* Check if we have space */
     Block = Picc.FirstFreeBlock;
-    if(Block + BlockCount < Block || Block + BlockCount >= 256) {
+    if(Block + BlockCount < Block || Block + BlockCount >= 512) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
