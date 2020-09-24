@@ -1,18 +1,18 @@
 >>> CreateApplication command:
-    -> 90 ca 00 00 05 f3 12 34 | 0f 06 00 
-    <- 91 9e 
+    -> 90 ca 00 00 05 f3 12 34 | 0f 03 00 
+    <- 91 00 
 >>> Select Application By AID:
     -> 90 5a 00 00 03 f3 12 34 | 00 
-    <- 91 a0 
+    <- 91 00 
 
 >>> Start AES Authenticate:
     -> 90 aa 00 00 01 00 00 
-    <- af 98 fc 4f 2a 51 4d 53 | 5d eb 36 dc 8d 3f 04 78 | 91 af 
-    -- RNDA = 88 e7 ab 9d 6e 02 79 73 
-    -- RNDB = 76 e4 2b 08 80 de 7c f5 
-    -- CHAL = 88 e7 ab 9d 6e 02 79 73 | f5 76 e4 2b 08 80 de 7c 
-    -> 90 af 00 00 10 45 bf 8c | 3e 0d 08 7f c9 3c e9 2f | fb 72 ca 7c dc 00 
-    <- 81 80 de 9a 87 68 ad 16 | a3 05 af 39 f1 68 f0 fe | 91 00 
+    <- d8 66 18 da d4 dd d4 88 | 0d 79 92 f9 fc 0b 7c fc | 91 af 
+    -- RNDA = 5e ee 23 2c fe 89 f0 2c 
+    -- RNDB = fe 86 52 d8 30 e9 c4 02 
+    -- CHAL = 5e ee 23 2c fe 89 f0 2c | 02 fe 86 52 d8 30 e9 c4 
+    -> 90 af 00 00 10 b9 99 5d | 84 a9 88 d5 69 e1 0b 76 | e1 eb 8a a6 6f 00 
+    <- 49 b1 da 35 ca b0 0d 32 | 65 a6 74 17 94 f7 8e 70 | 91 00 
        ... AUTH OK! :)
 
 >>> CreateValueFile command:
@@ -91,4 +91,4 @@
     <- 91 00 
 >>> GetValue command:
     -> 90 6c 00 00 01 03 00 
-    <- 80 00 00 00 91 00
+    <- 80 00 00 00 91 00 

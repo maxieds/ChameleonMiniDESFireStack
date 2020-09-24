@@ -17,16 +17,6 @@ Based in part on the original DESFire code created by
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
 This notice must be retained at the top of all source files where indicated. 
-
-This source code is only licensed for 
-redistribution under for non-commercial users. 
-All commerical use or inclusion of this 
-software requires express written consent of the author (MDS). 
-This restriction pertains to any binary distributions which 
-are derivative works of this software.
-
-The author is free to revoke or modify this license for future 
-versions of the code at free will.
 */
 
 /* LiveLogTick.h : Handle flushing of live logging buffers out through USB 
@@ -77,44 +67,37 @@ INLINE bool LiveLogTick(void);
 INLINE bool 
 AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize) {
      bool status = true;
-     //cli();
-     //cli_memory();
-     //ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-     //ATOMIC_BLOCK(ATOMIC_FORCEON) {
-         if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
-              if(FLUSH_LOGS_ON_SPACE_ERROR) {
-                  LiveLogTick();
-                  FreeLogBlocks();
-              }
-              status = false;
+     if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
+          if(FLUSH_LOGS_ON_SPACE_ERROR) {
+              LiveLogTick();
+              FreeLogBlocks();
+          }
+          status = false;
+     }
+     else if(logDataSize + 4 <= LogMemLeft) {
+         LogBlockListNode *logBlock = (LogBlockListNode *) malloc(sizeof(LogBlockListNode));
+         logBlock->logBlockStart = LogMemPtr;
+         logBlock->logBlockSize = logDataSize + 4;
+         logBlock->nextBlock = NULL;
+         *(LogMemPtr++) = logCode;
+         *(LogMemPtr++) = logDataSize;
+         *(LogMemPtr++) = (uint8_t) (sysTickTime >> 8);
+         *(LogMemPtr++) = (uint8_t) (sysTickTime >> 0);
+         memcpy(LogMemPtr, logData, logDataSize);
+         LogMemPtr += logDataSize;
+         LogMemLeft -= logDataSize + 4;
+         if(LogBlockListBegin != NULL && LogBlockListEnd != NULL) {
+              LogBlockListEnd->nextBlock = logBlock;
+              LogBlockListEnd = logBlock;
          }
-         else if(logDataSize + 4 <= LogMemLeft) {
-              LogBlockListNode *logBlock = (LogBlockListNode *) malloc(sizeof(LogBlockListNode));
-              logBlock->logBlockStart = LogMemPtr;
-              logBlock->logBlockSize = logDataSize + 4;
-              logBlock->nextBlock = NULL;
-              *(LogMemPtr++) = logCode;
-              *(LogMemPtr++) = logDataSize;
-              *(LogMemPtr++) = (uint8_t) (sysTickTime >> 8);
-              *(LogMemPtr++) = (uint8_t) (sysTickTime >> 0);
-              memcpy(LogMemPtr, logData, logDataSize);
-              LogMemPtr += logDataSize;
-              LogMemLeft -= logDataSize + 4;
-              if(LogBlockListBegin != NULL && LogBlockListEnd != NULL) {
-                   LogBlockListEnd->nextBlock = logBlock;
-                   LogBlockListEnd = logBlock;
-              }
-              else {
-                  LogBlockListBegin = LogBlockListEnd = logBlock;
-              }
-              ++LogBlockListElementCount;
-          }
-          else {
-              status = false;
-          }
-     //}
-     //sei_memory();
-     //sei();
+         else {
+             LogBlockListBegin = LogBlockListEnd = logBlock;
+         }
+         ++LogBlockListElementCount;
+     }
+     else {
+         status = false;
+     }
      return status;
 }
 
@@ -136,32 +119,22 @@ FreeLogBlocks(void) {
 INLINE bool 
 AtomicLiveLogTick(void) {
      bool status;
-     //cli();
-     //cli_memory();
      status = LiveLogTick();
-     //sei_memory();
-     //sei();
      return status;
 }
 
 INLINE bool 
 LiveLogTick(void) {
      bool status = LogBlockListBegin == NULL;
-     //ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-     //ATOMIC_BLOCK(ATOMIC_FORCEON) {
-          //Endpoint_ClearIN();
-          //TerminalFlushBuffer();
-          LogBlockListNode *logBlockCurrent = LogBlockListBegin;
-          while(logBlockCurrent != NULL && LogBlockListElementCount > 0) {
-              TerminalFlushBuffer();
-              TerminalSendBlock(logBlockCurrent->logBlockStart, logBlockCurrent->logBlockSize);
-              TerminalFlushBuffer();
-              logBlockCurrent = logBlockCurrent->nextBlock;
-          }
-          //Endpoint_ClearOUT();
-          FreeLogBlocks();
-          LiveLogModePostTickCount = 0x00;
-     //}
+     LogBlockListNode *logBlockCurrent = LogBlockListBegin;
+     while(logBlockCurrent != NULL && LogBlockListElementCount > 0) {
+         TerminalFlushBuffer();
+         TerminalSendBlock(logBlockCurrent->logBlockStart, logBlockCurrent->logBlockSize);
+         TerminalFlushBuffer();
+         logBlockCurrent = logBlockCurrent->nextBlock;
+     }
+     FreeLogBlocks();
+     LiveLogModePostTickCount = 0x00;
      return status;
 }
 

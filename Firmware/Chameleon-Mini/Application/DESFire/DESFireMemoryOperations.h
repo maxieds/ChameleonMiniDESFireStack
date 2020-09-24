@@ -61,6 +61,8 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount);
 
 BYTE GetCardCapacityBlocks(void);
 
+void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET byteCount);
+
 /* File data transfer related routines: */
 void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count);
 void WriteDataEEPROMSink(uint8_t *Buffer, uint8_t Count);

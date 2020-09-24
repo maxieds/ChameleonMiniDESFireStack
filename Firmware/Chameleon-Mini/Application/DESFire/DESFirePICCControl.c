@@ -61,8 +61,8 @@ void InitBlockSizes(void) {
      DESFIRE_PICC_INFO_BLOCK_ID = 0; 
      DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID + 
                                 DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFirePICCInfoType));
-     DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID; 
-                                             // + DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
+     DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID + 
+                                             DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
      DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
      DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = DESFIRE_FIRST_FREE_BLOCK_ID;
 }
@@ -262,7 +262,8 @@ uint8_t GetPiccKeySettings(void) {
 
 void FormatPicc(void) {
     /* Wipe application directory */
-    memset(&AppDir, PICC_EMPTY_BYTE, sizeof(DESFireAppDirType));
+    memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
+    memset(&SelectedApp, 0x00, sizeof(SelectedAppCacheType));
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 0;
     /* Flush the new local struct data out to the FRAM: */

@@ -87,14 +87,19 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount) {
 }
 
 /* TODO: Why doesn't this work ??? -- It freezes the AVR chip when run !! */
-void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET numBlocks) {
+void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET byteCount) {
     BYTE fillerBuf[DESFIRE_EEPROM_BLOCK_SIZE];
     memset(fillerBuf, initValue, DESFIRE_EEPROM_BLOCK_SIZE);
-    SIZET writeAddr = startBlock * DESFIRE_EEPROM_BLOCK_SIZE;
-    while(numBlocks > 0) {
-        MemoryWriteBlock(fillerBuf, writeAddr, MIN(DESFIRE_EEPROM_BLOCK_SIZE, numBlocks));
-        writeAddr += DESFIRE_EEPROM_BLOCK_SIZE / sizeof(SIZET);
-        numBlocks -= DESFIRE_EEPROM_BLOCK_SIZE;
+    SIZET writeAddr = startBlock;
+    while(byteCount > 0) {
+        WriteBlockBytes(fillerBuf, writeAddr, MIN(DESFIRE_EEPROM_BLOCK_SIZE, byteCount));
+        ++writeAddr;
+        if(byteCount > DESFIRE_EEPROM_BLOCK_SIZE) {
+            byteCount -= DESFIRE_EEPROM_BLOCK_SIZE;
+        }
+        else {
+            break;
+        }
     }
 }
 

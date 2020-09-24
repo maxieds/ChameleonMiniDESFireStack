@@ -1061,7 +1061,7 @@ uint16_t EV0CmdGetFileSettings(uint8_t* Buffer, uint16_t ByteCount) {
     }
     uint8_t fileNumber = Buffer[1];
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumber);
-    if(!KeyIdValid(SelectedApp.Slot, fileIndex)) {
+    if(fileIndex >= DESFIRE_MAX_FILES) {
         Buffer[0] = STATUS_FILE_NOT_FOUND;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }

@@ -38,9 +38,10 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 	{ .Id = CONFIG_MF_DESFIRE,		.Text = "MF_DESFIRE" },
-	{ .Id = CONFIG_MF_DESFIRE_EV1_2K,	.Text = "MF_DESFIRE_EV1_2K" },
-	{ .Id = CONFIG_MF_DESFIRE_EV1_4K,	.Text = "MF_DESFIRE_EV1_4K" },
-	{ .Id = CONFIG_MF_DESFIRE_EV1_8K,	.Text = "MF_DESFIRE_EV1_8K" },
+	/* Currently, have only successfully tested with the previous configuration ... */
+    /* { .Id = CONFIG_MF_DESFIRE_EV1_2K,	.Text = "MF_DESFIRE_EV1_2K" }, */
+	/* { .Id = CONFIG_MF_DESFIRE_EV1_4K,	.Text = "MF_DESFIRE_EV1_4K" }, */
+	/* { .Id = CONFIG_MF_DESFIRE_EV1_8K,	.Text = "MF_DESFIRE_EV1_8K" }, */
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
@@ -205,7 +206,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationInitFunc = MifareDesfireEV0AppInit,
 		.ApplicationResetFunc = MifareDesfireAppReset,
 		.ApplicationTaskFunc = MifareDesfireAppTask,
-		.ApplicationTickFunc = MifareDesfireAppTick, //ApplicationTickDummy,
+		.ApplicationTickFunc = MifareDesfireAppTick,
 		.ApplicationProcessFunc = MifareDesfireAppProcess,
 		.ApplicationGetUidFunc = MifareDesfireGetUid,
 		.ApplicationSetUidFunc = MifareDesfireSetUid,
@@ -213,14 +214,14 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
 		.ReadOnly = false
 	},
-	[CONFIG_MF_DESFIRE_EV1_2K] = {
+	/*[CONFIG_MF_DESFIRE_EV1_2K] = {
 		.CodecInitFunc = ISO14443ACodecInit,
 		.CodecDeInitFunc = ISO14443ACodecDeInit,
 		.CodecTaskFunc = ISO14443ACodecTask,
 		.ApplicationInitFunc = MifareDesfire2kEV1AppInit,
 		.ApplicationResetFunc = MifareDesfireAppReset,
 		.ApplicationTaskFunc = MifareDesfireAppTask,
-		.ApplicationTickFunc = MifareDesfireAppTick, //ApplicationTickDummy,
+		.ApplicationTickFunc = MifareDesfireAppTick,
 		.ApplicationProcessFunc = MifareDesfireAppProcess,
 		.ApplicationGetUidFunc = MifareDesfireGetUid,
 		.ApplicationSetUidFunc = MifareDesfireSetUid,
@@ -235,7 +236,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationInitFunc = MifareDesfire4kEV1AppInit,
 		.ApplicationResetFunc = MifareDesfireAppReset,
 		.ApplicationTaskFunc = MifareDesfireAppTask,
-		.ApplicationTickFunc = MifareDesfireAppTick, //ApplicationTickDummy,
+		.ApplicationTickFunc = MifareDesfireAppTick,
 		.ApplicationProcessFunc = MifareDesfireAppProcess,
 		.ApplicationGetUidFunc = MifareDesfireGetUid,
 		.ApplicationSetUidFunc = MifareDesfireSetUid,
@@ -250,14 +251,14 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationInitFunc = MifareDesfire8kEV1AppInit,
 		.ApplicationResetFunc = MifareDesfireAppReset,
 		.ApplicationTaskFunc = MifareDesfireAppTask,
-		.ApplicationTickFunc = MifareDesfireAppTick, //ApplicationTickDummy,
+		.ApplicationTickFunc = MifareDesfireAppTick,
 		.ApplicationProcessFunc = MifareDesfireAppProcess,
 		.ApplicationGetUidFunc = MifareDesfireGetUid,
 		.ApplicationSetUidFunc = MifareDesfireSetUid,
 		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
 		.MemorySize = 2 * MIFARE_CLASSIC_4K_MEM_SIZE,
 		.ReadOnly = false
-	},
+	},*/
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     [CONFIG_ISO14443A_SNIFF] = {

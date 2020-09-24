@@ -47,8 +47,8 @@ This notice must be retained at the top of all source files where indicated.
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
-    SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
-    WriteBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
+    //SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
+    //WriteBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
 }
 
 BYTE PMKConfigurationChangeable(void) {
@@ -510,7 +510,13 @@ uint8_t LookupAppSlot(const DESFireAidType Aid) {
 }
 
 void SelectAppBySlot(uint8_t AppSlot) {
+    if(AppSlot == SelectedApp.Slot) {
+        return;
+    }
     SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[AppSlot];
+    if(appCacheSelectedBlockId == 0) {
+        return;
+    }
     ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;
     SynchronizeAppDir();
@@ -580,7 +586,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
          return STATUS_NO_SUCH_KEY;
     }
     /* Update the next free slot */
-    for (FreeSlot = Slot + 1; FreeSlot < DESFIRE_MAX_SLOTS; ++FreeSlot) {
+    for (FreeSlot = 1; FreeSlot < DESFIRE_MAX_SLOTS; ++FreeSlot) {
         if ((AppDir.AppIds[FreeSlot][0] | AppDir.AppIds[FreeSlot][1] | AppDir.AppIds[FreeSlot][2]) == 0)
             break;
     }
@@ -591,7 +597,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
         return STATUS_OUT_OF_EEPROM_ERROR;
     }
     /* Allocate storage for the application components */
-    SelectedAppCacheType appCacheData = { 0 };
+    SelectedAppCacheType appCacheData;
+    memset(&appCacheData, 0x00, sizeof(SelectedAppCacheType));
     appCacheData.Slot = Slot;
     appCacheData.KeyCount = 1; // Master Key
     appCacheData.MaxKeyCount = KeyCount;
@@ -603,9 +610,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     else {
          BYTE keySettings[DESFIRE_MAX_KEYS];
-         memset(keySettings, 0x00, DESFIRE_MAX_KEYS);
-         // settings for the application Master Key:
-         keySettings[0] = KeySettings;
+         memset(keySettings, KeySettings, DESFIRE_MAX_KEYS);
+         keySettings[0] = KeySettings; // NEEDED ???
          WriteBlockBytes(keySettings, appCacheData.KeySettings, DESFIRE_MAX_KEYS);
     }
     appCacheData.FileNumbersArrayMap = AllocateBlocks(APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE);

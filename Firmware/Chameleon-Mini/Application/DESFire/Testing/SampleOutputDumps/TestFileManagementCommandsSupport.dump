@@ -1,23 +1,23 @@
 >>> CreateApplication command:
-    -> 90 ca 00 00 05 01 00 34 | 0f 06 00 
-    <- 91 9e 
+    -> 90 ca 00 00 05 01 00 34 | 0f 03 00 
+    <- 91 9d 
 >>> Select Application By AID:
     -> 90 5a 00 00 03 01 00 34 | 00 
-    <- 91 a0 
+    <- 91 00 
 
 >>> Start AES Authenticate:
     -> 90 aa 00 00 01 00 00 
-    <- e4 76 da 3c ef a4 94 f6 | 51 12 a5 84 3a fb c3 a3 | 91 af 
-    -- RNDA = 60 98 4f a6 57 27 e2 53 
-    -- RNDB = 34 fb 85 67 c6 a7 59 56 
-    -- CHAL = 60 98 4f a6 57 27 e2 53 | 56 34 fb 85 67 c6 a7 59 
-    -> 90 af 00 00 10 3e 1c 96 | 8a db d0 a9 fa a9 51 69 | b3 cc 22 c2 9c 00 
-    <- 72 dd 30 5d 72 e7 ed c7 | 8e fb 2e 24 d4 6f d0 2c | 91 00 
+    <- 46 24 f3 23 f1 56 8a 91 | 21 8c 6c 6d f9 1c a3 17 | 91 af 
+    -- RNDA = d0 34 2a 1d ee 65 74 11 
+    -- RNDB = 24 2a bf ce 23 a0 6d 1d 
+    -- CHAL = d0 34 2a 1d ee 65 74 11 | 1d 24 2a bf ce 23 a0 6d 
+    -> 90 af 00 00 10 4f 06 2b | 9f 5a 4f 32 c4 f8 c9 cb | 36 14 e9 3e 86 00 
+    <- 7a 91 97 98 b6 29 3b 10 | ef 6d f6 a7 60 fd b2 90 | 91 00 
        ... AUTH OK! :)
 
 >>> CreateStdDataFile command:
     -> 90 cd 00 00 07 00 00 0f | 00 04 00 00 00 
-    <- 91 00 
+    <- 91 de 
 
 >>> CreateBackupDataFile command:
     -> 90 cb 00 00 07 01 00 0f | 00 08 00 00 00 
@@ -25,15 +25,15 @@
 
 >>> CreateValueFile command:
     -> 90 cc 00 00 11 02 00 0f | 00 00 00 00 00 00 01 00 | 00 80 00 00 00 01 00 
-    <- 91 00 
+    <- 91 de 
 
 >>> CreateLinearRecordFile command:
     -> 90 c1 00 00 0a 03 00 0f | 00 04 00 00 0c 00 00 00 
-    <- 91 00 
+    <- 91 de 
 
 >>> CreateCyclicRecordFile command:
     -> 90 c0 00 00 0a 04 00 0f | 00 01 00 00 05 00 00 00 
-    <- 91 00 
+    <- 91 de 
 
 >>> GetFileIds command:
     -> 90 6f 00 00 00 00 
@@ -55,4 +55,4 @@
     <- 03 00 0f 00 04 00 00 0c | 00 00 00 00 00 91 00 
 >>> GetFileSettings command:
     -> 90 f5 00 00 01 04 00 
-    <- 91 f0 
+    <- 04 00 0f 00 01 00 00 05 | 00 00 00 00 00 91 00 
