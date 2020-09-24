@@ -34,7 +34,7 @@ This notice must be retained at the top of all source files where indicated.
 
 CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam) {
      snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
-                PSTR("%s <HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>"), 
+                PSTR("%s <ATS-5|HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>"), 
                 DFCOMMAND_SET_HEADER);
      return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
@@ -51,7 +51,15 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
      }
      hdrPropSpecStr[23] = propSpecBytesStr[15] = '\0';
      dataByteCount = HexStringToBuffer(propSpecBytes, 16, propSpecBytesStr);
-     if(!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
+     if(!strcasecmp_P(hdrPropSpecStr, PSTR("ATS"))) {
+         if(dataByteCount != 5) {
+             StatusError = 0x01;
+         }
+         else {
+             memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
+         }
+     }
+     else if(!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
           if(dataByteCount != 2) {
                StatusError = 0x01;
           }
@@ -93,6 +101,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
           CommandDESFireGetHeaderProperty(OutParam);
           return COMMAND_ERR_INVALID_USAGE_ID;
      }
+     SynchronizePICCInfo();
      return COMMAND_INFO_OK_ID;
 }
 

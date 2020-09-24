@@ -38,10 +38,15 @@ DF_SETHDR <HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <
 ```
 Likewise, as promised, we can modify the tag header information emulated by the tag as follows:
 ```bash
+DF_SETHDR=ATS xxxxxxxxxx
 DF_SETHDR=HardwareVersion xxxx
 DF_SETHDR=SoftwareVersion xxxx
 DF_SETHDR=BatchNumber xxxxxxxxxx
 DF_SETHDR=ProductionDate xxxx
+```
+For example, to set the ATS bytes reported to emulate a JCOP tag:
+```bash
+DF_SETHDR=ATS 0675f7b102
 ```
 Note that the UID for the tag can be set using separate Chameleon terminal commands.
 

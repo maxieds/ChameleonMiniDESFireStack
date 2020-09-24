@@ -155,6 +155,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t BatchNumber[5] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t ProductionWeek;
     uint8_t ProductionYear;
+    uint8_t ATSBytes[5];
     /* Dynamic data: changes during the PICC's lifetime */
     uint16_t FirstFreeBlock;
     uint8_t TransactionStarted; // USED ???

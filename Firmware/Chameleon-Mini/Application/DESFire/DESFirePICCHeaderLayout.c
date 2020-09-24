@@ -24,6 +24,7 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#include "../../Common.h"
 #include "DESFirePICCHeaderLayout.h"
 #include "DESFirePICCControl.h"
 #include "DESFireLogging.h"
@@ -43,6 +44,12 @@ SIZET PrettyPrintPICCHeaderData(BYTE *outputBuffer, SIZET maxLength, BYTE verbos
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
                                 PSTR("(DATE) %02x/%02x\r\n"), 
                                 Picc.ProductionWeek, Picc.ProductionYear);
+     BYTE atsBytes[6];
+     memcpy(&atsBytes[0], Picc.ATSBytes, 5);
+     atsBytes[5] = 0x80;
+     BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE, atsBytes, 6);
+     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
+                                PSTR("(ATS) %s\r\n"), __InternalStringBuffer);
      return charsWritten;
 }
 

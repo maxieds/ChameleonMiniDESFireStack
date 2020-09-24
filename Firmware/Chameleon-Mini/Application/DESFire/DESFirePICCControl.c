@@ -264,6 +264,12 @@ void FormatPicc(void) {
     /* Wipe application directory */
     memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
     memset(&SelectedApp, 0x00, sizeof(SelectedAppCacheType));
+    /* Set the ATS bytes to defaults: */
+    Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
+    Picc.ATSBytes[1] = DESFIRE_EV0_ATS_T0_BYTE;
+    Picc.ATSBytes[2] = DESFIRE_EV0_ATS_TA_BYTE;
+    Picc.ATSBytes[3] = DESFIRE_EV0_ATS_TB_BYTE;
+    Picc.ATSBytes[4] = DESFIRE_EV0_ATS_TC_BYTE;
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 0;
     /* Flush the new local struct data out to the FRAM: */

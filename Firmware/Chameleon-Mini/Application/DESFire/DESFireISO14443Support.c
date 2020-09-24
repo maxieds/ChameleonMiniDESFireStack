@@ -113,19 +113,19 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t Bit
          * NOTE: Some PCD implementations do a memcmp() over ATS bytes, which is completely wrong.
          */
         Iso144434CardID = Buffer[1] & 0x0F;
-
-        Buffer[0] = DESFIRE_EV0_ATS_TL_BYTE;
-        Buffer[1] = DESFIRE_EV0_ATS_T0_BYTE;
-        Buffer[2] = DESFIRE_EV0_ATS_TA_BYTE;
-        Buffer[3] = DESFIRE_EV0_ATS_TB_BYTE;
-        Buffer[4] = DESFIRE_EV0_ATS_TC_BYTE;
+        //Buffer[0] = DESFIRE_EV0_ATS_TL_BYTE;
+        //Buffer[1] = DESFIRE_EV0_ATS_T0_BYTE;
+        //Buffer[2] = DESFIRE_EV0_ATS_TA_BYTE;
+        //Buffer[3] = DESFIRE_EV0_ATS_TB_BYTE;
+        //Buffer[4] = DESFIRE_EV0_ATS_TC_BYTE;
+        memcpy(&Buffer[0], Picc.ATSBytes, 5);
         Buffer[5] = 0x80; /* T1: dummy value for historical bytes */
 
         ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
         ByteCount = Buffer[0];
         const char *debugPrintStr = PSTR("ISO14443-4: SEND RATS");
 	    LogDebuggingMsg(debugPrintStr);
-        break;
+        return ByteCount * BITS_PER_BYTE;
 
     case ISO14443_4_STATE_ACTIVE:
         /* See: ISO/IEC 14443-4; 7.1 Block format */
