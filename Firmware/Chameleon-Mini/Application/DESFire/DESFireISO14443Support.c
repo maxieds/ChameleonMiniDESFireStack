@@ -118,11 +118,11 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t Bit
         //Buffer[2] = DESFIRE_EV0_ATS_TA_BYTE;
         //Buffer[3] = DESFIRE_EV0_ATS_TB_BYTE;
         //Buffer[4] = DESFIRE_EV0_ATS_TC_BYTE;
-        memcpy(&Buffer[0], Picc.ATSBytes, 5);
-        Buffer[5] = 0x80; /* T1: dummy value for historical bytes */
+        memcpy(&Buffer[0], &Picc.ATSBytes[1], 4);
+        Buffer[4] = 0x80; /* T1: dummy value for historical bytes */
 
         ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
-        ByteCount = Buffer[0];
+        ByteCount = 5;
         const char *debugPrintStr = PSTR("ISO14443-4: SEND RATS");
 	    LogDebuggingMsg(debugPrintStr);
         return ByteCount * BITS_PER_BYTE;
