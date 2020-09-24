@@ -37,13 +37,14 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_ISO7816_CLA            0x00
 
 /* Storage allocation constants */
-#define DESFIRE_EEPROM_BLOCK_SIZE      32 /* Bytes */
+#define DESFIRE_EEPROM_BLOCK_SIZE                32 /* Bytes */
+#define DESFIRE_EEPROM_BLOCK_ADDR_MULTIPLIER     (DESFIRE_EEPROM_BLOCK_SIZE / BITS_PER_BYTE)
 #define DESFIRE_BYTES_TO_BLOCKS(x) \
     ( ((x) + DESFIRE_EEPROM_BLOCK_SIZE - 1) / DESFIRE_EEPROM_BLOCK_SIZE )
 
-#define DESFIRE_UID_SIZE     ISO14443A_UID_SIZE_DOUBLE
+#define DESFIRE_UID_SIZE                         ISO14443A_UID_SIZE_DOUBLE
 
-#define DESFIRE_MAX_PAYLOAD_SIZE       55 // 64 /* Bytes */
+#define DESFIRE_MAX_PAYLOAD_SIZE                 55 // 64 /* Bytes */
 
 /*
  * Definitions pertaining to on-card data

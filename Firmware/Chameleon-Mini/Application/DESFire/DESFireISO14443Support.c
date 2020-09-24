@@ -354,7 +354,9 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 const char *debugPrintStr = PSTR("ISO14443-4: Select NAK");
 	            LogDebuggingMsg(debugPrintStr);
             }
-	        return BitCount;
+	        //ISO14443AAppendCRCA(Buffer, BitCount);
+            //BitCount += ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
+            return BitCount;
         }
         const char *debugPrintStr4 = PSTR("ISO14443-4: RDY1, NOT SLCT CMD");
 	    LogDebuggingMsg(debugPrintStr4);
@@ -376,6 +378,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 const char *debugPrintStr = PSTR("Incorrect Select value (R2)");
                 LogDebuggingMsg(debugPrintStr);
 	        }
+            //ISO14443AAppendCRCA(Buffer, BitCount);
+            //BitCount += ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
             return BitCount;
         }
         const char *debugPrintStr3 = PSTR("RDY2, NOT SLCT CMD");

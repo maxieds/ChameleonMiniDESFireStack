@@ -208,14 +208,20 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
+    //else if(ByteCount >= 8 && Buffer[0] == 0x93 & Buffer[2] == 0x00 && 
+    //        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
+    //    DesfireCmdCLA = Buffer[0];
+    //    ByteCount = Buffer[4]; // also removing the trailing two parity bytes
+    //    memmove(&Buffer[2], &Buffer[5], ByteCount);
+    //}
     uint16_t BitCount2 = BitCount;
-    BitCount = ISO144433APiccProcess(Buffer, BitCount);
-    if(BitCount != ISO14443A_APP_NO_RESPONSE) {
-         return BitCount;
-    }
-    else {
-        return MifareDesfireProcess(Buffer, BitCount2);
-    }
+    return ISO144433APiccProcess(Buffer, BitCount);
+    //if(BitCount != ISO14443A_APP_NO_RESPONSE) {
+    //     return BitCount;
+    //}
+    //else {
+    //    return MifareDesfireProcess(Buffer, BitCount2);
+    //}
 }
 
 void ResetLocalStructureData(void) {

@@ -92,7 +92,7 @@ void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET byteCount) {
     memset(fillerBuf, initValue, DESFIRE_EEPROM_BLOCK_SIZE);
     SIZET writeAddr = startBlock;
     while(byteCount > 0) {
-        WriteBlockBytes(fillerBuf, writeAddr, MIN(DESFIRE_EEPROM_BLOCK_SIZE, byteCount));
+        WriteBlockBytes(&fillerBuf[0], writeAddr, MIN(DESFIRE_EEPROM_BLOCK_SIZE, byteCount));
         ++writeAddr;
         if(byteCount > DESFIRE_EEPROM_BLOCK_SIZE) {
             byteCount -= DESFIRE_EEPROM_BLOCK_SIZE;

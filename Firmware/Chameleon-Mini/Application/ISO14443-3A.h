@@ -74,23 +74,25 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
         DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
         memcpy(FirstUidCL, UidCL, ISO14443A_CL_UID_SIZE);
         *BitCount = ISO14443A_CL_FRAME_SIZE;
-        return true;
+        return false;
 
     case ISO14443A_NVB_AC_END:
         /* End of anticollision procedure.
          * Send SAK CLn if we are selected. */
-        if (    (DataPtr[2] == FirstUidCL[0]) &&
-                (DataPtr[3] == FirstUidCL[1]) &&
-                (DataPtr[4] == FirstUidCL[2]) &&
-                (DataPtr[5] == FirstUidCL[3]) ) { 
-	        DataPtr[1] = UidCL[1];
-            DataPtr[2] = UidCL[2];
-            DataPtr[3] = UidCL[3];
-            //DataPtr[4] = UidCL[4];
-            DataPtr[0] = SAKValue;
-            DataPtr[5] = ISO14443A_CALC_BCC(DataPtr);
-            *BitCount = 5 * BITS_PER_BYTE;
-	        return true;
+        if (    (DataPtr[2] == UidCL[0]) &&
+                (DataPtr[3] == UidCL[1]) &&
+                (DataPtr[4] == UidCL[2]) &&
+                (DataPtr[5] == UidCL[3]) ) { 
+	        //DataPtr[0] = SAKValue;
+            //DataPtr[1] = UidCL[1];
+            //DataPtr[2] = UidCL[2];
+            //DataPtr[3] = UidCL[3];
+            //DataPtr[4] = ISO14443A_CALC_BCC(DataPtr);
+            //*BitCount = 5 * BITS_PER_BYTE;
+	        DataPtr[0] = SAKValue;
+            //ISO14443AAppendCRCA(DataPtr, 1);
+            *BitCount = BITS_PER_BYTE;
+            return true;
         }
         else {
             /* We have not been selected. Don't send anything. */
