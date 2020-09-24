@@ -141,16 +141,16 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
     switch(LocalLoggingMode) {
          case OFF:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "OFF");
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("OFF"));
               break;
          case NORMAL:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "NORMAL");
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("NORMAL"));
               break;
          case VERBOSE:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "VERBOSE");
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("VERBOSE"));
               break;
          case DEBUGGING:
-              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s"), "DEBUGGING");
+              snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("DEBUGGING"));
               break;
          default:
               break;

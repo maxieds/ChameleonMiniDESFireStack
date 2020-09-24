@@ -517,6 +517,8 @@ void SelectAppBySlot(uint8_t AppSlot) {
     if(appCacheSelectedBlockId == 0) {
         return;
     }
+    SIZET prevAppCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
+    WriteBlockBytes(&SelectedApp, prevAppCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;
     SynchronizeAppDir();
@@ -530,7 +532,7 @@ bool GetAppData(uint8_t appSlot, SelectedAppCacheType *destData) {
     if(appCacheSelectedBlockId == 0) {
         return false;
     }
-    ReadBlockBytes(&destData, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
+    ReadBlockBytes(destData, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     return true;
 }
 
@@ -688,7 +690,6 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     SIZET appCacheDataBlockId = AppDir.AppCacheStructBlockOffset[Slot];
     WriteBlockBytes(&appCacheData, appCacheDataBlockId, sizeof(SelectedAppCacheType));
     // Note: Creating the block DOES NOT mean we have selected it: 
-    //SelectAppBySlot(Slot);
     if(initMasterApp) {
         memcpy(&SelectedApp, &appCacheData, sizeof(SelectedAppCacheType));
     }

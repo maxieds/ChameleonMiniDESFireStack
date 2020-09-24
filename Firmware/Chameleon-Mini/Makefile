@@ -40,8 +40,8 @@ SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_DECREMENT
 SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_STORE_MEM
-#SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_RECALL_MEM
-SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_PRINT_STATE
+SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_RECALL_MEM
+#SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_PRINT_STATE
 
 #Define if button action setting should be independent of active setting 
 SETTINGS	+= -DBUTTON_SETTING_GLOBAL
@@ -65,7 +65,7 @@ SETTINGS	+= -DLOG_SETTING_GLOBAL
 SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
 
 #Default pending task timeout
-SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50 #* 100ms
+SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50#* 100ms=
 
 #Default reader threshold
 SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
@@ -202,7 +202,8 @@ CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 			   -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			   -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 			   -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
-			   -D__AVR_ATxmega128A4U__ -Werror=implicit-function-declaration
+			   -D__AVR_ATxmega128A4U__ -Werror=implicit-function-declaration \
+			   -D__MAX_ENDPOINT_INDEX=4
 LD_FLAGS     = $(CC_FLAGS) -lc \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
@@ -229,7 +230,8 @@ endif
 DATECMD=$(shell $(DATECMD) '+%Y.%m.%d-%H%M%S')
 
 # Default target
-all: desfire-dev
+all:
+	$(CROSS)-size --mcu=atmega128 -C $(TARGET).elf
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
@@ -288,7 +290,6 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
-	$(CROSS)-size --mcu=atmega128 -C $(TARGET).elf
 
 desfire-dev-copy-lastest: desfire-dev
 	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/

@@ -28,31 +28,20 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFirePICCControl.h"
 #include "DESFireLogging.h"
 
-const const char PPRINT_INDENT_LEVELS[][3] = {
-     "", 
-     "   ", 
-     "      ",
-};
-BYTE PPrintIndentLevel = 0;
-
 SIZET PrettyPrintPICCHeaderData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose) {
      SIZET charsWritten = 0x00;
      charsWritten  = snprintf_P(outputBuffer, maxLength, 
-                                PSTR("%s(UID) %s\r\n"), 
-                                PPRINT_INDENT_LEVELS[PPrintIndentLevel],
+                                PSTR("(UID) %s\r\n"), 
                                 GetHexBytesString(Picc.Uid, DESFIRE_UID_SIZE));
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                PSTR("%s(VERSION) HW=%02x.%02x, SW=%02x.%02x\r\n"), 
-                                PPRINT_INDENT_LEVELS[PPrintIndentLevel],
+                                PSTR("(VERSION) HW=%02x.%02x, SW=%02x.%02x\r\n"), 
                                 Picc.HwVersionMajor, Picc.HwVersionMinor, 
                                 Picc.SwVersionMajor, Picc.SwVersionMinor);
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                PSTR("%s(BATCH) %s\r\n"), 
-                                PPRINT_INDENT_LEVELS[PPrintIndentLevel],
+                                PSTR("(BATCH) %s\r\n"), 
                                 GetHexBytesString(Picc.BatchNumber, 5));
      charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                PSTR("%s(DATE) %02x/%02x\r\n"), 
-                                PPRINT_INDENT_LEVELS[PPrintIndentLevel],
+                                PSTR("(DATE) %02x/%02x\r\n"), 
                                 Picc.ProductionWeek, Picc.ProductionYear);
      return charsWritten;
 }
@@ -68,16 +57,14 @@ SIZET PrettyPrintPICCFile(SelectedAppCacheType *appData, uint8_t fileIndex,
          BYTE fileCommSettings = ReadFileCommSettings(appData->Slot, fileIndex);
          SIZET fileAccessRights = ReadFileAccessRights(appData->Slot, fileIndex);
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                    PSTR("%s-> %02x [Comm=%s -- %s]\r\n"), 
-                                    PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
+                                    PSTR("  -> %02x [Comm=%s -- %s]\r\n"), 
                                     fileNumber, 
                                     GetCommSettingsDesc(fileCommSettings), 
                                     GetFileAccessPermissionsDesc(fileAccessRights));
     }
     else {
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                                    PSTR("%s-> %02x\r\n"), 
-                                    PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
+                                    PSTR("  -> %02x\r\n"), 
                                     fileNumber);
     }
     return charsWritten;
@@ -87,13 +74,16 @@ SIZET PrettyPrintPICCFilesFull(SelectedAppCacheType *appData, BYTE *outputBuffer
     SIZET charsWritten = 0x00;
     BYTE fileIndex;
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("%s[Files -- %d total]\r\n"), 
-                               PPRINT_INDENT_LEVELS[PPrintIndentLevel], appData->FileCount);
+                               PSTR(" [Files -- %d total of %d possible]\r\n"), 
+                               appData->FileCount, DESFIRE_MAX_FILES);
+    uint8_t fileNumberIndexMap[DESFIRE_MAX_FILES];
+    ReadBlockBytes(&fileNumberIndexMap, appData->FileNumbersArrayMap, DESFIRE_MAX_FILES);
     for(fileIndex = 0; fileIndex < DESFIRE_MAX_FILES; fileIndex++) {
-         ++PPrintIndentLevel;
+         if(fileNumberIndexMap[fileIndex] == DESFIRE_FILE_NOFILE_INDEX) {
+             continue;
+         }
          charsWritten += PrettyPrintPICCFile(appData, fileIndex, outputBuffer + charsWritten, 
                                              maxLength - charsWritten, verbose);
-         --PPrintIndentLevel;
     }
     return charsWritten;
 }
@@ -108,8 +98,7 @@ SIZET PrettyPrintPICCKey(SelectedAppCacheType *appData, uint8_t keyIndex,
     BYTE keyVersion = ReadKeyVersion(appData->Slot, keyIndex);
     BYTE keyType = ReadKeyCryptoType(appData->Slot, keyIndex);
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("%s-> %s [v%02d"), 
-                               PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
+                               PSTR("  -> %s [v%02d"), 
                                GetCryptoMethodDesc(keyType), keyVersion);
     if((appData->Slot == DESFIRE_PICC_APP_SLOT) && (keyIndex == DESFIRE_MASTER_KEY_ID)) {
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
@@ -140,13 +129,16 @@ SIZET PrettyPrintPICCKeysFull(SelectedAppCacheType *appData, BYTE *outputBuffer,
     SIZET charsWritten = 0x00;
     BYTE keyIndex;
     charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("%s[Keys -- %d total]\r\n"), 
-                               PPRINT_INDENT_LEVELS[PPrintIndentLevel], appData->KeyCount);
+                               PSTR(" [Keys -- %d of %d total]\r\n"), 
+                               appData->KeyCount, appData->MaxKeyCount);
+    uint16_t keyDataAddresses[DESFIRE_MAX_KEYS];
+    ReadBlockBytes(&keyDataAddresses, ReadKeyStorageAddress(appData->Slot), 2 * DESFIRE_MAX_KEYS);
     for(keyIndex = 0; keyIndex < DESFIRE_MAX_KEYS; keyIndex++) {
-         ++PPrintIndentLevel;
+         if(keyDataAddresses[keyIndex] == 0) {
+             continue;
+         }
          charsWritten += PrettyPrintPICCKey(appData, keyIndex, outputBuffer + charsWritten, 
                                             maxLength - charsWritten, verbose);
-         --PPrintIndentLevel;
     }
     return charsWritten;
 }
@@ -158,8 +150,12 @@ SIZET PrettyPrintPICCAppDir(uint8_t appIndex, BYTE *outputBuffer, SIZET maxLengt
     if(!GetAppData(appIndex, &appData)) {
         return charsWritten;
     }
+    appData.Slot = appIndex;
     charsWritten += PrettyPrintPICCKeysFull(&appData, outputBuffer + charsWritten, 
                                             maxLength - charsWritten, verbose);
+    if(appIndex == 0) { // master
+        return charsWritten;
+    }
     charsWritten += PrettyPrintPICCFilesFull(&appData, outputBuffer + charsWritten, 
                                              maxLength - charsWritten, verbose);
     return charsWritten;
@@ -171,34 +167,26 @@ SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbo
     for(appDirIndex = 0; appDirIndex < DESFIRE_MAX_SLOTS; appDirIndex++) {
          DESFireAidType curAID;
          memcpy(curAID, AppDir.AppIds[appDirIndex], MAX_AID_SIZE);
-         //if((curAID[0] | curAID[1] | curAID[2]) == 0x00) {
-         //     continue;
-         //}
+         if((curAID[0] | curAID[1] | curAID[2]) == 0x00 && appDirIndex > 0) {
+              continue;
+         }
          charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
                                     PSTR("%s== AID 0x%02x%02x%02x\r\n"), 
-                                    PPRINT_INDENT_LEVELS[PPrintIndentLevel], 
                                     curAID[0], curAID[1], curAID[2]);
-         ++PPrintIndentLevel;
          charsWritten += PrettyPrintPICCAppDir(appDirIndex, outputBuffer + charsWritten, 
-                                                maxLength - charsWritten, verbose);
-         PPrintIndentLevel--;
+                                               maxLength - charsWritten, verbose);
     }
     return charsWritten;
 }
 
 SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose) {
-    uint16_t previousTimeoutSetting = GlobalSettings.ActiveSettingPtr->PendingTaskTimeout;
-    GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = 0xffff;
     BYTE charsWritten = 0x00;
-    charsWritten += snprintf_P(outputBuffer, maxLength, 
-                               PSTR("**** DESFIRE HEADER DATA ****\r\n"));
-    ++PPrintIndentLevel;
+    //charsWritten += snprintf_P(outputBuffer, maxLength, 
+    //                           PSTR("**** DESFIRE HEADER DATA ****\r\n"));
     charsWritten += PrettyPrintPICCHeaderData(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
-    PPrintIndentLevel--;
-    charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
-                               PSTR("**** DESFIRE INTERNAL STORAGE ****\r\n"));
-    ++PPrintIndentLevel;
+    //charsWritten += snprintf_P(outputBuffer + charsWritten, maxLength - charsWritten, 
+    //                           PSTR("**** DESFIRE INTERNAL STORAGE ****\r\n"));
     charsWritten += PrettyPrintPICCAppDirsFull(outputBuffer + charsWritten, maxLength - charsWritten, verbose);
-    GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = previousTimeoutSetting;
+    outputBuffer[maxLength - 1] = '\0';
     return charsWritten;
 }
