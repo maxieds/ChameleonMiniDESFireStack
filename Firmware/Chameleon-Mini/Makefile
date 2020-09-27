@@ -140,9 +140,15 @@ SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
 
 #Build configuration
 ifeq ($(OS),Windows_NT)
-BUILD_DATE   = "\"$(shell date /t)\""
+	BUILD_DATE   = "\"$(shell date /t)\""
 else
-BUILD_DATE   = $(shell date +'\"%y%m%d\"')
+	HOST_PLATFORM:=$(shell uname -s)
+	DATECMD=`which date`
+	ifeq "$(HOST_PLATFORM)" "Darwin"
+		DATECMD=`which gdate`
+	endif
+	DATECMD:=$(shell $(DATECMD) '+%Y.%m.%d-%H%M%S')
+	BUILD_DATE = "\"$(DATECMD)\"" 
 endif
 COMMIT_ID    = $(shell git rev-parse --short HEAD)
 MCU          = atxmega128a4u
@@ -223,13 +229,6 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 #AVRDUDE settings to program the precompiled firmware
 AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini-DESFire.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini-DESFire.eep
-
-HOST_PLATFORM:=$(shell uname -s)
-DATECMD=`which date`
-ifeq "$(HOST_PLATFORM)" "Darwin"
-	DATECMD=`which gdate`
-endif
-DATECMD=$(shell $(DATECMD) '+%Y.%m.%d-%H%M%S')
 
 # Default target
 all:
