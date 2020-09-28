@@ -122,13 +122,6 @@ SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS	+= -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
 
-#Enable "quick" DES and 3DES encryption schemes:
-# -> Typically, if we store the DES permute array data in PROGMEM, then the 
-#    encryption routines take too long to run.
-# -> This option enables storing these arrays in the .data segment
-# -> The downside is that it significantly increases / blows up the size of .data
-SETTINGS	+= -DDESFIRE_QUICK_DES_CRYPTO
-
 #Memory definitions and objcopy flags to include sections in binaries
 #FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
 #FLASH_DATA_SIZE = 0x0FFF0 #Size of data section in flash

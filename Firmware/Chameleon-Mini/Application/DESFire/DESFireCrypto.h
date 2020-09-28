@@ -32,7 +32,6 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes128.h"
 #include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes-cmac.h"
-#include "ExternalCryptoLib/AVRCryptoLib/des/des.h"
 #include "ExternalCryptoLib/AVRCryptoLib/memxor/memxor.h"
 
 /* Communication modes: 
