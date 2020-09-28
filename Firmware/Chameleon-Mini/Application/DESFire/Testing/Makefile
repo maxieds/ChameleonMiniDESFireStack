@@ -6,7 +6,7 @@ CFLAGS= -ILocalInclude -ISource -DDRIVER_PN53X_USB_ENABLED \
 		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
 		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include \
 		-DLIBNFC_LOGLEVEL=3 -DHOST_BUILD -DCRYPTO_AES_DEFAULT=1\
-		-I../ExternalCryptoLib
+		-I../ExternalCryptoLib -I../../
 LD=gcc-10
 LDFLAGS= -lc `pkg-config libnfc --libs` \
 		 -L/usr/local/opt/openssl/lib -lssl -lcrypto
@@ -18,8 +18,6 @@ OBJEXT=o
 
 FILE_BASENAMES=NFCAntiCollisionMod \
 			   TestAuthenticateAES128 \
-			   TestAuthenticateIso \
-			   TestAuthenticateLegacy \
 			   TestGeneralCommands \
 			   TestKeyManagementCommands \
 			   TestApplicationManagementCommands \
@@ -36,7 +34,7 @@ BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENA
 
 all: clean default
 
-default: $(BINOUTS)
+default: $(OBJFILES) $(BINOUTS)
 
 $(OBJDIR)/%.$(OBJEXT): Source/%.c
 	$(CC) $(CFLAGS) $< -c -o $@

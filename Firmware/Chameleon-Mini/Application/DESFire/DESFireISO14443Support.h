@@ -85,7 +85,7 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT        (1)
+#define MAX_STATE_RETRY_COUNT        (2)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault); 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 

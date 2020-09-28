@@ -65,7 +65,7 @@ SETTINGS	+= -DLOG_SETTING_GLOBAL
 SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
 
 #Default pending task timeout
-SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=126#50#* 100ms=
+SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=150#50#* 100ms=
 
 #Default reader threshold
 SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
@@ -203,7 +203,8 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S
-ASRC        += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
+ASRC        += Application/CryptoTDEA.S \
+			   $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
@@ -222,8 +223,8 @@ OBJECT_FILES =
 AVRDUDE_PROGRAMMER = flip2
 AVRDUDE_MCU = atxmega128a4u
 AVRDUDE_PORT = usb
-AVRDUDE_WRITE_APP = -U application:w:$(TARGET)-DESFire.hex
-AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET)-DESFire.eep
+AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
+AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
 #AVRDUDE settings to program the precompiled firmware

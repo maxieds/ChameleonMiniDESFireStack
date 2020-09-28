@@ -265,6 +265,8 @@ void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
  */
 void CryptoEncrypt2KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 void CryptoDecrypt2KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoEncrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoDecrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
  *
@@ -292,27 +294,8 @@ void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphe
 void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext, 
                                     void *IV, const uint8_t* Keys);
 
-void CryptoEncrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 void Encrypt3DESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 void Decrypt3DESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys);
-
-/** Performs the 3-key Triple DES en/deciphering in the CBC "send" or "receive" mode
- *
- * \param Count         Block count, expected to be >= 1
- * \param Plaintext     Source buffer with plaintext
- * \param Ciphertext    Destination buffer to contain ciphertext
- * \param IV            Initialization vector buffer, will be updated
- * \param Keys          Key block pointer (CRYPTO_3KTDEA_KEY_SIZE)
- */
-void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                                 void *IV, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                                 void *IV, const uint8_t* Keys);
-void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                                 void *IV, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                                    void *IV, const uint8_t* Keys);
 
 void CryptoEncryptDESBlock(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecryptDESBlock(void *Plaintext, void *Ciphertext, const uint8_t *Keys);

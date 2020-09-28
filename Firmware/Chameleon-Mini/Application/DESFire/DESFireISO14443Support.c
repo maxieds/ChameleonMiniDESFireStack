@@ -42,12 +42,11 @@ uint8_t Iso144434LastBlockLength = 0x00;
 uint8_t StateRetryCount = 0x00;
 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging) {
-    if(resetByDefault || StateRetryCount >= MAX_STATE_RETRY_COUNT) {
+    if(resetByDefault || ++StateRetryCount >= MAX_STATE_RETRY_COUNT) {
         ISO144434SwitchState2(Iso144433AIdleState, performLogging);
         StateRetryCount = 0x00;
         return false;
     }
-    StateRetryCount++;
     return true;
 }
 bool CheckStateRetryCount(bool resetByDefault) {
@@ -231,11 +230,12 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t Bit
     }
 
     /* Stash the block for possible retransmissions */
-    ISO14443AAppendCRCA(Buffer, ByteCount);
-    ByteCount += ISO14443A_CRCA_SIZE;
-    const char *debugPrintStr = PSTR("ISO14443-4: STASHING FOR RE-TRANS");
-	LogDebuggingMsg(debugPrintStr);
-    return ByteCount * BITS_PER_BYTE;
+    return ISO14443A_APP_NO_RESPONSE;
+    //ISO14443AAppendCRCA(Buffer, ByteCount);
+    //ByteCount += ISO14443A_CRCA_SIZE;
+    //const char *debugPrintStr = PSTR("ISO14443-4: STASHING FOR RE-TRANS");
+	//LogDebuggingMsg(debugPrintStr);
+    //return ByteCount * BITS_PER_BYTE;
     //Iso144434LastBlockLength = ByteCount;
     //memmove(&Iso144434LastBlock[0], &Buffer[0], ByteCount);
 
@@ -354,8 +354,6 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 const char *debugPrintStr = PSTR("ISO14443-4: Select NAK");
 	            LogDebuggingMsg(debugPrintStr);
             }
-	        //ISO14443AAppendCRCA(Buffer, BitCount);
-            //BitCount += ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
             return BitCount;
         }
         const char *debugPrintStr4 = PSTR("ISO14443-4: RDY1, NOT SLCT CMD");
@@ -378,8 +376,6 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 const char *debugPrintStr = PSTR("Incorrect Select value (R2)");
                 LogDebuggingMsg(debugPrintStr);
 	        }
-            //ISO14443AAppendCRCA(Buffer, BitCount);
-            //BitCount += ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
             return BitCount;
         }
         const char *debugPrintStr3 = PSTR("RDY2, NOT SLCT CMD");
