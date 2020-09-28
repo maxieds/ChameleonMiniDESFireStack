@@ -224,6 +224,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 } DesfireCardLayout;
 
 SIZET PrettyPrintPICCHeaderData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
+SIZET PrettyPrintFileContentsData(BYTE *outputBuffer, SIZET maxLength, BYTE fileNumber);
 SIZET PrettyPrintPICCFile(SelectedAppCacheType *appData, uint8_t fileIndex, 
                           BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintPICCFilesFull(SelectedAppCacheType *appData, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);

@@ -88,7 +88,7 @@ const char * GetCryptoMethodDesc(uint8_t cryptoType) {
           case CRYPTO_TYPE_AES128:
                return PSTR("AES128");
           default:
-               return PSTR("DES");
+               return PSTR("ANY");
      }
 }
 

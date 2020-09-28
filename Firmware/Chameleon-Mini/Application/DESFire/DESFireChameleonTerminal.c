@@ -114,13 +114,10 @@ CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InPar
      else {
           pprintListSpecStr[31] = '\0';
           if(!strcasecmp_P(pprintListSpecStr, PSTR("FullImage"))) {
-               PrettyPrintPICCImageData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x00);
+               PrettyPrintPICCImageData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
           }
           else if(!strcasecmp_P(pprintListSpecStr, PSTR("HeaderData"))) {
                PrettyPrintPICCHeaderData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
-          }
-          else if(!strcasecmp_P(pprintListSpecStr, PSTR("ListDirs"))) {
-               PrettyPrintPICCAppDirsFull((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
           }
           else {
                StatusError = 0x01;
@@ -128,7 +125,7 @@ CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InPar
      }
      if(StatusError) {
           snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
-                     PSTR("%s <FullImage|HeaderData|ListDirs>"), 
+                     PSTR("%s <FullImage|HeaderData>"), 
                      DFCOMMAND_LAYOUT_PPRINT);
           return COMMAND_ERR_INVALID_USAGE_ID;
      }
