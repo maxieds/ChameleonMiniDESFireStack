@@ -24,11 +24,6 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
-#include "gf256mul/gf256mul.h"
-
-#include "des/des.h"
-#include "des/des.c"
-
 #include "memxor/memxor.h"
 #include "memxor/memxor_c.c"
 
