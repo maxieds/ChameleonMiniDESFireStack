@@ -77,6 +77,7 @@ uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File) {
      }
      DESFireFileTypeSettings fileSettings = ReadFileSettings(SelectedApp.Slot, FileIndex);
      memcpy(File, &fileSettings, sizeof(DESFireFileTypeSettings));
+     File->FileNumber = FileNum;
      return STATUS_OPERATION_OK;
 }
 

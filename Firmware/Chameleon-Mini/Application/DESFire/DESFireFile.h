@@ -54,6 +54,7 @@ This notice must be retained at the top of all source files where indicated.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t FileType;
+    uint8_t FileNumber;
     uint16_t FileSize;
     uint16_t FileDataAddress;
     union DESFIRE_FIRMWARE_ALIGNAT {

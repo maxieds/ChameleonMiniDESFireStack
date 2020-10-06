@@ -47,6 +47,8 @@ BYTE DesfireCmdCLA = 0x90;
 Iso7816WrappedParams_t Iso7816P1Data = ISO7816_NO_DATA;
 Iso7816WrappedParams_t Iso7816P2Data = ISO7816_NO_DATA;
 bool Iso7816FileSelected = false;
+uint8_t Iso7816FileOffset = 0x00;
+uint8_t Iso7816EfIdNumber = 0xff;
 
 /* Dispatching routines */
 void MifareDesfireReset(void) {}
@@ -207,7 +209,7 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
         else {
             /* Re-wrap into ISO 7816-4 */
             Buffer[BitCount] = Buffer[0];
-            Buffer[ButCount + 1] = Buffer[1];
+            Buffer[BitCount + 1] = Buffer[1];
             memmove(&Buffer[0], &Buffer[2], BitCount - 2);
             ISO14443AAppendCRCA(Buffer, BitCount);
             BitCount += 2;
@@ -272,7 +274,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
     if(ByteCount < 8 || !Iso7816CLA(Buffer[0])) {
         Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
         Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-        return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
     }
     else {
         Iso7816P1Data = ISO7816_NO_DATA;
@@ -337,6 +339,24 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
         }
         Iso7816P1Data = ISO7816_NO_DATA;
         Iso7816P2Data = ISO7816_NO_DATA;
+    }
+    else if(insCode == CMD_ISO7816_READ_BINARY) {
+         if((P1 & 0x80) != 0) { 
+              if((P1 & 0x60) != 0) {
+                   Iso7816P1Data = Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+                   return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_INCORRECT_P1P2);
+              }
+              else {
+                   Iso7816EfIdNumber = P1 & 0x0f;
+                   Iso7816FileOffset = P2;
+                   Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
+              }
+         }
+         else {
+              Iso7816EfIdNumber = 0xff;
+              Iso7816FileOffset = P1 | P2;
+              Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
+         }
     }
     else {
         Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
