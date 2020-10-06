@@ -196,12 +196,20 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
          */
         BitCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
         /* TODO: Where are we re-wrapping the data according to the CommMode standards? */
-        if (BitCount) {
-            /* Re-wrap into ISO 7816-4 */
+        if((BitCount && !Iso7816CLA(DesfireCmdCLA)) || (BitCount == 1)) {
+            /* Re-wrap into padded APDU form */
             Buffer[BitCount] = Buffer[0];
             memmove(&Buffer[0], &Buffer[1], BitCount - 1);
             Buffer[BitCount - 1] = 0x91;
             ISO14443AAppendCRCA(Buffer, ++BitCount);
+            BitCount += 2;
+        }
+        else {
+            /* Re-wrap into ISO 7816-4 */
+            Buffer[BitCount] = Buffer[0];
+            Buffer[ButCount + 1] = Buffer[1];
+            memmove(&Buffer[0], &Buffer[2], BitCount - 2);
+            ISO14443AAppendCRCA(Buffer, BitCount);
             BitCount += 2;
         }
         return BitCount * BITS_PER_BYTE;
@@ -281,7 +289,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
             }
             else {
                 Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-                return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+                return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
             }
         }
         else if((P1 & 0xf9) == 0) { // Select by DF/AID name:
@@ -290,12 +298,12 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
              }
              else {
                  Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-                 return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+                 return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
              }
         }
         else {
              Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-             return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+             return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
         }
         if((P2 & 0xf0) == 0) {
             switch(P2 & 0x03) {
@@ -313,19 +321,19 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
                     break;
                 default:
                     Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-                    return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+                    return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
             }
         }
         else {
             Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
         }
     }
     else if(insCode == CMD_ISO7816_GET_CHALLENGE) {
         if(P1 != 0x00 || P2 != 0x00) {
             Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
             Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
         }
         Iso7816P1Data = ISO7816_NO_DATA;
         Iso7816P2Data = ISO7816_NO_DATA;
@@ -333,7 +341,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
     else {
         Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
         Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-        return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
     }
     return ISO7816_CMD_NO_ERROR;
 }

@@ -1974,20 +1974,20 @@ uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount) {
      Iso7816FileSelected = false;
      if(ByteCount != 1 + 1) {
-          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[0] = ISO7816_ERROR_SW1;
           Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
      uint8_t fileNumberHandle = Buffer[1];
      uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumberHandle);
      if(fileIndex >= DESFIRE_MAX_FILES) {
-          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[0] = ISO7816_ERROR_SW1;
           Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
      uint8_t readFileStatus = ReadFileControlBlock(fileNumberHandle, &SelectedFile); 
      if(readFileStatus != STATUS_OPERATION_OK) {
-          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[0] = ISO7816_ERROR_SW1;
           Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
@@ -2000,7 +2000,7 @@ uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount) {
      InvalidateAuthState(0x00);
      if(ByteCount != 1 + DESFIRE_AID_SIZE) {
-          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[0] = ISO7816_ERROR_SW1;
           Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
@@ -2008,7 +2008,7 @@ uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount) {
      memcpy(incomingAid, &Buffer[1], DESFIRE_AID_SIZE);
      uint8_t appSlot = LookupAppSlot(incomingAid);
      if(appSlot >= DESFIRE_MAX_SLOTS) {
-          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[0] = ISO7816_ERROR_SW1;
           Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
@@ -2019,7 +2019,23 @@ uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount) {
-    return CmdNotImplemented(Buffer, ByteCount);
+    /* Reference: 
+     * https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/#chap6_15
+     * The maximum length of the expected challenge (in bytes) is provided in the Le field: 
+     * here, ByteCount - 1. We shall declare that this value needs to be at least 8 bytes, and 
+     * intend on returning only 8 bytes when it is set to larger.
+     */
+     if(ByteCount < 1 + 8) {
+          Buffer[0] = ISO7816_ERROR_SW1;
+          Buffer[1] = ISO7816_GET_CHALLENGE_ERROR_SW2_UNSUPPORTED;
+          return ISO7816_STATUS_RESPONSE_SIZE;
+     }
+     const uint8_t challengeRespDefaultBytes = 8;
+     RandomGetBuffer(&Buffer[2], challengeResponseDefaultBytes);
+     // TODO: Should store this value somewhere for the next commands / auth routines ... 
+     Buffer[0] = 0x00;
+     Buffer[1] = 0x00;
+     return ISO7816_STATUS_RESPONSE_SIZE + challengeResponseDefaultBytes;
 }
 
 uint16_t ISO7816CmdExternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount) {
