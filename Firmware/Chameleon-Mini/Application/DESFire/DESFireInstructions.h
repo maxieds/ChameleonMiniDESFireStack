@@ -189,7 +189,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount);
 
 /* ISO7816 command handling */
 uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdSelectFile(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ISO7816CmdExternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
@@ -199,4 +199,4 @@ uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount);
 
-#endif 
+#endif

@@ -49,10 +49,10 @@
 
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_ISO7816_SELECT | 0xa4 | | | |
-| CMD_ISO7816_GET_CHALLENGE | 0x84 | | | |
-| CMD_ISO7816_EXTERNAL_AUTHENTICATE | 0x82 | | | |
-| CMD_ISO7816_INTERNAL_AUTHENTICATE | 0x88 | | | |
+| CMD_ISO7816_SELECT | 0xa4 | A more nuanced ISO7816 version of EF/DF selection. | :wavy_dash: :question: | See the implementation notes [in this spec](https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/#chap6_11). We only support EF selection with ``P1=00000000|000000010`` and DF(AID) with ``P1=00000100``. |
+| CMD_ISO7816_GET_CHALLENGE | 0x84 | | :question: | |
+| CMD_ISO7816_EXTERNAL_AUTHENTICATE | 0x82 | | :x: | |
+| CMD_ISO7816_INTERNAL_AUTHENTICATE | 0x88 | | :x: | |
 | CMD_ISO7816_READ_BINARY | 0xb0 | | | |
 | CMD_ISO7816_UPDATE_BINARY | 0xd6 | | | |
 | CMD_ISO7816_READ_RECORDS | 0xb2 | | | |

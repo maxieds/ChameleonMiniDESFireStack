@@ -43,8 +43,10 @@ DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
 BYTE DesfireCmdCLA = 0x90;
+
 Iso7816WrappedParams_t Iso7816P1Data = ISO7816_NO_DATA;
 Iso7816WrappedParams_t Iso7816P2Data = ISO7816_NO_DATA;
+bool Iso7816FileSelected = false;
 
 /* Dispatching routines */
 void MifareDesfireReset(void) {}

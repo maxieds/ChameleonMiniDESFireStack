@@ -110,7 +110,9 @@ typedef enum {
 
 extern Iso7816WrappedParams_t Iso7816P1Data;
 extern Iso7816WrappedParams_t Iso7816P2Data;
+extern bool Iso7816FileSelected;
 
+#define ISO7816_STATUS_RESPONSE_SIZE           (0x02)
 #define ISO7816_CMD_NO_ERROR                   (0x0000)
 #define ISO7816_SELECT_ERROR_SW1               (0x6a)
 #define ISO7816_SELECT_ERROR_SW2_UNSUPPORTED   (0x81)

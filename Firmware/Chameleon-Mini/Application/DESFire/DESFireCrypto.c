@@ -28,6 +28,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "../../Log.h"
 
+#include "../MifareDESFire.h"
 #include "DESFireCrypto.h"
 #include "DESFireInstructions.h"
 #include "DESFirePICCControl.h"
@@ -58,6 +59,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
      Authenticated = 0x00;
      AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
      AuthenticatedWithPICCMasterKey = 0x00;
+     Iso7816FileSelected = false;
      CryptoAuthMethod = CRYPTO_TYPE_ANY;
      ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }

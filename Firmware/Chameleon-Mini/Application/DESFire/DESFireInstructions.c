@@ -1952,7 +1952,70 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount) {
-    return CmdNotImplemented(Buffer, ByteCount);
+     if(ByteCount == 0) {
+          Buffer[0] = STATUS_LENGTH_ERROR;
+          return DESFIRE_STATUS_RESPONSE_SIZE;
+     }
+     else if(Iso7816P1Data == ISO7816_UNSUPPORTED_MODE || 
+             Iso7816P2Data == ISO7816_UNSUPPORTED_MODE) {
+          Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+          return DESFIRE_STATUS_RESPONSE_SIZE;
+     }
+     else if(Iso7816P1Data == ISO7816_SELECT_EF) {
+          return ISO7816CmdSelectEF(Buffer, ByteCount);
+     }
+     else if(Iso7816P1Data == ISO7816_SELECT_DF) {
+          return ISO7816CmdSelectDF(Buffer, ByteCount);
+     }
+     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+     return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount) {
+     Iso7816FileSelected = false;
+     if(ByteCount != 1 + 1) {
+          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+          return ISO7816_STATUS_RESPONSE_SIZE;
+     }
+     uint8_t fileNumberHandle = Buffer[1];
+     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumberHandle);
+     if(fileIndex >= DESFIRE_MAX_FILES) {
+          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+          return ISO7816_STATUS_RESPONSE_SIZE;
+     }
+     uint8_t readFileStatus = ReadFileControlBlock(fileNumberHandle, &SelectedFile); 
+     if(readFileStatus != STATUS_OPERATION_OK) {
+          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+          return ISO7816_STATUS_RESPONSE_SIZE;
+     }
+     Iso7816FileSelected = true;
+     Buffer[0] = 0x00;
+     Buffer[1] = 0x00;
+     return ISO7816_STATUS_RESPONSE_SIZE;
+}
+
+uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount) {
+     InvalidateAuthState(0x00);
+     if(ByteCount != 1 + DESFIRE_AID_SIZE) {
+          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+          return ISO7816_STATUS_RESPONSE_SIZE;
+     }
+     DESFireAidType incomingAid;
+     memcpy(incomingAid, &Buffer[1], DESFIRE_AID_SIZE);
+     uint8_t appSlot = LookupAppSlot(incomingAid);
+     if(appSlot >= DESFIRE_MAX_SLOTS) {
+          Buffer[0] = ISO7816_SELECT_ERROR_SW1;
+          Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+          return ISO7816_STATUS_RESPONSE_SIZE;
+     }
+     SelectAppBySlot(appSlot);
+     Buffer[0] = 0x00;
+     Buffer[1] = 0x00;
+     return ISO7816_STATUS_RESPONSE_SIZE;
 }
 
 uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount) {
