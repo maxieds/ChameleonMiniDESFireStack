@@ -39,13 +39,12 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireLogging.h"
 #include "Reader14443A.h"
 
-#define DesfireCLA(cmdCode) \
-    ((cmdCode == DESFIRE_NATIVE_CLA) || (cmdCode == DESFIRE_ISO7816_CLA))
-
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
 BYTE DesfireCmdCLA = 0x90;
+Iso7816WrappedParams_t Iso7816P1Data = ISO7816_NO_DATA;
+Iso7816WrappedParams_t Iso7816P2Data = ISO7816_NO_DATA;
 
 /* Dispatching routines */
 void MifareDesfireReset(void) {}
@@ -176,6 +175,16 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
         // Check CRC bytes appended to the buffer:
         // -- Actually, just ignore parity problems if they exist
         DesfireCmdCLA = Buffer[0];
+        if(Iso7816CLA(DesfireCmdCLA)) {
+            uint16_t iso7816ParamsStatus = SetIso7816WrappedParametersType(Buffer, ByteCount);
+            if(iso7816ParamsStatus != ISO7816_CMD_NO_ERROR) {
+                Buffer[0] = (uint8_t) ((iso7816ParamsStatus >> 8) & 0xff);
+                Buffer[1] = (uint8_t) (iso7816ParamsStatus & 0x00ff);
+                ISO14443AAppendCRCA(Buffer, 2);
+                ByteCount = 2 + 2;
+                return ByteCount * BITS_PER_BYTE;
+            }
+        }
         ByteCount = Buffer[4]; // also removing the trailing two parity bytes
         Buffer[0] = Buffer[1];
         memmove(&Buffer[1], &Buffer[5], ByteCount);
@@ -247,6 +256,84 @@ void MifareDesfireGetUid(ConfigurationUidType Uid)
 void MifareDesfireSetUid(ConfigurationUidType Uid)
 {
     SetPiccUid(Uid);
+}
+
+uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
+    if(ByteCount < 8 || !Iso7816CLA(Buffer[0])) {
+        Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+        Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+        return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+    }
+    else {
+        Iso7816P1Data = ISO7816_NO_DATA;
+        Iso7816P2Data = ISO7816_NO_DATA;
+    }
+    uint8_t insCode = Buffer[1];
+    uint8_t P1 = Buffer[2];
+    uint8_t P2 = Buffer[3];
+    if(insCode == CMD_ISO7816_SELECT) {
+        /* Reference: https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/#chap6_11 */
+        if((P1 & 0xfc) == 0) { // Select by file ID:
+            if((P1 & 0x03) == 0 || (P1 & 0x03) == 0x01) {
+                Iso7816P1Data = ISO7816_SELECT_EF;
+            }
+            else {
+                Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+                return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+            }
+        }
+        else if((P1 & 0xf9) == 0) { // Select by DF/AID name:
+             if((P1 & 0x03) == 0) {
+                 Iso7816P1Data = ISO7816_SELECT_DF;
+             }
+             else {
+                 Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+                 return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+             }
+        }
+        else {
+             Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+             return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+        }
+        if((P2 & 0xf0) == 0) {
+            switch(P2 & 0x03) {
+                case 0x00:
+                    Iso7816P2Data = ISO7816_FILE_FIRST_RECORD;
+                    break;
+                case 0x01:
+                    Iso7816P2Data = ISO7816_FILE_LAST_RECORD;
+                    break;
+                case 0x02:
+                    Iso7816P2Data = ISO7816_FILE_NEXT_RECORD;
+                    break;
+                case 0x03:
+                    Iso7816P2Data = ISO7816_FILE_PREV_RECORD;
+                    break;
+                default:
+                    Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+                    return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+            }
+        }
+        else {
+            Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+            return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+        }
+    }
+    else if(insCode == CMD_ISO7816_GET_CHALLENGE) {
+        if(P1 != 0x00 || P2 != 0x00) {
+            Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+            Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+            return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+        }
+        Iso7816P1Data = ISO7816_NO_DATA;
+        Iso7816P2Data = ISO7816_NO_DATA;
+    }
+    else {
+        Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+        Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+        return AppendSW12Bytes(ISO7816_SELECT_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+    }
+    return ISO7816_CMD_NO_ERROR;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

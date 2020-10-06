@@ -32,14 +32,18 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "Application.h"
 #include "DESFire/DESFireFirmwareSettings.h"
+#include "DESFire/DESFirePICCHeaderLayout.h"
 #include "DESFire/DESFireISO14443Support.h"
+#include "DESFire/DESFireInstructions.h"
 
-//#define IS_ISO14443A_4_COMPLIANT(buf) (buf[0] & 0x20)
+#define IS_ISO14443A_4_COMPLIANT(buf)   (buf[0] & 0x20)
 #define MAKE_ISO14443A_4_COMPLIANT(buf) (buf[0] |= 0x20)
 
 /* The core functions used outside of this implementation 
  * to describe the DESFire emulation to the Chameleon firmware: 
  */
+void ResetLocalStructureData(void);
+void MifareDesfireReset(void);
 void MifareDesfireEV0AppInit(void);
 void MifareDesfire2kEV1AppInit(void);
 void MifareDesfire4kEV1AppInit(void);
@@ -59,6 +63,10 @@ void MifareDesfireSetUid(ConfigurationUidType Uid);
  * elsewhere in the backend, and so we do not need to 
  * declare them as static in the source. 
  */
+#define DesfireCLA(cmdCode) \
+    ((cmdCode == DESFIRE_NATIVE_CLA) || (cmdCode == DESFIRE_ISO7816_CLA))
+#define Iso7816CLA(cmdCode) \
+    (cmdCode == DESFIRE_ISO7816_CLA)
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_HALT,
@@ -82,7 +90,35 @@ extern DesfireStateType DesfirePreviousState;
 extern bool DesfireFromHalt;
 extern BYTE DesfireCmdCLA;
 
-void ResetLocalStructureData(void);
-void MifareDesfireReset(void);
+/* Some of the wrapped ISO7816 commands have extra meaning 
+ * packed into the P1-P2 bytes of the APDU byte array.
+ * When we support these extra modes, this is a way to keep 
+ * track of the local meanings without needing extra handling 
+ * functions to distinguish between the wrapped command types 
+ * for the ISO7816 versus native DESFire instructions.
+ */
+typedef enum {
+    ISO7816_NO_DATA = 0,
+    ISO7816_UNSUPPORTED_MODE,
+    ISO7816_SELECT_EF,
+    ISO7816_SELECT_DF,
+    ISO7816_FILE_FIRST_RECORD,
+    ISO7816_FILE_LAST_RECORD,
+    ISO7816_FILE_NEXT_RECORD,
+    ISO7816_FILE_PREV_RECORD,
+} Iso7816WrappedParams_t;
+
+extern Iso7816WrappedParams_t Iso7816P1Data;
+extern Iso7816WrappedParams_t Iso7816P2Data;
+
+#define ISO7816_CMD_NO_ERROR                   (0x0000)
+#define ISO7816_SELECT_ERROR_SW1               (0x6a)
+#define ISO7816_SELECT_ERROR_SW2_UNSUPPORTED   (0x81)
+#define ISO7816_SELECT_ERROR_SW2_NOFILE        (0x82)
+
+#define AppendSW12Bytes(sw1, sw2)   \
+    ((uint16_t)  ((sw1 << 8) | (sw2 & 0xff)))
+
+uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif /* MIFAREDESFIRE_H_ */
