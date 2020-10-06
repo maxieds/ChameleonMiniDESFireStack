@@ -122,6 +122,10 @@ SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS	+= -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
 
+#Option to save space with the "Application/Crypto1.c" code by storing large tables 
+#in PROGMEM. Note that this will slow down the read times when accessing these tables:
+SETTINGS	+= -DDESFIRE_CRYPTO1_SAVE_SPACE
+
 #Memory definitions and objcopy flags to include sections in binaries
 #FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
 #FLASH_DATA_SIZE = 0x0FFF0 #Size of data section in flash
