@@ -220,7 +220,7 @@ uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings
      memset(&SelectedFile, PICC_EMPTY_BYTE, sizeof(SelectedFileCacheType));
      SelectedFile.File.FileType = FileType;
      SelectedFile.File.RecordFile.BlockCount = 0;
-     SelectedFile.File.RecordFile.ClearPending = 0;
+     SelectedFile.File.RecordFile.RecordPointer = 0;
      memcpy(SelectedFile.File.RecordFile.RecordSize, RecordSize, 3);
      memcpy(SelectedFile.File.RecordFile.MaxRecordCount, MaxRecordSize, 3);
      uint16_t maxRecords = MaxRecordSize[0] | (MaxRecordSize[1] << 8);

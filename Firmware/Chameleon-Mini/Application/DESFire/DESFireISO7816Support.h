@@ -44,6 +44,7 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO7816_ERROR_SW2_UNSUPPORTED                (0x81)
 #define ISO7816_SELECT_ERROR_SW2_UNSUPPORTED         (0x81)
 #define ISO7816_SELECT_ERROR_SW2_NOFILE              (0x82)
+#define ISO7816_ERROR_SW2_FILE_NOMEM                 (0x84)
 #define ISO7816_GET_CHALLENGE_ERROR_SW2_UNSUPPORTED  (0x81)
 #define ISO7816_ERROR_SW2_INCOMPATFS                 (0x81)
 #define ISO7816_ERROR_SW2_SECURITY                   (0x82)

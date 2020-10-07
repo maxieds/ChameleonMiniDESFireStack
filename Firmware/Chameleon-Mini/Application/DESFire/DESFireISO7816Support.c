@@ -95,7 +95,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
         }
     }
     else if(insCode == CMD_ISO7816_GET_CHALLENGE) {
-        if(P1 != 0 || P2 != 0) {
+        if((P1 != 0) || (P2 != 0)) {
             Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
             Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
             return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
@@ -144,6 +144,17 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
               return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
          }
     }
+    else if(insCode == CMD_ISO7816_APPEND_RECORD) {
+         if((P1 != 0) || (P2 != 0)) {
+            Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+            Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
+         }
+         Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
+    }
+    //else if(insCode == CMD_ISO7816_UPDATE_BINARY) {}
+    //else if(insCode == CMD_ISO7816_EXTERNAL_AUTHENTICATE) {}
+    //else if(insCode == CMD_ISO7816_INTERNAL_AUTHENTICATE) {}
     else {
         Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
         Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
