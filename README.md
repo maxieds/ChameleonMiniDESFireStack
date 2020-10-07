@@ -3,6 +3,7 @@ Chameleon Mini Mifare DESFire tag emulation support
 
 This project aims to bring a full featured Mifare DESFire tag emulation support to the standard sources for the Chameleon Mini RevG firmware.
 
+* [Latest releases with firmware binaries](https://github.com/maxieds/ChameleonMiniDESFireStack/releases)
 * [Primary source code modifications](https://github.com/maxieds/ChameleonMiniDESFireStack/tree/master/Firmware/Chameleon-Mini/Application/DESFire)
 * [Current features support tracking table](https://github.com/maxieds/ChameleonMiniDESFireStack/blob/master/Firmware/Chameleon-Mini/Application/DESFire/Docs/TestingFunctionalityTable.md)
 * [DESFire specific Chameleon Terminal commands](https://github.com/maxieds/ChameleonMiniDESFireStack/blob/master/Firmware/Chameleon-Mini/Application/DESFire/Docs/ChameleonMiniTerminalAddOns.md)
