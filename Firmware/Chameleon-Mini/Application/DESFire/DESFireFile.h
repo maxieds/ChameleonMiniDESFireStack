@@ -95,6 +95,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
  */
 
 uint16_t GetFileDataAreaBlockId(uint8_t FileIndex);
+uint8_t ReadFileControlBlockIntoCacheStructure(uint8_t FileNum, SelectedFileCacheType *FileCache);
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 

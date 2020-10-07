@@ -123,6 +123,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
          }
     }
     else if(insCode == CMD_ISO7816_READ_RECORDS) {
+         Iso7816FileOffset = 0;
          if(P1 == 0) {
               Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
          }

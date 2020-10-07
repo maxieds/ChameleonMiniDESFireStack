@@ -70,6 +70,14 @@ uint16_t GetFileDataAreaBlockId(uint8_t fileIndex) {
      return FileData.FileDataAddress;
 }
 
+uint8_t ReadFileControlBlockIntoCacheStructure(uint8_t FileNum, SelectedFileCacheType *FileCache) {
+     if(FileCache == NULL) {
+          return STATUS_PARAMETER_ERROR;
+     }
+     FileCache->Num = FileNum;
+     return ReadFileControlBlock(FileNum, &(FileCache->File));
+}
+
 uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File) {
      if(File == NULL) {
           return STATUS_PARAMETER_ERROR;
