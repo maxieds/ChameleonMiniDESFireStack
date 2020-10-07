@@ -24,7 +24,11 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds) 
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../../Log.h"
+#include "../../Terminal/Terminal.h"
+
 #include "DESFireLogging.h" 
 
 #ifdef DESFIRE_DEFAULT_DEBUGGING_MODE
@@ -58,3 +62,15 @@ void DESFireLogSourceCodeTODO(char *implNoteMsg, char *srcFileLoggingData) {
      LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, bigDataBuffer, logMsgBufferSize + 1);
 }
 
+void DebugPrintP(const char *fmt, ...) {
+    char Format[80];
+    char Buffer[80];
+    va_list args;
+    strcpy_P(Format, fmt);
+    va_start(args, fmt);
+    vsnprintf(Buffer, sizeof(Buffer), Format, args);
+    va_end(args);
+    TerminalSendString(Buffer);
+}
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

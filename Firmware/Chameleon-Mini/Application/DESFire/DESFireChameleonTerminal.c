@@ -24,6 +24,8 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../../Terminal/Terminal.h"
 #include "../../Terminal/Commands.h"
 
@@ -221,3 +223,4 @@ CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InP
      return COMMAND_ERR_INVALID_USAGE_ID;
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

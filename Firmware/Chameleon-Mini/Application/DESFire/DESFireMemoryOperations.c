@@ -24,7 +24,10 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../../Memory.h"
+
 #include "DESFireMemoryOperations.h"
 #include "DESFirePICCControl.h"
 #include "DESFireFile.h"
@@ -132,3 +135,4 @@ void WriteDataEEPROMSink(uint8_t* Buffer, uint8_t Count) {
     TransferState.WriteData.Sink.Pointer += DESFIRE_BYTES_TO_BLOCKS(Count);
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

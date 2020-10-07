@@ -24,14 +24,17 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
+#include "../../Common.h"
+#include "../MifareDESFire.h"
+
 #include "DESFireFile.h"
 #include "DESFirePICCControl.h"
 #include "DESFireStatusCodes.h"
 #include "DESFireMemoryOperations.h"
 #include "DESFireInstructions.h"
 #include "DESFireApplicationDirectory.h"
-#include "../MifareDESFire.h"
-#include "../../Common.h"
 
 uint16_t GetFileSizeFromFileType(DESFireFileTypeSettings *File) {
      if(File == NULL) {
@@ -393,3 +396,5 @@ const char * GetFileAccessPermissionsDesc(uint16_t fileAccessRights) {
      }
      return __InternalStringBuffer;
 }
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

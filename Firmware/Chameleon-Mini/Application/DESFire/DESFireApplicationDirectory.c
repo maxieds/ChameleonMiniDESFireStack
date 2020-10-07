@@ -24,6 +24,8 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../MifareDESFire.h"
 #include "DESFireApplicationDirectory.h"
 #include "DESFirePICCControl.h"
@@ -33,13 +35,6 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireMemoryOperations.h"
 #include "DESFireUtils.h"
 #include "DESFireLogging.h"
-
-//const BYTE DEFAULT_SELECT_DESFIRE_AID[] = { 
-//     0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00 
-//};
-//const BYTE DEFAULT_SELECT_ISO7816_AID[] = { 
-//     0xa0, 0x00, 0x00, 0x00, 0x03, 0x96 
-//};
 
 /*
  * Global card structure support routines
@@ -766,3 +761,4 @@ uint16_t GetApplicationIdsIterator(uint8_t* Buffer, uint16_t ByteCount) {
     return DESFIRE_STATUS_RESPONSE_SIZE + Status.BytesProcessed;
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

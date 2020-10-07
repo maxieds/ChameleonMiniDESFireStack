@@ -24,9 +24,10 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */ 
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #ifndef __DESFIRE_LOGGING_CODES_INCLUDE_C__ 
 #define __DESFIRE_LOGGING_CODES_INCLUDE_C__
-     
      /* Intended to log all routine, complete transaction records (verbose output), and 
         to source a list of debugging messages and TODO items in the 
         developing DESFire emulation support within the firmware sources. 
@@ -55,5 +56,6 @@ This notice must be retained at the top of all source files where indicated.
      /* ISO 14443 related entries */
      LOG_ISO14443_3A_STATE       = 0x53,
      LOG_ISO14443_4_STATE        = 0x54,
-
 #endif
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

@@ -24,6 +24,8 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #ifndef __DESFIRE_CHAMELEON_TERMINAL_INCLUDE_C__
 #define __DESFIRE_CHAMELEON_TERMINAL_INCLUDE_C__
      {
@@ -62,3 +64,5 @@ This notice must be retained at the top of all source files where indicated.
           .GetFunc        = CommandDESFireGetTestingMode
      },
 #endif
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

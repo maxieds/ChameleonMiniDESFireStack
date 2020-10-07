@@ -24,8 +24,10 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
-#include <avr/pgmspace.h>
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include <string.h>
+#include <avr/pgmspace.h>
 
 #include "../../Configuration.h"
 #include "../../Memory.h"
@@ -1992,8 +1994,8 @@ uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount) {
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
      Iso7816FileSelected = true;
-     Buffer[0] = 0x00;
-     Buffer[1] = 0x00;
+     Buffer[0] = ISO7816_CMD_NO_ERROR;
+     Buffer[1] = ISO7816_CMD_NO_ERROR;
      return ISO7816_STATUS_RESPONSE_SIZE;
 }
 
@@ -2013,8 +2015,8 @@ uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount) {
           return ISO7816_STATUS_RESPONSE_SIZE;
      }
      SelectAppBySlot(appSlot);
-     Buffer[0] = 0x00;
-     Buffer[1] = 0x00;
+     Buffer[0] = ISO7816_CMD_NO_ERROR;
+     Buffer[1] = ISO7816_CMD_NO_ERROR;
      return ISO7816_STATUS_RESPONSE_SIZE;
 }
 
@@ -2033,8 +2035,8 @@ uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount) {
      const uint8_t challengeRespDefaultBytes = 8;
      RandomGetBuffer(&Buffer[2], challengeRespDefaultBytes);
      // TODO: Should store this value somewhere for the next commands / auth routines ... 
-     Buffer[0] = 0x00;
-     Buffer[1] = 0x00;
+     Buffer[0] = ISO7816_CMD_NO_ERROR;
+     Buffer[1] = ISO7816_CMD_NO_ERROR;
      return ISO7816_STATUS_RESPONSE_SIZE + challengeRespDefaultBytes;
 }
 
@@ -2047,13 +2049,18 @@ uint16_t ISO7816CmdInternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
+    if(ByteCount == 0) {
+         Buffer[0] = ISO7816_ERROR_SW1;
+         Buffer[1] = ISO7816_SELECT_ERROR_SW2_UNSUPPORTED;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
     uint8_t maxBytesToRead = ByteCount - 1;
-    if((Iso7816EfIdNumber > 0x0f) && !Iso7816FileSelected) {
+    if((Iso7816EfIdNumber > ISO7816_EFID_NUMBER_MAX) && !Iso7816FileSelected) {
          Buffer[0] = ISO7816_ERROR_SW1;
          Buffer[1] = ISO7816_ERROR_SW2_NOEF;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
-    else if(Iso7816EfIdNumber <= 0x0f) {
+    else if(Iso7816EfIdNumber <= ISO7816_EFID_NUMBER_MAX) {
          uint8_t fileNumberHandle = Iso7816EfIdNumber;
          uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumberHandle);
          if(fileIndex >= DESFIRE_MAX_FILES) {
@@ -2067,8 +2074,8 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
               Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
               return ISO7816_STATUS_RESPONSE_SIZE;
          }
-         Iso7816FileSelected = 1;
-         Iso7816EfIdNumber = 0xff;
+         Iso7816FileSelected = true;
+         Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
     }
     /* Verify authentication: read or read&write required */
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, SelectedFile.File.FileNumber);
@@ -2079,14 +2086,14 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
     uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
     uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
     switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
-    case VALIDATED_ACCESS_DENIED:
-        Buffer[0] = ISO7816_ERROR_SW1_ACCESS;
-        Buffer[1] = ISO7816_ERROR_SW2_SECURITY;
-        return ISO7816_STATUS_RESPONSE_SIZE;
-    case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
-        CommSettings = DESFIRE_COMMS_PLAINTEXT;
-    case VALIDATED_ACCESS_GRANTED:
-        break;
+        case VALIDATED_ACCESS_DENIED:
+            Buffer[0] = ISO7816_ERROR_SW1_ACCESS;
+            Buffer[1] = ISO7816_ERROR_SW2_SECURITY;
+            return ISO7816_STATUS_RESPONSE_SIZE;
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
     }
     if(SelectedFile.File.FileType == DESFIRE_FILE_STANDARD_DATA || 
        SelectedFile.File.FileType == DESFIRE_FILE_BACKUP_DATA) {
@@ -2094,7 +2101,7 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
          Buffer[1] = ISO7816_ERROR_SW2_INCOMPATFS;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
-    if(maxBytesToRead == 0x00 && SelectedFile.File.FileSize > 0xfd) {
+    if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE && SelectedFile.File.FileSize > ISO7816_MAX_FILE_SIZE) {
          Buffer[0] = ISO7816_ERROR_SW1;
          Buffer[1] = ISO7816_ERROR_SW2_INCORRECT_P1P2;
          return ISO7816_STATUS_RESPONSE_SIZE;
@@ -2114,13 +2121,13 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
          Buffer[1] = ISO7816_SELECT_ERROR_SW2_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
-    else if(maxBytesToRead == 0x00) {
+    else if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE) {
          maxBytesToRead = SelectedFile.File.FileSize - Iso7816FileOffset;
     }
     ReadBlockBytes(&Buffer[2], SelectedFile.File.FileDataAddress + 
                                DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset), maxBytesToRead);
-    Buffer[0] = 0x00;
-    Buffer[1] = 0x00;
+    Buffer[0] = ISO7816_CMD_NO_ERROR;
+    Buffer[1] = ISO7816_CMD_NO_ERROR;
     return ISO7816_STATUS_RESPONSE_SIZE + maxBytesToRead;
 }
 
@@ -2135,3 +2142,5 @@ uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount) {
     return CmdNotImplemented(Buffer, ByteCount);
 }
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

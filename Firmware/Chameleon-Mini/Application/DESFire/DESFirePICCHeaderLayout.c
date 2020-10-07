@@ -24,7 +24,10 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../../Common.h"
+
 #include "DESFirePICCHeaderLayout.h"
 #include "DESFirePICCControl.h"
 #include "DESFireFile.h"
@@ -244,3 +247,5 @@ SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose
     outputBuffer[maxLength - 1] = '\0';
     return charsWritten;
 }
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

@@ -24,13 +24,15 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../Application.h"
+#include "../Reader14443A.h"
+#include "../MifareDESFire.h"
 
 #include "DESFireISO14443Support.h"
 #include "DESFirePICCControl.h"
 #include "DESFireLogging.h"
-#include "../MifareDESFire.h"
-#include "../Reader14443A.h"
 
 /*
  * ISO/IEC 14443-4 implementation
@@ -410,3 +412,4 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     return ISO14443A_APP_NO_RESPONSE;
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

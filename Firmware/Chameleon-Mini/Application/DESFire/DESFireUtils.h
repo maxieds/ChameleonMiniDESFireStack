@@ -31,29 +31,13 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireFirmwareSettings.h"
 
-void PadBuffer(BYTE *buf, SIZET startIdx, SIZET endIdx, BYTE fillByte);
-void RightPadBuffer(BYTE *buf, SIZET origBufSize, SIZET padBytes, BYTE fillByte);
-void LeftPadBuffer(BYTE *buf, SIZET padBytes, BYTE fillByte);
-
 void RotateArrayRight(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize);
 void RotateArrayLeft(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize);
 void ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BYTE *destArr);
 
-void ShortToByteArray(SIZET shortValue, BYTE *outputArr);
-void IntegerToByteArray(UINT intValue, BYTE *outputArr);
 void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value);
 void Int24ToByteBuffer(uint8_t *byteBuffer, uint32_t int24Value);
 int32_t Int32FromByteBuffer(uint8_t *byteBuffer);
-
-void ByteToBinaryString(BYTE byteValue, char *destStrBuf, SIZET maxDestSize);
-void ByteArrayToBinaryString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);
-void ByteArrayToAsciiString(BYTE *byteBuf, SIZET byteBufSize, char *destStrBuf, SIZET maxDestSize);
-void StringArrayJoin(char **strArray, SIZET arrSize, char joinDelim, char *destStrBuf, SIZET maxDestSize);
-
-void DebugPrintP(const char *fmt, ...);
-
-#define DEBUG_PRINT(fmt, ...) \
-    DebugPrintP(PSTR(fmt), ##__VA_ARGS__)
 
 SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize);
 

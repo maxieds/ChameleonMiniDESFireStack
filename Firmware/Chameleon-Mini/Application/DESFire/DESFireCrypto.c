@@ -24,6 +24,8 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include <string.h>
 
 #include "../../Log.h"
@@ -532,3 +534,4 @@ void Decrypt3DESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, 
     }   
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

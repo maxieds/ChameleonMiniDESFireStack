@@ -42,13 +42,7 @@ This notice must be retained at the top of all source files where indicated.
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
-BYTE DesfireCmdCLA = 0x90;
-
-Iso7816WrappedParams_t Iso7816P1Data = ISO7816_NO_DATA;
-Iso7816WrappedParams_t Iso7816P2Data = ISO7816_NO_DATA;
-bool Iso7816FileSelected = false;
-uint8_t Iso7816FileOffset = 0x00;
-uint8_t Iso7816EfIdNumber = 0xff;
+BYTE DesfireCmdCLA = DESFIRE_NATIVE_CLA;
 
 /* Dispatching routines */
 void MifareDesfireReset(void) {}
@@ -229,20 +223,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
-    //else if(ByteCount >= 8 && Buffer[0] == 0x93 & Buffer[2] == 0x00 && 
-    //        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
-    //    DesfireCmdCLA = Buffer[0];
-    //    ByteCount = Buffer[4]; // also removing the trailing two parity bytes
-    //    memmove(&Buffer[2], &Buffer[5], ByteCount);
-    //}
-    uint16_t BitCount2 = BitCount;
     return ISO144433APiccProcess(Buffer, BitCount);
-    //if(BitCount != ISO14443A_APP_NO_RESPONSE) {
-    //     return BitCount;
-    //}
-    //else {
-    //    return MifareDesfireProcess(Buffer, BitCount2);
-    //}
 }
 
 void ResetLocalStructureData(void) {
@@ -268,102 +249,6 @@ void MifareDesfireGetUid(ConfigurationUidType Uid)
 void MifareDesfireSetUid(ConfigurationUidType Uid)
 {
     SetPiccUid(Uid);
-}
-
-uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
-    if(ByteCount < 8 || !Iso7816CLA(Buffer[0])) {
-        Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-        Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-    }
-    else {
-        Iso7816P1Data = ISO7816_NO_DATA;
-        Iso7816P2Data = ISO7816_NO_DATA;
-    }
-    uint8_t insCode = Buffer[1];
-    uint8_t P1 = Buffer[2];
-    uint8_t P2 = Buffer[3];
-    if(insCode == CMD_ISO7816_SELECT) {
-        /* Reference: https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/#chap6_11 */
-        if((P1 & 0xfc) == 0) { // Select by file ID:
-            if((P1 & 0x03) == 0 || (P1 & 0x03) == 0x01) {
-                Iso7816P1Data = ISO7816_SELECT_EF;
-            }
-            else {
-                Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-                return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-            }
-        }
-        else if((P1 & 0xf9) == 0) { // Select by DF/AID name:
-             if((P1 & 0x03) == 0) {
-                 Iso7816P1Data = ISO7816_SELECT_DF;
-             }
-             else {
-                 Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-                 return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-             }
-        }
-        else {
-             Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-             return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-        }
-        if((P2 & 0xf0) == 0) {
-            switch(P2 & 0x03) {
-                case 0x00:
-                    Iso7816P2Data = ISO7816_FILE_FIRST_RECORD;
-                    break;
-                case 0x01:
-                    Iso7816P2Data = ISO7816_FILE_LAST_RECORD;
-                    break;
-                case 0x02:
-                    Iso7816P2Data = ISO7816_FILE_NEXT_RECORD;
-                    break;
-                case 0x03:
-                    Iso7816P2Data = ISO7816_FILE_PREV_RECORD;
-                    break;
-                default:
-                    Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-                    return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-            }
-        }
-        else {
-            Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-        }
-    }
-    else if(insCode == CMD_ISO7816_GET_CHALLENGE) {
-        if(P1 != 0x00 || P2 != 0x00) {
-            Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-            Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-        }
-        Iso7816P1Data = ISO7816_NO_DATA;
-        Iso7816P2Data = ISO7816_NO_DATA;
-    }
-    else if(insCode == CMD_ISO7816_READ_BINARY) {
-         if((P1 & 0x80) != 0) { 
-              if((P1 & 0x60) != 0) {
-                   Iso7816P1Data = Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-                   return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_INCORRECT_P1P2);
-              }
-              else {
-                   Iso7816EfIdNumber = P1 & 0x0f;
-                   Iso7816FileOffset = P2;
-                   Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
-              }
-         }
-         else {
-              Iso7816EfIdNumber = 0xff;
-              Iso7816FileOffset = P1 | P2;
-              Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
-         }
-    }
-    else {
-        Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-        Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
-    }
-    return ISO7816_CMD_NO_ERROR;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

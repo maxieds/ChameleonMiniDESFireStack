@@ -24,7 +24,10 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../../Terminal/Terminal.h"
+
 #include "DESFireUtils.h" 
 #include "DESFirePICCControl.h"
 
@@ -77,17 +80,6 @@ int32_t Int32FromByteBuffer(uint8_t *byteBuffer) {
     return b0 | b1 | b2 | b3;
 }
 
-void DebugPrintP(const char *fmt, ...) {
-    char Format[80];
-    char Buffer[80];
-    va_list args;
-    strcpy_P(Format, fmt);
-    va_start(args, fmt);
-    vsnprintf(Buffer, sizeof(Buffer), Format, args);
-    va_end(args);
-    TerminalSendString(Buffer);
-}
-
 SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize) {
      if(blockSize == 0) {
           return 0;
@@ -95,3 +87,4 @@ SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize) {
      return DESFIRE_BYTES_TO_BLOCKS(byteSize);
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

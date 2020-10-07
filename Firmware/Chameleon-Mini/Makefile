@@ -191,6 +191,7 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 			$(DESFIRE_MAINSRC)/DESFireCrypto.c \
 			$(DESFIRE_MAINSRC)/DESFireFile.c \
 			$(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
+			$(DESFIRE_MAINSRC)/DESFireISO7816Support.c \
 			$(DESFIRE_MAINSRC)/DESFireInstructions.c \
 			$(DESFIRE_MAINSRC)/DESFireLogging.c \
 			$(DESFIRE_MAINSRC)/DESFireMemoryOperations.c \

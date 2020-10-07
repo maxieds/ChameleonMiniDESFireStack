@@ -76,6 +76,10 @@ void DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
 void DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
 void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
 
+void DebugPrintP(const char *fmt, ...);
+#define DEBUG_PRINT(fmt, ...) \
+    DebugPrintP(PSTR(fmt), ##__VA_ARGS__)
+
 #define DEBUG_PRINT_P(fmtStr, ...)                           ({ \
     uint8_t logLength = 0;                                      \
     do {                                                        \

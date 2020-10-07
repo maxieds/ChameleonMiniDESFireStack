@@ -24,6 +24,8 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "../../Settings.h"
 #include "../../Log.h"
 #include "../../Random.h"
@@ -339,3 +341,4 @@ void SetPiccUid(ConfigurationUidType Uid) {
     SynchronizePICCInfo();
 }
 
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */

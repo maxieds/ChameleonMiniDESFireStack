@@ -65,6 +65,9 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443_PCB_S_DESELECT     (ISO14443_PCB_S_BLOCK_STATIC)
 #define ISO14443_PCB_S_WTX          (ISO14443_PCB_S_BLOCK_STATIC | 0x30)
 
+#define IS_ISO14443A_4_COMPLIANT(buf)   (buf[0] & 0x20)
+#define MAKE_ISO14443A_4_COMPLIANT(buf) (buf[0] |= 0x20)
+
 /*
  * ISO/IEC 14443-4 implementation
  * To support EV2 cards emulation, proper support for handling 14443-4
