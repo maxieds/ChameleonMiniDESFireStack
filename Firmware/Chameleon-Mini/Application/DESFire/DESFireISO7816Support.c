@@ -152,7 +152,24 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
          }
          Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
     }
-    //else if(insCode == CMD_ISO7816_UPDATE_BINARY) {}
+    else if(insCode == CMD_ISO7816_UPDATE_BINARY) {
+         if((P1 & 0x80) != 0) {
+              if((P1 & 0x30) != 0) {
+                   Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
+                   Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
+                   return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
+              }
+              Iso7816EfIdNumber = P1 & 0x03;
+              Iso7816FileSelected = false;
+              Iso7816FileOffset = P2;
+              Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
+         }
+         else {
+              Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
+              Iso7816FileOffset = P1 | P2;
+              Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
+         }
+    }
     //else if(insCode == CMD_ISO7816_EXTERNAL_AUTHENTICATE) {}
     //else if(insCode == CMD_ISO7816_INTERNAL_AUTHENTICATE) {}
     else {

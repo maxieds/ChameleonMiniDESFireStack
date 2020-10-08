@@ -40,17 +40,18 @@ This notice must be retained at the top of all source files where indicated.
  * CRC-16
  */
 
-#define ISO14443A_CMD_RATS          0xE0
-#define ISO14443A_RATS_FRAME_SIZE   (6 * 8) //(4 * 8) /* Bit */
+#define ISO14443A_CMD_RATS                  0xE0
+#define ISO14443A_RATS_FRAME_SIZE           (6 * BITS_PER_BYTE) //(4 * 8) /* Bit */
+#define ISO14443A_CRC_BYTES_FRAME_SIZE      (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
 
-#define ISO14443_PCB_BLOCK_TYPE_MASK 0xC0
-#define ISO14443_PCB_I_BLOCK 0x00
-#define ISO14443_PCB_R_BLOCK 0x80
-#define ISO14443_PCB_S_BLOCK 0xC0
+#define ISO14443_PCB_BLOCK_TYPE_MASK        0xC0
+#define ISO14443_PCB_I_BLOCK                0x00
+#define ISO14443_PCB_R_BLOCK                0x80
+#define ISO14443_PCB_S_BLOCK                0xC0
 
-#define ISO14443_PCB_I_BLOCK_STATIC 0x02
-#define ISO14443_PCB_R_BLOCK_STATIC 0xA2
-#define ISO14443_PCB_S_BLOCK_STATIC 0xC2
+#define ISO14443_PCB_I_BLOCK_STATIC         0x02
+#define ISO14443_PCB_R_BLOCK_STATIC         0xA2
+#define ISO14443_PCB_S_BLOCK_STATIC         0xC2
 
 #define ISO14443_PCB_BLOCK_NUMBER_MASK      0x01
 #define ISO14443_PCB_HAS_NAD_MASK           0x04
@@ -60,13 +61,13 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443_PCB_R_BLOCK_ACK            0x00
 #define ISO14443_PCB_R_BLOCK_NAK            0x10
 
-#define ISO14443_R_BLOCK_SIZE 1 /* Bytes */
+#define ISO14443_R_BLOCK_SIZE               1 /* Bytes */
 
-#define ISO14443_PCB_S_DESELECT     (ISO14443_PCB_S_BLOCK_STATIC)
-#define ISO14443_PCB_S_WTX          (ISO14443_PCB_S_BLOCK_STATIC | 0x30)
+#define ISO14443_PCB_S_DESELECT             (ISO14443_PCB_S_BLOCK_STATIC)
+#define ISO14443_PCB_S_WTX                  (ISO14443_PCB_S_BLOCK_STATIC | 0x30)
 
-#define IS_ISO14443A_4_COMPLIANT(buf)   (buf[0] & 0x20)
-#define MAKE_ISO14443A_4_COMPLIANT(buf) (buf[0] |= 0x20)
+#define IS_ISO14443A_4_COMPLIANT(buf)       (buf[0] & 0x20)
+#define MAKE_ISO14443A_4_COMPLIANT(buf)     (buf[0] |= 0x20)
 
 /*
  * ISO/IEC 14443-4 implementation

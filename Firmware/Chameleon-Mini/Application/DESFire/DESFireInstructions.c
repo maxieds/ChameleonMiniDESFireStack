@@ -2120,23 +2120,37 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
          Buffer[1] = ISO7816_ERROR_SW2_EOF;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
-    else if((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
-         Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_SELECT_ERROR_SW2_UNSUPPORTED;
-         return ISO7816_STATUS_RESPONSE_SIZE;
-    }
-    else if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE) {
+    if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE) {
          maxBytesToRead = SelectedFile.File.FileSize - Iso7816FileOffset;
     }
-    ReadBlockBytes(&Buffer[2], SelectedFile.File.FileDataAddress + 
-                               DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset), maxBytesToRead);
+    /* Handle fetching bits in the cases where the file offset is not a multiple of 
+     * DESFIRE_EEPROM_BLOCK_SIZE, which is required to address the data read out of the 
+     * file using ReadBlockBytes
+     */
+    uint8_t fileDataReadAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset) - 1);
+    uint8_t *storeDataBufStart = &Buffer[2];
+    if((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
+         uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE;
+         uint8_t blockData[DESFIRE_EEPROM_BLOCK_SIZE];
+         ReadBlockBytes(blockData, fileDataReadAddr, DESFIRE_EEPROM_BLOCK_SIZE);
+         memcpy(storeDataBufStart + blockPriorByteCount, blockData, DESFIRE_EEPROM_BLOCK_SIZE);
+         fileDataReadAddr += 1;
+         storeDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+         maxBytesToRead -= DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+    }
+    ReadBlockBytes(storeDataBufStart, fileDataReadAddr, maxBytesToRead); 
     Buffer[0] = ISO7816_CMD_NO_ERROR;
     Buffer[1] = ISO7816_CMD_NO_ERROR;
     return ISO7816_STATUS_RESPONSE_SIZE + maxBytesToRead;
 }
 
 uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
-    return CmdNotImplemented(Buffer, ByteCount);
+    
+     
+     
+     
+     
+     return CmdNotImplemented(Buffer, ByteCount);
 }
 
 uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
@@ -2205,11 +2219,6 @@ uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
          Buffer[1] = ISO7816_ERROR_SW2_WRONG_FSPARAMS;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
-    else if((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
-         Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_SELECT_ERROR_SW2_UNSUPPORTED;
-         return ISO7816_STATUS_RESPONSE_SIZE;
-    } 
     if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE) {
          maxBytesToRead = MIN(SelectedFile.File.FileSize - Iso7816FileOffset, ISO7816_MAX_FILE_SIZE);
     }
@@ -2218,12 +2227,26 @@ uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
        (SelectedFile.File.FileSize - Iso7816FileOffset < maxBytesToRead)) {
          cyclicRecordOffsetDiff = maxBytesToRead + Iso7816FileOffset - SelectedFile.File.FileSize;
     }
+    /* Handle fetching bits in the cases where the file offset is not a multiple of 
+     * DESFIRE_EEPROM_BLOCK_SIZE, which is required to address the data read out of the 
+     * file using ReadBlockBytes
+     */
+    uint8_t initFileReadDataAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset) - 1);
+    uint8_t *storeDataBufStart = &Buffer[2];
+    if((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
+         uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE;
+         uint8_t blockData[DESFIRE_EEPROM_BLOCK_SIZE];
+         ReadBlockBytes(blockData, initFileReadDataAddr, DESFIRE_EEPROM_BLOCK_SIZE);
+         memcpy(storeDataBufStart + blockPriorByteCount, blockData, DESFIRE_EEPROM_BLOCK_SIZE);
+         initFileReadDataAddr += 1;
+         storeDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+         maxBytesToRead -= DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+    }
     /* Now, read the specified file contents into the Buffer:
      * Cases to handle separately: 
      *      1) Cyclic record files with a non-zero offset difference;
      *      2) Any other record file cases. 
      */
-    uint16_t initFileReadDataAddr = SelectedFile.File.FileDataAddress + DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset);
     if((SelectedFile.File.FileType == DESFIRE_FILE_CIRCULAR_RECORDS) && 
        (cyclicRecordOffsetDiff > 0)) {
          uint8_t initEOFReadLength = maxBytesToRead - cyclicRecordOffsetDiff;
@@ -2307,8 +2330,8 @@ uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount) {
          memcpy(firstBlockData + priorBlockBytesToCopy, writeDataBufStart, DESFIRE_EEPROM_BLOCK_SIZE - 1 - priorBlockBytesToCopy);
          WriteBlockBytes(firstBlockData, fileDataWriteAddr, DESFIRE_EEPROM_BLOCK_SIZE);
          fileDataWriteAddr += 1;
-         appendRecordLength -= (nextRecordIndexToAppend % DESFIRE_EEPROM_BLOCK_SIZE);
-         writeDataBufStart += (nextRecordIndexToAppend % DESFIRE_EEPROM_BLOCK_SIZE);
+         appendRecordLength -= DESFIRE_EEPROM_BLOCK_SIZE - priorBlockBytesToCopy;
+         writeDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - priorBlockBytesToCopy;
     }
     WriteBlockBytes(writeDataBufStart, fileDataWriteAddr, appendRecordLength);
     SelectedFile.File.RecordFile.RecordPointer = nextRecordPointer;
