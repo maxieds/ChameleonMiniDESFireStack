@@ -2145,12 +2145,97 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
-    
-     
-     
-     
-     
-     return CmdNotImplemented(Buffer, ByteCount);
+    if(ByteCount < 1 + 1) {
+         Buffer[0] = ISO7816_ERROR_SW1;
+         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    uint8_t maxBytesToRead = ByteCount - 1;
+    if((Iso7816EfIdNumber > ISO7816_EFID_NUMBER_MAX) && !Iso7816FileSelected) {
+         Buffer[0] = ISO7816_ERROR_SW1;
+         Buffer[1] = ISO7816_ERROR_SW2_NOEF;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    else if(Iso7816EfIdNumber <= ISO7816_EFID_NUMBER_MAX) {
+         uint8_t fileNumberHandle = Iso7816EfIdNumber;
+         uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, fileNumberHandle);
+         if(fileIndex >= DESFIRE_MAX_FILES) {
+              Buffer[0] = ISO7816_ERROR_SW1;
+              Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+              return ISO7816_STATUS_RESPONSE_SIZE;
+         }
+         uint8_t readFileStatus = ReadFileControlBlockIntoCacheStructure(fileNumberHandle, &SelectedFile); 
+         if(readFileStatus != STATUS_OPERATION_OK) {
+              Buffer[0] = ISO7816_ERROR_SW1;
+              Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;
+              return ISO7816_STATUS_RESPONSE_SIZE;
+         }
+         Iso7816FileSelected = true;
+         Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
+    }
+    /* Verify authentication: read or read&write required */
+    uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, SelectedFile.File.FileNumber);
+    if (fileIndex >= DESFIRE_MAX_FILES) {
+         Buffer[0] = ISO7816_ERROR_SW1;
+         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
+    uint8_t CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+    switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
+        case VALIDATED_ACCESS_DENIED:
+            Buffer[0] = ISO7816_ERROR_SW1_ACCESS;
+            Buffer[1] = ISO7816_ERROR_SW2_SECURITY;
+            return ISO7816_STATUS_RESPONSE_SIZE;
+        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+            CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        case VALIDATED_ACCESS_GRANTED:
+            break;
+    }
+    if(SelectedFile.File.FileType != DESFIRE_FILE_STANDARD_DATA && 
+       SelectedFile.File.FileType != DESFIRE_FILE_BACKUP_DATA) {
+         Buffer[0] = ISO7816_ERROR_SW1_ACCESS;
+         Buffer[1] = ISO7816_ERROR_SW2_INCOMPATFS;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE && SelectedFile.File.FileSize > ISO7816_MAX_FILE_SIZE) {
+         Buffer[0] = ISO7816_ERROR_SW1;
+         Buffer[1] = ISO7816_ERROR_SW2_INCORRECT_P1P2;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    else if(Iso7816FileOffset >= SelectedFile.File.FileSize) {
+         Buffer[0] = ISO7816_ERROR_SW1_WRONG_FSPARAMS;
+         Buffer[1] = ISO7816_ERROR_SW2_WRONG_FSPARAMS;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    else if(SelectedFile.File.FileSize - Iso7816FileOffset < maxBytesToRead) {
+         Buffer[0] = ISO7816_ERROR_SW1_FSE;
+         Buffer[1] = ISO7816_ERROR_SW2_EOF;
+         return ISO7816_STATUS_RESPONSE_SIZE;
+    }
+    if(maxBytesToRead == ISO7816_READ_ALL_BYTES_SIZE) {
+         maxBytesToRead = SelectedFile.File.FileSize - Iso7816FileOffset;
+    }
+    /* Handle fetching bits in the cases where the file offset is not a multiple of 
+     * DESFIRE_EEPROM_BLOCK_SIZE, which is required to address the data read out of the 
+     * file using ReadBlockBytes
+     */
+    uint8_t fileDataWriteAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset) - 1);
+    uint8_t *updateDataBufStart = &Buffer[1];
+    if((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
+         uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE;
+         uint8_t blockData[DESFIRE_EEPROM_BLOCK_SIZE];
+         ReadBlockBytes(blockData, fileDataWriteAddr, blockPriorByteCount);
+         memcpy(blockData + blockPriorByteCount, updateDataBufStart, DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount);
+         WriteBlockBytes(blockData, fileDataWriteAddr, DESFIRE_EEPROM_BLOCK_SIZE);
+         fileDataWriteAddr += 1;
+         updateDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+         maxBytesToRead -= DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+    }
+    WriteBlockBytes(updateDataBufStart, fileDataWriteAddr, maxBytesToRead); 
+    Buffer[0] = ISO7816_CMD_NO_ERROR;
+    Buffer[1] = ISO7816_CMD_NO_ERROR;
+    return ISO7816_STATUS_RESPONSE_SIZE + maxBytesToRead;
 }
 
 uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {

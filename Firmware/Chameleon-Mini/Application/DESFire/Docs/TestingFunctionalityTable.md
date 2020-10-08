@@ -54,7 +54,7 @@
 | CMD_ISO7816_EXTERNAL_AUTHENTICATE | 0x82 | | :x: | |
 | CMD_ISO7816_INTERNAL_AUTHENTICATE | 0x88 | | :x: | |
 | CMD_ISO7816_READ_BINARY | 0xb0 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_UPDATE_BINARY | 0xd6 | | | |
+| CMD_ISO7816_UPDATE_BINARY | 0xd6 | | :wavy_dash: :question: | Needs testing. |
 | CMD_ISO7816_READ_RECORDS | 0xb2 | | :wavy_dash: :question: | Needs testing. |
 | CMD_ISO7816_APPEND_RECORD | 0xe2 | | :wavy_dash: :question: | Especially needs testing for corner case checks. |
 
