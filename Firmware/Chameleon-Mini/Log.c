@@ -173,15 +173,13 @@ uint16_t LogMemFree(void)
 
 void LogSetModeById(LogModeEnum Mode)
 {
-#ifndef LOG_SETTING_GLOBAL
-    GlobalSettings.ActiveSettingPtr->LogMode = Mode;
-#else
+#ifdef LOG_SETTING_GLOBAL
     /* Write Log settings globally */
     for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
          GlobalSettings.Settings[i].LogMode = Mode;
     }
 #endif
-
+    GlobalSettings.ActiveSettingPtr->LogMode = Mode;
     switch(Mode) {
     case LOG_MODE_OFF:
         EnableLogSRAMtoFRAM = false;
@@ -194,7 +192,7 @@ void LogSetModeById(LogModeEnum Mode)
         break;
 
     case LOG_MODE_LIVE:
-        EnableLogSRAMtoFRAM = false;
+        EnableLogSRAMtoFRAM = false; // TODO: ??? false ???
         CurrentLogFunc = LogFuncLive;
         break;
 
