@@ -181,7 +181,6 @@ we are programming. The syntax include:
 ```bash
 DF_PPRINT_PICC FullImage
 DF_PPRINT_PICC HeaderData
-DF_PPRINT_PICC ListDirs
 ```
 
 #### DF_FWINFO -- Print firmware revision information 
