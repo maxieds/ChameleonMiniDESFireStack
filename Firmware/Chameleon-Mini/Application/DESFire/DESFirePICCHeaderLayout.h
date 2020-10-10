@@ -151,7 +151,9 @@ This notice must be retained at the top of all source files where indicated.
 typedef struct DESFIRE_FIRMWARE_PACKING {
     /* Static data: does not change during the PICC's lifetime.
      * We will add Chameleon Mini terminal commands to enable 
-     * resetting this data so tags can be emulated authentically 
+     * resetting this data so tags can be emulated authentically. 
+     * This structure is stored verbatim (using memcpy) at the 
+     * start of the FRAM setting space for the configuration. 
      */
     uint8_t Uid[DESFIRE_UID_SIZE] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t StorageSize;

@@ -49,14 +49,14 @@ This notice must be retained at the top of all source files where indicated.
 
 #define DESFIRE_FILE_NOFILE_INDEX       (0xff)
 
-/** Data about an application's file is currently kept in this structure.
+/* Data about an application's file is currently kept in this structure.
  * The location of these structures is defined by the file index.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
     uint8_t FileType;
     uint8_t FileNumber;
     uint16_t FileSize;
-    uint16_t FileDataAddress;
+    uint16_t FileDataAddress; /* FRAM address of the storage of the data for the file */
     union DESFIRE_FIRMWARE_ALIGNAT {
         struct DESFIRE_FIRMWARE_ALIGNAT {
             uint16_t FileSize;
