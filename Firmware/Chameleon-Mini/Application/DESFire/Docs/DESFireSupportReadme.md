@@ -144,9 +144,6 @@ run these commands.
 ```bash
 CONFIG=?
 CONFIG=MF_DESFIRE
-CONFIG=MF_DESFIRE_EV1_2K
-CONFIG=MF_DESFIRE_EV1_4K
-CONFIG=MF_DESFIRE_EV1_8K
 ```
 
 #### DF_SETHDR -- Set PICC header information 
