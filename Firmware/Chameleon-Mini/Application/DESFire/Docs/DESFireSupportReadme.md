@@ -318,14 +318,14 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE  MaxKeyCount;
     BYTE  FileCount;
     BYTE  CryptoCommStandard;
-    SIZET KeySettings;            /* Block offset in EEPROM */
-    SIZET FileNumbersArrayMap;    /* Block offset in EEPROM */
-    SIZET FileCommSettings;       /* Block offset in EEPROM */
-    SIZET FileAccessRights;       /* Block offset in EEPROM */
-    SIZET FilesAddress;           /* Block offset in EEPROM */
-    SIZET KeyVersionsArray;       /* Block offset in EEPROM */
-    SIZET KeyTypesArray;          /* Block offset in EEPROM */
-    SIZET KeyAddress;             /* Block offset in EEPROM */
+    SIZET KeySettings;            /* Block offset in FRAM */
+    SIZET FileNumbersArrayMap;    /* Block offset in FRAM */
+    SIZET FileCommSettings;       /* Block offset in FRAM */
+    SIZET FileAccessRights;       /* Block offset in FRAM */
+    SIZET FilesAddress;           /* Block offset in FRAM */
+    SIZET KeyVersionsArray;       /* Block offset in FRAM */
+    SIZET KeyTypesArray;          /* Block offset in FRAM */
+    SIZET KeyAddress;             /* Block offset in FRAM */
     UINT  DirtyFlags; // USED ???
 } SelectedAppCacheType;
 
