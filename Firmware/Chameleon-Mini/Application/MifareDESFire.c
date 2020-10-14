@@ -219,17 +219,16 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = BitCount / BITS_PER_BYTE;
-    if(Iso144433AState == ISO14443_3A_STATE_ACTIVE && 
-       ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+    if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
     uint16_t piccProcessResult = ISO144433APiccProcess(Buffer, BitCount);
-    if(piccProcessResult == 0 && 
-       ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-       Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
-         return MifareDesfireProcess(Buffer, BitCount);
-    }
+    //if(piccProcessResult == 0 && 
+    //   ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+    //   Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
+    //     return MifareDesfireProcess(Buffer, BitCount);
+    //}
     return piccProcessResult;
 }
 
