@@ -440,7 +440,6 @@ bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount
 
         /* Output local memory contents */
         FRAMRead(Buffer, BlockAddress, ByteCount);
-
         return true;
     }
 }

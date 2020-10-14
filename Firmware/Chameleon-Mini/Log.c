@@ -96,10 +96,7 @@ void LogTick(void)
         LogSRAMToFRAM();
 }
 
-void LogTask(void)
-{
-
-}
+void LogTask(void) {}
 
 bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
 {

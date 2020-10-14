@@ -29,6 +29,7 @@ int main(void)
                 AtomicLiveLogTick();
             }
             CommandLineTick();
+            AntennaLevelLogReaderDetectCount = (++AntennaLevelLogReaderDetectCount) % ANTENNA_LEVEL_LOG_RDRDETECT_INTERVAL;
             AntennaLevelTick();
             LEDHook(LED_POWERED, LED_ON);
         }

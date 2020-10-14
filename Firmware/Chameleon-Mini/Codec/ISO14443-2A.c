@@ -440,7 +440,7 @@ void ISO14443ACodecTask(void) {
         }
 	    if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {
             
-	        LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
+	       LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
             LEDHook(LED_CODEC_TX, LED_PULSE);
 
             BitCount = AnswerBitCount;
@@ -450,6 +450,8 @@ void ISO14443ACodecTask(void) {
             StateRegister = LOADMOD_START;
         } 
 	    else {
+            const char *logNoRespState = "LOG_ISO14443A_APP_NO_RESPONSE";
+            LogEntry(LOG_ISO14443_3A_STATE, logNoRespState, strlen(logNoRespState));
             /* No data to be processed. Disable loadmodding and start listening again */
             CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
             CODEC_TIMER_LOADMOD.INTCTRLA = 0;
