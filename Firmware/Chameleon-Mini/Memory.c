@@ -168,7 +168,6 @@ INLINE void FlashRead(void* Buffer, uint32_t Address, uint16_t ByteCount)
 
     /* We assume that ByteCount is a multiple of 2 */
     uint32_t PhysicalAddress = Address + FLASH_DATA_ADDR;
-
     if ( (PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END) ) {
         /* Sanity check to limit access to the allocated area */
         while(ByteCount > 1) {
@@ -373,14 +372,14 @@ void MemoryInit(void)
 
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
-    if (ByteCount == 0)
+    if (ByteCount == 0 || Address >= MEMORY_SIZE_PER_SETTING)
         return;
     FRAMRead(Buffer, Address, ByteCount);
 }
 
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
-    if (ByteCount == 0)
+    if (ByteCount == 0 || Address >= MEMORY_SIZE_PER_SETTING)
         return;
     FRAMWrite(Buffer, Address, ByteCount);
     LEDHook(LED_MEMORY_CHANGED, LED_ON);
