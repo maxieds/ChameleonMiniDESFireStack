@@ -5,10 +5,11 @@
  *      Author: skuser
  */
 
-#include "ISO14443-2A.h"
+#include "ISO14443-4A.h"
 #include "../System.h"
 #include "../Application/Application.h"
 #include "../LEDHook.h"
+#include "../Common.h"
 #include "Codec.h"
 #include "Log.h"
 
@@ -27,7 +28,6 @@ typedef enum {
     /* Demod */
     DEMOD_DATA_BIT,
     DEMOD_PARITY_BIT,
-
     /* Loadmod */
     LOADMOD_FDT,
     LOADMOD_START,
@@ -43,15 +43,17 @@ typedef enum {
 } StateType;
 
 /* Define pseudo variables to use fast register access. This is useful for global vars */
-#define DataRegister	Codec8Reg0
-#define StateRegister	Codec8Reg1
-#define ParityRegister	Codec8Reg2
-#define SampleIdxRegister Codec8Reg2
-#define SampleRegister	Codec8Reg3
-#define BitSent			CodecCount16Register1
-#define BitCount		CodecCount16Register2
-#define CodecBufferPtr	CodecPtrRegister1
-#define ParityBufferPtr	CodecPtrRegister2
+#define DataRegister	  Codec8Reg0
+#define StateRegister	  Codec8Reg1
+#define ParityRegister	  Codec8Reg2
+#define SampleIdxRegister  Codec8Reg2
+#define SampleRegister	  Codec8Reg3
+#define BitSent		  CodecCount16Register1
+#define BitCount		  CodecCount16Register2
+#define CodecBufferPtr	  CodecPtrRegister1
+#define ParityBufferPtr	  CodecPtrRegister2
+#define BitRate1           256
+#define BitRate2           252
 
 static void StartDemod(void) {
     /* Activate Power for demodulator */
@@ -94,7 +96,7 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
      * We want to sample the demodulated data stream in the first quarter of the half-bit
      * where the pulsed miller encoded is located. */
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
-    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES/2 - 1; /* Half bit width */
+    CODEC_TIMER_SAMPLING.PERBUF = BitRate1; // SAMPLE_RATE_SYSTEM_CYCLES/2 - 1; /* Half bit width */
     CODEC_TIMER_SAMPLING.CCABUF = SAMPLE_RATE_SYSTEM_CYCLES/8 - 14 - 1; /* Compensate for DIGFILT and ISR prolog */
 
     /* Setup Frame Delay Timer and wire to EVSYS. Frame delay time is
@@ -103,7 +105,7 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
      * The preliminary frame delay time chosen here is irrelevant, because
      * the correct FDT gets set automatically after demodulation. */
     CODEC_TIMER_LOADMOD.CNT = 0;
-    CODEC_TIMER_LOADMOD.PER = 0xFFFF;
+    CODEC_TIMER_LOADMOD.PER = BitRate1 - 1; // 0xFFFF;
     CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODEND_EVSEL;
     CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
     CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
@@ -136,9 +138,11 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
             CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
 
             if (SampleRegister & 0x08) {
-                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV1 - 40; /* compensate for ISR prolog */
+                //CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV1 - 40; /* compensate for ISR prolog */
+                CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
             } else {
-                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV0 - 40; /* compensate for ISR prolog */
+                //CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV0 - 40; /* compensate for ISR prolog */
+                CODED_TIMER_LOADMOD.PER = BitRate2 - 1;
             }
 
             StateRegister = LOADMOD_FDT;
@@ -259,7 +263,6 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
         /* Start subcarrier generation, output startbit and align to bitrate. */
         CodecSetLoadmodState(true);
         CodecStartSubcarrier();
-
         CODEC_TIMER_LOADMOD.PER = ISO14443A_BIT_RATE_CYCLES / 2 - 1;
         StateRegister = LOADMOD_START_BIT1;
         return;
@@ -333,7 +336,6 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
             } else {
                 CodecSetLoadmodState(true);
             }
-
             ParityBufferPtr++;
         } else {
             if (ParityRegister) {
@@ -379,16 +381,15 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
         return;
 }
 
-void ISO14443ACodecInit(void) {
+void ISO144434ACodecInit(void) {
     /* Initialize some global vars and start looking out for reader commands */
     Flags.DemodFinished = 0;
     Flags.LoadmodFinished = 0;
-
     CodecInitCommon();
     StartDemod();
 }
 
-void ISO14443ACodecDeInit(void)
+void ISO144434ACodecDeInit(void)
 {
     /* Gracefully shutdown codec */
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
@@ -413,7 +414,7 @@ void ISO14443ACodecDeInit(void)
 
 }
 
-void ISO14443ACodecTask(void) {
+void ISO144434ACodecTask(void) {
     if (Flags.DemodFinished) {
         Flags.DemodFinished = 0;
         /* Reception finished. Process the received bytes */
@@ -450,8 +451,6 @@ void ISO14443ACodecTask(void) {
             StateRegister = LOADMOD_START;
         } 
 	   else {
-            //const char *logNoRespState = "LOG_ISO14443A_APP_NO_RESPONSE";
-            //LogEntry(LOG_ISO14443_3A_STATE, logNoRespState, strlen(logNoRespState));
             /* No data to be processed. Disable loadmodding and start listening again */
             CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
             CODEC_TIMER_LOADMOD.INTCTRLA = 0;

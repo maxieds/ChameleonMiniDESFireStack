@@ -15,7 +15,7 @@
 #include <avr/pgmspace.h>
 #include <avr/io.h>
 
-#define ODD_PARITY(Value) OddParityBit(Value)//(parity_even_bit(Value) ? 0 : 1)
+#define ODD_PARITY(Value) OddParityBit(Value) //(parity_even_bit(Value) ? 0 : 1)
 
 #define ISR_SHARED \
     void __attribute__((signal)) // This function type has to be used for all the interrupt handlers that have to be changed at runtime

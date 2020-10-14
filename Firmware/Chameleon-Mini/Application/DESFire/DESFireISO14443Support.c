@@ -210,7 +210,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t Bit
             if (PCB == ISO14443_PCB_S_DESELECT) {
                 /* Reset our state */
                 ISO144434Reset();
-		        DesfireLogISOStateChange(Iso144434State, LOG_ISO14443_4_STATE);
+		      DesfireLogISOStateChange(Iso144434State, LOG_ISO14443_4_STATE);
                 /* Transition to HALT */
                 ISO144433AHalt();
                 /* Answer with S(DESELECT) -- just send the copy of the message */
@@ -226,8 +226,8 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t Bit
         break;
     }
 
-    ISO14443AAppendCRCA(Buffer, ByteCount);
-    ByteCount += ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
+    //ISO14443AAppendCRCA(Buffer, ByteCount);
+    //ByteCount += ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
     return ISO14443A_APP_NO_RESPONSE;
     
     /* (Old code) Stash the block for possible retransmissions */
@@ -287,17 +287,17 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         return ISO14443A_APP_NO_RESPONSE;
     }
     
-    uint8_t Cmd = Buffer[0];
+    uint8_t Cmd = Buffer[1];
     
     /* Wakeup and Request may occur in all states */
     if (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE); 
     }
-    else if(Cmd == IGNORE_ACK_BYTE) {
-        ISO144433AReset();
-        ISO144434Reset();
-        return ISO14443A_APP_NO_RESPONSE;
-    }
+    //else if(Cmd == IGNORE_ACK_BYTE) {
+    //    ISO144433AReset();
+    //    ISO144434Reset();
+    //    return ISO14443A_APP_NO_RESPONSE;
+    //}
     else if(ISO144433AIsHalt(Buffer, BitCount)) {
         LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
         ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
@@ -310,7 +310,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     /* See: ISO/IEC 14443-3, clause 6.2 */
     switch (Iso144433AState) {
     case ISO14443_3A_STATE_HALT:
-        if (Cmd != ISO14443A_CMD_WUPA) {
+        if ((Cmd & 0x7f) != ISO14443A_CMD_WUPA) {
             const char *debugPrintStr = PSTR("ISO14443-4: HALT / NOT WUPA");
 	       LogDebuggingMsg(debugPrintStr);
             break;
@@ -321,19 +321,20 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         /* Fall-through */
 
     case ISO14443_3A_STATE_IDLE:
-        if (Cmd != ISO14443A_CMD_REQA && Cmd != ISO14443A_CMD_WUPA && Cmd != IGNORE_ACK_BYTE) {
+        if ((Cmd & 0x7f) != ISO14443A_CMD_REQA && 
+            (Cmd & 0x7f) != ISO14443A_CMD_WUPA) {
             const char *debugPrintStr = PSTR("ISO14443-4: IDLE / NOT WUPA");
 	        LogDebuggingMsg(debugPrintStr);
             break;
         }
         Iso144433AIdleState = Iso144433AState;
         ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
-        Buffer[0] = (ATQA_VALUE >> 0) & 0x00FF;
-        Buffer[1] = (ATQA_VALUE >> 8) & 0x00FF;
-        ISO14443AAppendCRCA(Buffer, 2);
+        Buffer[0] = (ATQA_VALUE >> 8) & 0x00FF; // TODO: Swapped these ... 
+        Buffer[1] = (ATQA_VALUE >> 0) & 0x00FF;
+        //ISO14443AAppendCRCA(Buffer, 2);
         const char *debugPrintStr = PSTR("ISO14443-4 (IDLE): ATQA");
 	   LogDebuggingMsg(debugPrintStr);
-        return ISO14443A_ATQA_FRAME_SIZE + ISO14443A_CRC_BYTES_FRAME_SIZE;
+        return ISO14443A_ATQA_FRAME_SIZE;
 
     case ISO14443_3A_STATE_READY1:
         if (Cmd == ISO14443A_CMD_SELECT_CL1) {
@@ -357,8 +358,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
 	            LogDebuggingMsg(debugPrintStr);
             }
             if(BitCount > 0) {
-                ISO14443AAppendCRCA(Buffer, (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
-                BitCount += ISO14443A_CRC_BYTES_FRAME_SIZE;
+                //ISO14443AAppendCRCA(Buffer, (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
+                //BitCount += ISO14443A_CRC_BYTES_FRAME_SIZE;
             }
             return BitCount;
         }
@@ -383,8 +384,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 LogDebuggingMsg(debugPrintStr);
 	         }
               if(BitCount > 0) {
-                  ISO14443AAppendCRCA(Buffer, (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
-                  BitCount += ISO14443A_CRC_BYTES_FRAME_SIZE;
+                  //ISO14443AAppendCRCA(Buffer, (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
+                  //BitCount += ISO14443A_CRC_BYTES_FRAME_SIZE;
               }
               return BitCount;
         }

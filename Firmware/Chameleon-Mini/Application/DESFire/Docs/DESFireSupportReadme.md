@@ -8,7 +8,7 @@ were the known instruction (command) and status codes from the
 [Android HCE (Java based code)](https://github.com/jekkos/android-hce-desfire) 
 repository maintained by **@jekkos**. 
 After that point, **@maxieds** reorganized and began work modifying and debugging the 
-compiled source base in [this repository](). 
+compiled source base in [this repository](https://github.com/maxieds/ChameleonMiniDESFireStack). 
 Most of the preliminary testing of these firmware mods was done using the 
 [Chameleon Mini Live Debugger](https://github.com/maxieds/ChameleonMiniLiveDebugger) 
 Android logger application, and with ``libnfc`` via a 
@@ -212,9 +212,10 @@ DF_TESTMODE=<0|1|TRUE|FALSE|OFF|ON>
 The following links are the original online resource links are
 archived here for documentation on how this firmware operates:
 * [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
-* [PublicDESFireEV0DatasheetSpecs-April2004-M075031_desfire.pdf](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
-* [PublicNXPApplicationNote-AN12343.pdf](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
-* [PublicTIDESFireEV1TagAESAuthSpec-sloa213.pdf](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
+* [PublicDESFireEV0DatasheetSpecs -- April2004 (M075031_desfire.pdf)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
+* [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
+* [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
+* [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
 
 ### Makefile support to enable special functionality
 
