@@ -449,7 +449,7 @@ void ISO14443ACodecTask(void) {
 
             StateRegister = LOADMOD_START;
         } 
-	    else {
+	   else {
             const char *logNoRespState = "LOG_ISO14443A_APP_NO_RESPONSE";
             LogEntry(LOG_ISO14443_3A_STATE, logNoRespState, strlen(logNoRespState));
             /* No data to be processed. Disable loadmodding and start listening again */

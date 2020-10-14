@@ -7,8 +7,8 @@
 #include "LEDHook.h"
 
 uint8_t LogMem[LOG_SIZE];
-uint8_t *LogMemPtr;
-uint16_t LogMemLeft;
+uint8_t *LogMemPtr = &LogMem[0];
+uint16_t LogMemLeft = LOG_SIZE;
 
 static uint16_t LogFRAMAddr = FRAM_LOG_START_ADDR;
 static uint8_t EEMEM LogFRAMAddrValid = false;

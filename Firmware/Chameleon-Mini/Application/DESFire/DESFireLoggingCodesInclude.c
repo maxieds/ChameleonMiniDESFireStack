@@ -54,8 +54,9 @@ This notice must be retained at the top of all source files where indicated.
      LOG_APP_NONCE_AB            = 0xD2, ///< Nonces A and B values (received)
      
      /* ISO 14443 related entries */
-     LOG_ISO14443_3A_STATE       = 0x53,
-     LOG_ISO14443_4_STATE        = 0x54,
+     LOG_ISO14443_3A_STATE           = 0x53,
+     LOG_ISO14443_4_STATE            = 0x54,
+     LOG_ISO14443A_APP_NO_RESPONSE   = 0x55,
 #endif
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
