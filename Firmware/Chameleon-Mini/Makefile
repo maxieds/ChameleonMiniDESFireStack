@@ -5,15 +5,15 @@
 SHELL = /bin/bash
 
 #Supported configurations
-SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
+#SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
+#SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
+#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
+#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
+#SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
 SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
 SETTINGS    += -DCONFIG_ISO14443A_SNIFF_SUPPORT
 #SETTINGS    += -DCONFIG_ISO15693_SNIFF_SUPPORT 
-SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
+#SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
 
 #Support magic mode on mifare classic configuration
 SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
@@ -122,10 +122,12 @@ SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 SETTINGS	+= -DDESFIRE_CRYPTO1_SAVE_SPACE
 
 #Memory definitions and objcopy flags to include sections in binaries
-#FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
-#FLASH_DATA_SIZE = 0x0FFF0 #Size of data section in flash
-FLASH_DATA_ADDR = 0x00030
-FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
+FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
+FLASH_DATA_SIZE = 0x0FFF0 #Size of data section in flash
+#FLASH_DATA_ADDR = 0x00030
+#FLASH_DATA_SIZE = 0x0FFFF 
+#FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+#FLASH_DATA_SIZE = 0x10fff #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"

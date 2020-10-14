@@ -1,3 +1,6 @@
+#if defined(CONFIG_ISO14443A_READER_SUPPORT) || \
+     defined(CONFIG_ISO14443A_SNIFF_SUPPORT)
+
 #include "Reader14443A.h"
 #include "Application.h"
 #include "ISO14443-3A.h"
@@ -18,6 +21,77 @@
 #define FLAGS_NO_DATA	0x02
 
 // TODO replace remaining magic numbers
+
+uint16_t addParityBits(uint8_t * Buffer, uint16_t BitCount)
+{
+    if (BitCount == 7)
+        return 7;
+    if (BitCount % 8)
+        return BitCount;
+    uint8_t * currByte, * tmpByte;
+    uint8_t * const lastByte = Buffer + BitCount/8 + BitCount/64; // starting address + number of bytes + number of parity bytes
+    currByte = Buffer + BitCount/8 - 1;
+    uint8_t parity;
+    memset(currByte+1, 0, lastByte-currByte); // zeroize all bytes used for parity bits
+    while (currByte >= Buffer) // loop over all input bytes
+    {
+        parity = OddParityBit(*currByte); // get parity bit
+        tmpByte = lastByte;
+        while (tmpByte > currByte) // loop over all bytes from the last byte to the current one -- shifts the whole byte string
+        {
+            *tmpByte <<= 1; // shift this byte
+            *tmpByte |= (*(tmpByte-1) & 0x80) >> 7; // insert the last bit from the previous byte
+            tmpByte--; // go to the previous byte
+        }
+        *(++tmpByte) &= 0xFE; // zeroize the bit, where we want to put the parity bit
+        *tmpByte |= parity & 1; // add the parity bit
+        currByte--; // go to previous input byte
+    }
+    return BitCount + (BitCount / 8);
+}
+
+uint16_t removeParityBits(uint8_t * Buffer, uint16_t BitCount)
+{
+    // Short frame, no parity bit is added
+    if (BitCount == 7)
+        return 7;
+
+    uint16_t i;
+    for (i = 0; i < (BitCount / 9); i++)
+    {
+        Buffer[i] = (Buffer[i + i/8] >> (i%8));
+        if (i%8)
+            Buffer[i] |= (Buffer[i + i/8 + 1] << (8 - (i % 8)));
+    }
+    return BitCount/9*8;
+}
+
+bool checkParityBits(uint8_t * Buffer, uint16_t BitCount)
+{
+    if (BitCount == 7)
+        return true;
+
+    //if (BitCount % 9 || BitCount == 0)
+    //	return false;
+
+    uint16_t i;
+    uint8_t currentByte, parity;
+    for (i = 0; i < (BitCount / 9); i++)
+    {
+        currentByte = (Buffer[i + i/8] >> (i%8));
+        if (i%8)
+            currentByte |= (Buffer[i + i/8 + 1] << (8 - (i % 8)));
+        parity = OddParityBit(currentByte);
+        if (((Buffer[i + i/8 + 1] >> (i % 8)) ^ parity) & 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+#endif
+
+#ifdef CONFIG_ISO14443A_READER_SUPPORT
 
 static bool Selected = false;
 Reader14443Command Reader14443CurrentCommand = Reader14443_Do_Nothing;
@@ -110,74 +184,6 @@ static const CardIdentificationType PROGMEM CardIdentificationList[] = {
 
 static CardType CardCandidates[ARRAY_COUNT(CardIdentificationList)];
 static uint8_t CardCandidatesIdx = 0;
-
-uint16_t addParityBits(uint8_t * Buffer, uint16_t BitCount)
-{
-    if (BitCount == 7)
-        return 7;
-    if (BitCount % 8)
-        return BitCount;
-    uint8_t * currByte, * tmpByte;
-    uint8_t * const lastByte = Buffer + BitCount/8 + BitCount/64; // starting address + number of bytes + number of parity bytes
-    currByte = Buffer + BitCount/8 - 1;
-    uint8_t parity;
-    memset(currByte+1, 0, lastByte-currByte); // zeroize all bytes used for parity bits
-    while (currByte >= Buffer) // loop over all input bytes
-    {
-        parity = OddParityBit(*currByte); // get parity bit
-        tmpByte = lastByte;
-        while (tmpByte > currByte) // loop over all bytes from the last byte to the current one -- shifts the whole byte string
-        {
-            *tmpByte <<= 1; // shift this byte
-            *tmpByte |= (*(tmpByte-1) & 0x80) >> 7; // insert the last bit from the previous byte
-            tmpByte--; // go to the previous byte
-        }
-        *(++tmpByte) &= 0xFE; // zeroize the bit, where we want to put the parity bit
-        *tmpByte |= parity & 1; // add the parity bit
-        currByte--; // go to previous input byte
-    }
-    return BitCount + (BitCount / 8);
-}
-
-uint16_t removeParityBits(uint8_t * Buffer, uint16_t BitCount)
-{
-    // Short frame, no parity bit is added
-    if (BitCount == 7)
-        return 7;
-
-    uint16_t i;
-    for (i = 0; i < (BitCount / 9); i++)
-    {
-        Buffer[i] = (Buffer[i + i/8] >> (i%8));
-        if (i%8)
-            Buffer[i] |= (Buffer[i + i/8 + 1] << (8 - (i % 8)));
-    }
-    return BitCount/9*8;
-}
-
-bool checkParityBits(uint8_t * Buffer, uint16_t BitCount)
-{
-    if (BitCount == 7)
-        return true;
-
-    //if (BitCount % 9 || BitCount == 0)
-    //	return false;
-
-    uint16_t i;
-    uint8_t currentByte, parity;
-    for (i = 0; i < (BitCount / 9); i++)
-    {
-        currentByte = (Buffer[i + i/8] >> (i%8));
-        if (i%8)
-            currentByte |= (Buffer[i + i/8 + 1] << (8 - (i % 8)));
-        parity = OddParityBit(currentByte);
-        if (((Buffer[i + i/8 + 1] >> (i % 8)) ^ parity) & 1) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void Reader14443AAppTimeout(void)
 {
     Reader14443AAppReset();
@@ -899,19 +905,25 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					{
 						case CardType_NXP_MIFARE_Ultralight:
 						{
-							cfgid = CONFIG_MF_ULTRALIGHT;
+                                   #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+                                   cfgid = CONFIG_MF_ULTRALIGHT;
 							// TODO: enter MFU clone mdoe
-							break;
+                                   #endif
+                                   break;
 						}
 						case CardType_NXP_MIFARE_Classic_1k:
 						case CardType_Infineon_MIFARE_Classic_1k:
 						{
 							if (CardCharacteristics.UIDSize == UIDSize_Single)
 							{
-								cfgid = CONFIG_MF_CLASSIC_1K;
-							} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
-								cfgid = CONFIG_MF_CLASSIC_1K_7B;
-							}
+                                        #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
+                                        cfgid = CONFIG_MF_CLASSIC_1K;
+							     #endif
+                                   } else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+								#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
+                                        cfgid = CONFIG_MF_CLASSIC_1K_7B;
+							     #endif
+                                   }
 							break;
 						}
 						case CardType_NXP_MIFARE_Classic_4k:
@@ -920,10 +932,14 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 						{
 							if (CardCharacteristics.UIDSize == UIDSize_Single)
 							{
-								cfgid = CONFIG_MF_CLASSIC_4K;
-							} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
-								cfgid = CONFIG_MF_CLASSIC_4K_7B;
-							}
+                                        #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
+                                        cfgid = CONFIG_MF_CLASSIC_4K;
+							     #endif
+                                   } else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+                                        #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
+                                        cfgid = CONFIG_MF_CLASSIC_4K_7B;
+							     #endif
+                                   }
 							break;
 						}
 						default:
@@ -974,3 +990,5 @@ uint16_t ISO14443_CRCA(uint8_t * Buffer, uint8_t ByteCount)
     }
     return crc;
 }
+
+#endif /* CONFIG_ISO14443A_READER_SUPPORT */
