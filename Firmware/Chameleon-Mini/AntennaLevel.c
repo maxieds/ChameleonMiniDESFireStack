@@ -17,7 +17,7 @@ void AntennaLevelTick(void)
         LEDHook(LED_FIELD_DETECTED, LED_ON);
         if(AntennaLevelLogReaderDetectCount == 0) {
             uint8_t antLevel[2];
-            antLevel[0] = (uint8_t) ((rssi << 8) & 0x00ff);
+            antLevel[0] = (uint8_t) ((rssi >> 8) & 0x00ff);
             antLevel[1] = (uint8_t) (rssi & 0x00ff);
             LogEntry(LOG_INFO_CODEC_READER_FIELD_DETECTED, antLevel, 2);
         }
