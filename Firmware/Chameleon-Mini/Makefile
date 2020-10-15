@@ -122,10 +122,10 @@ SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 SETTINGS	+= -DDESFIRE_CRYPTO1_SAVE_SPACE
 
 #Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
-FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
-#FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+#FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
 #FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
+FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
