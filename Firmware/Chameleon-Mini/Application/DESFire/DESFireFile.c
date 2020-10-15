@@ -131,7 +131,7 @@ uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings,
                   return STATUS_OUT_OF_EEPROM_ERROR;
               }
               // The file data is considered to be uninitialized until the user sets it. 
-              MemsetBlockBytes(0x00, File->FileDataAddress, File->FileSize);
+              //MemsetBlockBytes(0x00, File->FileDataAddress, File->FileSize);
           }
           else {
               File->FileDataAddress = 0;

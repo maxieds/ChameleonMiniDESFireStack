@@ -287,7 +287,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         return ISO14443A_APP_NO_RESPONSE;
     }
     
-    uint8_t Cmd = Buffer[1];
+    uint8_t Cmd = Buffer[0];
     
     /* Wakeup and Request may occur in all states */
     if (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
@@ -310,7 +310,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     /* See: ISO/IEC 14443-3, clause 6.2 */
     switch (Iso144433AState) {
     case ISO14443_3A_STATE_HALT:
-        if ((Cmd & 0x7f) != ISO14443A_CMD_WUPA) {
+        if (Cmd != ISO14443A_CMD_WUPA) {
             const char *debugPrintStr = PSTR("ISO14443-4: HALT / NOT WUPA");
 	       LogDebuggingMsg(debugPrintStr);
             break;
@@ -321,8 +321,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         /* Fall-through */
 
     case ISO14443_3A_STATE_IDLE:
-        if ((Cmd & 0x7f) != ISO14443A_CMD_REQA && 
-            (Cmd & 0x7f) != ISO14443A_CMD_WUPA) {
+        if (Cmd != ISO14443A_CMD_REQA && 
+            Cmd != ISO14443A_CMD_WUPA) {
             const char *debugPrintStr = PSTR("ISO14443-4: IDLE / NOT WUPA");
 	        LogDebuggingMsg(debugPrintStr);
             break;
@@ -334,7 +334,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         //ISO14443AAppendCRCA(Buffer, 2);
         const char *debugPrintStr = PSTR("ISO14443-4 (IDLE): ATQA");
 	   LogDebuggingMsg(debugPrintStr);
-        return ISO14443A_ATQA_FRAME_SIZE;
+        return ISO14443A_ATQA_FRAME_SIZE; //+ ISO14443A_CRC_BYTES_FRAME_SIZE;
 
     case ISO14443_3A_STATE_READY1:
         if (Cmd == ISO14443A_CMD_SELECT_CL1) {

@@ -6,7 +6,7 @@
 #ifdef DESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
      #define LOG_SIZE            128
 #else
-     #define LOG_SIZE	        256 // 2048
+     #define LOG_SIZE	        512 // 2048
 #endif
 
 extern uint8_t LogMem[LOG_SIZE];

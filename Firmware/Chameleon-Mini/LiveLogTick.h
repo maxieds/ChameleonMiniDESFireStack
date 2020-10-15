@@ -49,8 +49,8 @@ This notice must be retained at the top of all source files where indicated.
 typedef struct LogBlockListNode {
      uint8_t                  *logBlockDataStart;
      uint8_t                  logBlockDataSize;
-     //struct LogBlockListNode  *nextBlock;
-     uint8_t                  *nextBlock;
+     struct LogBlockListNode  *nextBlock;
+     //uint8_t                  *nextBlock;
 } LogBlockListNode;
 
 #define LOG_BLOCK_LIST_NODE_SIZE             ((sizeof(LogBlockListNode) + 3) / 4)
@@ -78,14 +78,14 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
           status = false;
      }
      else if(logDataSize + 4 + 3 + LOG_BLOCK_LIST_NODE_SIZE <= LogMemLeft) {
-         uint8_t alignOffset = 4 - (((uint8_t) LogMemPtr) % 4);
-         uint8_t *logBlockStart = LogMemPtr + alignOffset; /* Align the structure data address at a multiple of 4 */
-         LogBlockListNode *logBlock = (LogBlockListNode *) logBlockStart;
+         uint8_t alignOffset = 4 - (uint8_t) (((uint16_t) LogMemPtr) % 4);
+         uint8_t *logBlockStart = LogMemPtr + alignOffset;
+         LogBlockListNode logBlock;
          LogMemPtr += LOG_BLOCK_LIST_NODE_SIZE + alignOffset;
          LogMemLeft -= LOG_BLOCK_LIST_NODE_SIZE + alignOffset;
-         logBlock->logBlockDataStart = LogMemPtr;
-         logBlock->logBlockDataSize = logDataSize + 4;
-         logBlock->nextBlock = 0;
+         logBlock.logBlockDataStart = LogMemPtr;
+         logBlock.logBlockDataSize = logDataSize + 4;
+         logBlock.nextBlock = 0;
          *(LogMemPtr++) = (uint8_t) logCode;
          *(LogMemPtr++) = logDataSize;
          *(LogMemPtr++) = (uint8_t) (sysTickTime >> 8);
@@ -93,12 +93,13 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
          memcpy(LogMemPtr, logData, logDataSize);
          LogMemPtr += logDataSize;
          LogMemLeft -= logDataSize + 4;
+         memcpy(logBlockStart, &logBlock, sizeof(LogBlockListNode));
          if(LogBlockListBegin != NULL && LogBlockListEnd != NULL) {
-              LogBlockListEnd->nextBlock = logBlockStart;
-              LogBlockListEnd = logBlock;
+              LogBlockListEnd->nextBlock = (LogBlockListNode *) logBlockStart;
+              LogBlockListEnd = (LogBlockListNode *) logBlockStart;
          }
          else {
-             LogBlockListBegin = LogBlockListEnd = logBlock;
+             LogBlockListBegin = LogBlockListEnd = (LogBlockListNode *) logBlockStart;
          }
          ++LogBlockListElementCount;
      }
@@ -123,12 +124,19 @@ AtomicLiveLogTick(void) {
 
 INLINE bool 
 LiveLogTick(void) {
-     LogBlockListNode *logBlockCurrent = LogBlockListBegin;
-     while(logBlockCurrent != NULL && LogBlockListElementCount > 0) {
+     LogBlockListNode logBlockCurrent, *tempBlockPtr = NULL;
+     memcpy(&logBlockCurrent, LogBlockListBegin, sizeof(LogBlockListNode));
+     while(LogBlockListElementCount > 0) {
          TerminalFlushBuffer();
-         TerminalSendBlock(logBlockCurrent->logBlockDataStart, logBlockCurrent->logBlockDataSize);
+         TerminalSendBlock(logBlockCurrent.logBlockDataStart, logBlockCurrent.logBlockDataSize);
          TerminalFlushBuffer();
-         logBlockCurrent = (LogBlockListNode *) logBlockCurrent->nextBlock;
+         tempBlockPtr = logBlockCurrent.nextBlock;
+         if(tempBlockPtr != NULL) {
+              memcpy(&logBlockCurrent, tempBlockPtr, sizeof(LogBlockListNode));
+         }
+         else {
+              break;
+         }
          --LogBlockListElementCount;
      }
      FreeLogBlocks();
