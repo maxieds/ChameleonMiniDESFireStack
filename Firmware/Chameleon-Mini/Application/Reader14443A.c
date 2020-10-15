@@ -553,19 +553,19 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
             BitCount = removeParityBits(Buffer, BitCount);
             if ((2 * (BitCount + 7) / 8 + 2 + 4) > 128) // 2 = \r\n, 4 = size of bitcount in hex
             {
-                sprintf(tmpBuf, "Too many data.");
+                sprintf_P(tmpBuf, PSTR("Too many data."));
                 Reader14443CurrentCommand = Reader14443_Do_Nothing;
                 CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
                 return 0;
             }
             uint16_t charCnt = BufferToHexString(tmpBuf, 128, Buffer, (BitCount + 7) / 8);
             uint8_t count[2] = {(BitCount>>8)&0xFF, BitCount&0xFF};
-            charCnt += snprintf(tmpBuf + charCnt, 128 - charCnt, "\r\n");
+            charCnt += snprintf_P(tmpBuf + charCnt, 128 - charCnt, "\r\n");
             charCnt += BufferToHexString(tmpBuf + charCnt, 128 - charCnt, count, 2);
             if (!parity)
-                snprintf(tmpBuf + charCnt, 128 - charCnt, "\r\nPARITY ERROR");
+                snprintf_P(tmpBuf + charCnt, 128 - charCnt, PSTR("\r\nPARITY ERROR"));
             else
-                snprintf(tmpBuf + charCnt, 128 - charCnt, "\r\nPARITY OK");
+                snprintf_P(tmpBuf + charCnt, 128 - charCnt, PSTR("\r\nPARITY OK"));
             Reader14443CurrentCommand = Reader14443_Do_Nothing;
             CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
             return 0;
@@ -584,7 +584,8 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
             if (BitCount == 0)
             {
-                char tmpBuf[] = "NO DATA";
+                char tmpBuf[8];
+                strcpy_P(tmpBuf, PSTR("NO DATA"));
                 Reader14443CurrentCommand = Reader14443_Do_Nothing;
                 CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
                 return 0;
@@ -812,11 +813,11 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
                     char tmpBuf[135]; // 135 = 128 hex digits + 3 * \r\n + \0
                     BufferToHexString(	tmpBuf, 							135, 							MFUContents, 16);
-                    snprintf(			tmpBuf + 32, 						135 - 32, 						"\r\n");
+                    snprintf_P(			tmpBuf + 32, 						135 - 32, 						PSTR("\r\n"));
                     BufferToHexString(	tmpBuf + 32 + 2, 					135 - 32 - 2, 					MFUContents + 16, 16);
-                    snprintf(			tmpBuf + 32 + 2 + 32, 				135 - 32 - 2 - 32, 				"\r\n");
+                    snprintf_P(			tmpBuf + 32 + 2 + 32, 				135 - 32 - 2 - 32, 				PSTR("\r\n"));
                     BufferToHexString(	tmpBuf + 32 + 2 + 32 + 2, 			135 - 32 - 2 - 32 - 2, 			MFUContents + 32, 16);
-                    snprintf(			tmpBuf + 32 + 2 + 32 + 2 + 32, 		135 - 32 - 2 - 32 - 2 - 32, 	"\r\n");
+                    snprintf_P(			tmpBuf + 32 + 2 + 32 + 2 + 32, 		135 - 32 - 2 - 32 - 2 - 32, 	PSTR("\r\n"));
                     BufferToHexString(	tmpBuf + 32 + 2 + 32 + 2 + 32 + 2, 	135 - 32 - 2 - 32 - 2 - 32 - 2, MFUContents + 48, 16);
                     CodecReaderFieldStop();
                     CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
@@ -859,7 +860,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         {
                             char tmpType[64];
                             memcpy_P(tmpType, &CardIdentificationList[CardCandidates[i]].Type, 64);
-                            tmpsize = snprintf(tmpBuf + size, TERMINAL_BUFFER_SIZE - size, "%s or ", tmpType);
+                            tmpsize = snprintf_P(tmpBuf + size, TERMINAL_BUFFER_SIZE - size, PSTR("%s or "), tmpType);
                             size += tmpsize;
                         } else {
                             break;

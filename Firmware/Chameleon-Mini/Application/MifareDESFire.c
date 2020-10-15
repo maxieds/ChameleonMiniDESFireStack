@@ -29,6 +29,8 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
+#include "Reader14443A.h"
+
 #include "MifareDESFire.h"
 #include "DESFire/DESFireFirmwareSettings.h"
 #include "DESFire/DESFireInstructions.h"
@@ -37,7 +39,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireISO14443Support.h"
 #include "DESFire/DESFireStatusCodes.h"
 #include "DESFire/DESFireLogging.h"
-#include "Reader14443A.h"
+#include "DESFire/DESFireUtils.h"
 
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
@@ -108,7 +110,7 @@ void MifareDesfireAppTask(void)
 
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount == 0) {
          return ISO14443A_APP_NO_RESPONSE;
     } 
@@ -160,7 +162,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
+    //DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
     return ReturnBytes;
 
 }
@@ -219,18 +221,12 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
-    uint16_t piccProcessResult = ISO144433APiccProcess(Buffer, BitCount);
-    //if(piccProcessResult == 0 && 
-    //   ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-    //   Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
-    //     return MifareDesfireProcess(Buffer, BitCount);
-    //}
-    return piccProcessResult;
+    return ISO144433APiccProcess(Buffer, BitCount);
 }
 
 void ResetLocalStructureData(void) {

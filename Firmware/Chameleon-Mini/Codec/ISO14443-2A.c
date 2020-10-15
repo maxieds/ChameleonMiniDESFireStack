@@ -420,6 +420,9 @@ void ISO14443ACodecTask(void) {
         uint16_t DemodBitCount = BitCount;
         uint16_t AnswerBitCount = ISO14443A_APP_NO_RESPONSE;
 
+        if(DemodBitCount > 0) {
+            LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8); // TODO: Later remove this ??? 
+        }
         if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
             // For logging data
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);

@@ -15,7 +15,7 @@
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
      #include "Application/MifareDESFire.h"
 #endif
-#ifdef CONFIG_ISO1593_SNIFF_SUPPORT
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT 
      #include "Application/ISO15693-A.h"
      #include "Codec/ISO15693.h"
 #endif

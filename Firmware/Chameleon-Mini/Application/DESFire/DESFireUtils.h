@@ -31,6 +31,13 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireFirmwareSettings.h"
 
+#define UnsignedTypeToUINT(typeValue) \
+    ((UINT) typeValue)
+#define ExtractLSBLE(ui) \
+    ((BYTE) (((UnsignedTypeToUINT(ui) & 0xff000000) >> 24) & 0x000000ff))
+#define ExtractLSBBE(ui) \
+    ((BYTE) (UnsignedTypeToUINT(ui) & 0x000000ff))
+
 void RotateArrayRight(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize);
 void RotateArrayLeft(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize);
 void ConcatByteArrays(BYTE *arrA, SIZET arrASize, BYTE *arrB, SIZET arrBSize, BYTE *destArr);
@@ -41,11 +48,9 @@ int32_t Int32FromByteBuffer(uint8_t *byteBuffer);
 
 SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize);
 
-#define UnsignedTypeToUINT(typeValue) \
-    ((UINT) typeValue)
-#define ExtractLSBLE(ui) \
-    ((BYTE) (((UnsignedTypeToUINT(ui) & 0xff000000) >> 24) & 0x000000ff))
-#define ExtractLSBBE(ui) \
-    ((BYTE) (UnsignedTypeToUINT(ui) & 0x000000ff))
+/* Copied from the READER configuration sources: */
+uint16_t DesfireAddParityBits(uint8_t * Buffer, uint16_t bits);
+uint16_t DesfireRemoveParityBits(uint8_t * Buffer, uint16_t BitCount);
+bool DesfireCheckParityBits(uint8_t * Buffer, uint16_t BitCount);
 
 #endif

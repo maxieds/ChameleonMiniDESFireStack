@@ -84,7 +84,70 @@ SIZET RoundBlockSize(SIZET byteSize, SIZET blockSize) {
      if(blockSize == 0) {
           return 0;
      }
-     return DESFIRE_BYTES_TO_BLOCKS(byteSize);
+     return (byteSize + blockSize - 1) / blockSize;
+}
+
+uint16_t DesfireAddParityBits(uint8_t * Buffer, uint16_t BitCount)
+{
+    if (BitCount == 7)
+        return 7;
+    if (BitCount % 8)
+        return BitCount;
+    uint8_t * currByte, * tmpByte;
+    uint8_t * const lastByte = Buffer + BitCount/8 + BitCount/64; // starting address + number of bytes + number of parity bytes
+    currByte = Buffer + BitCount/8 - 1;
+    uint8_t parity;
+    memset(currByte+1, 0, lastByte-currByte); // zeroize all bytes used for parity bits
+    while (currByte >= Buffer) // loop over all input bytes
+    {   
+        parity = OddParityBit(*currByte); // get parity bit
+        tmpByte = lastByte;
+        while (tmpByte > currByte) // loop over all bytes from the last byte to the current one -- shifts the whole byte string        {
+            *tmpByte <<= 1; // shift this byte
+            *tmpByte |= (*(tmpByte-1) & 0x80) >> 7; // insert the last bit from the previous byte
+            tmpByte--; // go to the previous byte 
+        }       
+        *(++tmpByte) &= 0xFE; // zeroize the bit, where we want to put the parity bit
+        *tmpByte |= parity & 1; // add the parity bit
+        currByte--; // go to previous input byte
+    }       
+    return BitCount + (BitCount / 8);
+}
+
+uint16_t DesfireRemoveParityBits(uint8_t * Buffer, uint16_t BitCount)
+{
+    // Short frame, no parity bit is added
+    if (BitCount == 7)
+        return 7;
+
+    uint16_t i;
+    for (i = 0; i < (BitCount / 9); i++)
+    {   
+        Buffer[i] = (Buffer[i + i/8] >> (i%8));
+        if (i%8)
+            Buffer[i] |= (Buffer[i + i/8 + 1] << (8 - (i % 8)));
+    }           
+    return BitCount/9*8;
+}
+
+bool DesfireCheckParityBits(uint8_t * Buffer, uint16_t BitCount)
+{
+    if (BitCount == 7)
+        return true; 
+
+    uint16_t i;
+    uint8_t currentByte, parity;
+    for (i = 0; i < (BitCount / 9); i++)
+    {
+        currentByte = (Buffer[i + i/8] >> (i%8));
+        if (i%8)
+            currentByte |= (Buffer[i + i/8 + 1] << (8 - (i % 8)));
+        parity = OddParityBit(currentByte);
+        if (((Buffer[i + i/8 + 1] >> (i % 8)) ^ parity) & 1) {
+            return false;
+        }
+    }
+    return true;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
