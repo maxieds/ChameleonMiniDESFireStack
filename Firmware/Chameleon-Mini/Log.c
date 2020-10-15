@@ -19,7 +19,6 @@ static const MapEntryType PROGMEM LogModeMap[] = {
     { .Id = LOG_MODE_OFF, 	        .Text = "OFF" 	},
     { .Id = LOG_MODE_MEMORY,          .Text = "MEMORY" 	},
     { .Id = LOG_MODE_LIVE, 	        .Text = "LIVE" 	},
-    { .Id = LOG_MODE_LIVE_FLUSH_NOW,  .Text = "LIVE_FLUSH_NOW" }
 };
 
 LogBlockListNode *LogBlockListBegin = NULL;
@@ -62,15 +61,6 @@ static void LogFuncLive(LogEntryEnum Entry, const void* Data, uint8_t Length)
 {
     uint16_t SysTick = SystemGetSysTick();
     AtomicAppendLogBlock(Entry, SysTick, Data, Length);
-}
-
-static void LogFuncLiveFlushNow(LogEntryEnum Entry, const void* Data, uint8_t Length) {
-    uint16_t SysTick = SystemGetSysTick();
-    TerminalSendByte((uint8_t) Entry);
-    TerminalSendByte((uint8_t) Length);
-    TerminalSendByte((uint8_t) (SysTick >> 8));
-    TerminalSendByte((uint8_t) (SysTick >> 0));
-    TerminalSendBlock(Data, Length);
 }
 
 void LogInit(void)
@@ -196,10 +186,6 @@ void LogSetModeById(LogModeEnum Mode)
     case LOG_MODE_LIVE:
         EnableLogSRAMtoFRAM = false; // TODO: ??? false ???
         CurrentLogFunc = LogFuncLive;
-        break;
-    case LOG_MODE_LIVE_FLUSH_NOW:
-        EnableLogSRAMtoFRAM = false;
-        CurrentLogFunc = LogFuncLiveFlushNow;
         break;
 
     default:

@@ -42,8 +42,8 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_LITTLE_ENDIAN                       (1)
 
 #define DESFIRE_PICC_STRUCT_PACKING                 //__attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_PACKING                    //__attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_ALIGNAT                    //__attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_PACKING                    __attribute__((packed))
+#define DESFIRE_FIRMWARE_ALIGNAT                    __attribute__((aligned(1)))
 #define DESFIRE_PICC_ARRAY_ALIGNAT                  //__attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              //__attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_ENUM_PACKING               //__attribute__((aligned(1)))

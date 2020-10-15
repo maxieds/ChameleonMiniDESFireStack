@@ -11,7 +11,7 @@ SHELL = /bin/bash
 #SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 #SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
 SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
-SETTINGS    += -DCONFIG_ISO14443A_SNIFF_SUPPORT
+#SETTINGS    += -DCONFIG_ISO14443A_SNIFF_SUPPORT
 #SETTINGS    += -DCONFIG_ISO15693_SNIFF_SUPPORT 
 #SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
 
@@ -122,12 +122,12 @@ SETTINGS	+= -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 SETTINGS	+= -DDESFIRE_CRYPTO1_SAVE_SPACE
 
 #Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
-FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
+#FLASH_DATA_ADDR = 0x01000 #Start of data section in flash
+#FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
 #FLASH_DATA_ADDR = 0x00030
 #FLASH_DATA_SIZE = 0x0FFF0 
-#FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
-#FLASH_DATA_SIZE = 0x01000 #Size of data section in flash
+FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -205,13 +205,16 @@ ASRC        += Application/CryptoTDEA.S \
 			   $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
-CC_FLAGS     = -std=gnu99 -D__PROG_TYPES_COMPAT__ \
+CC_FLAGS     = -g0 -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 			   -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			   -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 			   -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
 			   -D__AVR_ATxmega128A4U__ -Werror=implicit-function-declaration \
-			   -D__MAX_ENDPOINT_INDEX=4
-LD_FLAGS     = $(CC_FLAGS) -lc \
+			   -D__MAX_ENDPOINT_INDEX=4 \
+			   -fno-inline-small-functions -fshort-enums -fpack-struct \
+			   -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
+			   -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop #-ffreestanding
+LD_FLAGS     = $(CC_FLAGS) \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin

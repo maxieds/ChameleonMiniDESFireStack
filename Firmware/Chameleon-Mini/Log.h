@@ -67,7 +67,6 @@ typedef enum {
     LOG_MODE_OFF,
     LOG_MODE_MEMORY,
     LOG_MODE_LIVE,
-    LOG_MODE_LIVE_FLUSH_NOW /* Live logging without the LiveLogTick(): Flushes logs immediately (use with caution) */
 } LogModeEnum;
 
 typedef void (*LogFuncType) (LogEntryEnum Entry, const void* Data, uint8_t Length);

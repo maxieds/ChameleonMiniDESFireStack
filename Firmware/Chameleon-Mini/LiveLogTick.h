@@ -47,10 +47,13 @@ This notice must be retained at the top of all source files where indicated.
 #endif
 
 typedef struct LogBlockListNode {
-     uint8_t                  *logBlockStart;
-     uint8_t                  logBlockSize;
-     struct LogBlockListNode  *nextBlock;
+     uint8_t                  *logBlockDataStart;
+     uint8_t                  logBlockDataSize;
+     //struct LogBlockListNode  *nextBlock;
+     uint8_t                  *nextBlock;
 } LogBlockListNode;
+
+#define LOG_BLOCK_LIST_NODE_SIZE             ((sizeof(LogBlockListNode) + 3) / 4)
 
 extern LogBlockListNode *LogBlockListBegin;
 extern LogBlockListNode *LogBlockListEnd;
@@ -67,19 +70,23 @@ INLINE bool LiveLogTick(void);
 INLINE bool 
 AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize) {
      bool status = true;
-     if((logDataSize + 4 > LogMemLeft) && (LogMemPtr != LogMem)) { 
+     if((logDataSize + 4 + 3 + LOG_BLOCK_LIST_NODE_SIZE > LogMemLeft) && (LogMemPtr != LogMem)) { 
           if(FLUSH_LOGS_ON_SPACE_ERROR) {
               LiveLogTick();
               FreeLogBlocks();
           }
           status = false;
      }
-     else if(logDataSize + 4 <= LogMemLeft) {
-         LogBlockListNode *logBlock = (LogBlockListNode *) malloc(sizeof(LogBlockListNode));
-         logBlock->logBlockStart = LogMemPtr;
-         logBlock->logBlockSize = logDataSize + 4;
-         logBlock->nextBlock = NULL;
-         *(LogMemPtr++) = logCode;
+     else if(logDataSize + 4 + 3 + LOG_BLOCK_LIST_NODE_SIZE <= LogMemLeft) {
+         uint8_t alignOffset = 4 - (((uint8_t) LogMemPtr) % 4);
+         uint8_t *logBlockStart = LogMemPtr + alignOffset; /* Align the structure data address at a multiple of 4 */
+         LogBlockListNode *logBlock = (LogBlockListNode *) logBlockStart;
+         LogMemPtr += LOG_BLOCK_LIST_NODE_SIZE + alignOffset;
+         LogMemLeft -= LOG_BLOCK_LIST_NODE_SIZE + alignOffset;
+         logBlock->logBlockDataStart = LogMemPtr;
+         logBlock->logBlockDataSize = logDataSize + 4;
+         logBlock->nextBlock = 0;
+         *(LogMemPtr++) = (uint8_t) logCode;
          *(LogMemPtr++) = logDataSize;
          *(LogMemPtr++) = (uint8_t) (sysTickTime >> 8);
          *(LogMemPtr++) = (uint8_t) (sysTickTime >> 0);
@@ -87,7 +94,7 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
          LogMemPtr += logDataSize;
          LogMemLeft -= logDataSize + 4;
          if(LogBlockListBegin != NULL && LogBlockListEnd != NULL) {
-              LogBlockListEnd->nextBlock = logBlock;
+              LogBlockListEnd->nextBlock = logBlockStart;
               LogBlockListEnd = logBlock;
          }
          else {
@@ -104,38 +111,29 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
 INLINE void
 FreeLogBlocks(void) {
       LogMemPtr = &LogMem[0];
-      LogBlockListNode *logBlockCurrent = LogBlockListBegin;
-      LogBlockListNode *logBlockNext = NULL;
-      while(logBlockCurrent != NULL) {
-           logBlockNext = logBlockCurrent->nextBlock;
-           LogMemLeft += logBlockCurrent->logBlockSize;
-           free(logBlockCurrent);
-           logBlockCurrent = logBlockNext;
-      }
+      LogMemLeft = LOG_SIZE;
       LogBlockListBegin = LogBlockListEnd = NULL;
       LogBlockListElementCount = 0;
 }
 
 INLINE bool 
 AtomicLiveLogTick(void) {
-     bool status;
-     status = LiveLogTick();
-     return status;
+     return LiveLogTick();
 }
 
 INLINE bool 
 LiveLogTick(void) {
-     bool status = LogBlockListBegin == NULL;
      LogBlockListNode *logBlockCurrent = LogBlockListBegin;
      while(logBlockCurrent != NULL && LogBlockListElementCount > 0) {
          TerminalFlushBuffer();
-         TerminalSendBlock(logBlockCurrent->logBlockStart, logBlockCurrent->logBlockSize);
+         TerminalSendBlock(logBlockCurrent->logBlockDataStart, logBlockCurrent->logBlockDataSize);
          TerminalFlushBuffer();
-         logBlockCurrent = logBlockCurrent->nextBlock;
+         logBlockCurrent = (LogBlockListNode *) logBlockCurrent->nextBlock;
+         --LogBlockListElementCount;
      }
      FreeLogBlocks();
-     LiveLogModePostTickCount = 0x00;
-     return status;
+     LiveLogModePostTickCount = 0;
+     return true;
 }
 
 #endif

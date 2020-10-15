@@ -46,7 +46,7 @@ void ReadBlockBytes(void* Buffer, SIZET StartBlock, SIZET Count) {
     //    const char *logWarningMsg = PSTR("WARNING: Reading NULL Address!");
     //    DEBUG_PRINT_P(logWarningMsg);
     //}
-    MemoryReadBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    MemoryReadBlockInSetting(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 
 void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
@@ -59,7 +59,7 @@ void WriteBlockBytesMain(const void* Buffer, SIZET StartBlock, SIZET Count) {
     //    const char *logWarningMsg = PSTR("WARNING: Writing NULL! -- %s");
     //    DEBUG_PRINT_P(logWarningMsg, __InternalStringBuffer2);
     //}
-    MemoryWriteBlock(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    MemoryWriteBlockInSetting(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 
 void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {

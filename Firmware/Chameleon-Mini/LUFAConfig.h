@@ -59,7 +59,7 @@
         #define FIXED_CONTROL_ENDPOINT_SIZE      8
         #define FIXED_NUM_CONFIGURATIONS         1
         #ifndef __MAX_ENDPOINT_INDEX
-            #define MAX_ENDPOINT_INDEX           3 // 4 // 5
+            #define MAX_ENDPOINT_INDEX           4 // 5
         #else 
             #define MAX_ENDPOINT_INDEX               (__MAX_ENDPOINT_INDEX)
         #endif        

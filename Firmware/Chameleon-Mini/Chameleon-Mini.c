@@ -1,5 +1,7 @@
 #include "Chameleon-Mini.h"
 
+//int main() __attribute__((noreturn));
+
 int main(void)
 {
     SystemInit();

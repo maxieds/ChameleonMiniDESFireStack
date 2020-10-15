@@ -138,7 +138,7 @@ void DebugPrintP(const char *fmt, ...);
     strBuffer;                                                                          \
     })
 
-#define DesfireLogIncoming(incBuf, bitCount)                                             ({ \
+//#define DesfireLogIncoming(incBuf, bitCount)                                             ({ \
     uint8_t logLength = 0;                                                                  \
     do {                                                                                    \
         logLength = BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE,           \
@@ -150,7 +150,7 @@ void DebugPrintP(const char *fmt, ...);
     } while(0);                                                                             \
     })
 
-#define DesfireLogOutgoing(incBuf, bitCount)                                             ({ \
+//#define DesfireLogOutgoing(incBuf, bitCount)                                             ({ \
     uint8_t logLength = 0;                                                                  \
     do {                                                                                    \
         logLength = BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE,           \
@@ -162,7 +162,8 @@ void DebugPrintP(const char *fmt, ...);
     } while(0);                                                                             \
     })
 
-#define DesfireLogISOStateChange(state, logCode)                                         ({ \
+#define DesfireLogISOStateChange(state, logCode)
+//#define DesfireLogISOStateChange(state, logCode)                                         ({ \
     const char *stateSymbName = NULL;                                                       \
     uint8_t logLength = 0x00;                                                               \
     do {                                                                                    \
