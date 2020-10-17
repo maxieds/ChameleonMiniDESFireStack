@@ -8,7 +8,7 @@ CFLAGS= -ILocalInclude -ISource \
 		-DHOST_BUILD -DCRYPTO_AES_DEFAULT=1 \
 		-I../ExternalCryptoLib -I../../
 LD=gcc-10
-LDFLAGS= -lc `pkg-config libnfc --libs` \
+LDFLAGS= $(CFLAGS) -lc `pkg-config libnfc --libs` \
 		 -L/usr/local/opt/openssl/lib -lssl -lcrypto
 
 BINDIR=./Bin
