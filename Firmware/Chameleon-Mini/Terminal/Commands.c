@@ -665,7 +665,7 @@ CommandStatusIdType CommandExecAutocalibrate(char* OutMessage)
         return TIMEOUT_COMMAND;
     }
     #endif
-    #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT)
+    #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_SNIFF){
         ApplicationReset();
 

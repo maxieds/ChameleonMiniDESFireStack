@@ -33,9 +33,6 @@ typedef enum {
     BUTTON_ACTION_TOGGLE_FIELD,
     BUTTON_ACTION_STORE_LOG,
     BUTTON_ACTION_CLONE,
-    #ifdef CONFIG_MF_DESFIRE_SUPPORT
-    BUTTON_ACTION_PRINT_STATE,
-    #endif
 
     /* This has to be last element */
     BUTTON_ACTION_COUNT
