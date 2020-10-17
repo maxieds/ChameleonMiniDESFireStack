@@ -69,13 +69,11 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
-#TODO
-#SETTINGS  += -DENABLE_CRYPTO_TESTS
+SETTINGS  += -DENABLE_CRYPTO_TESTS
 
 #Enable a command to run any tests added by developers, e.g., the 
 #crypto scheme tests that can be enabled above:
-#TODO
-#SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
+SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
 
 #Whether or not to customize the USB identifier settings in the firmware:
 SETTINGS	+= -DENABLE_LUFAUSB_CUSTOM_VERSIONS
@@ -205,6 +203,7 @@ SRC         += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
 			$(DESFIRE_MAINSRC)/DESFirePICCControl.c \
 			$(DESFIRE_MAINSRC)/DESFirePICCHeaderLayout.c \
 			$(DESFIRE_MAINSRC)/DESFireUtils.c 
+SRC         += Tests/CryptoTests.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S
