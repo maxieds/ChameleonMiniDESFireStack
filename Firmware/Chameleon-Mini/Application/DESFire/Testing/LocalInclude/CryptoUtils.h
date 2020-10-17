@@ -49,6 +49,15 @@ typedef struct {
      DesfireAESCryptoContext cryptoCtx;
 } CryptoData_t;
 
+#define CryptoMemoryXOR(inputBuf, destBuf, bufSize) ({ \
+     uint8_t *in = (uint8_t *) inputBuf;               \
+     uint8_t *out = (uint8_t *) destBuf;               \
+     uint16_t count = (uint16_t) bufSize;              \
+     while(count-- > 0) {                              \
+          *(out++) ^= *(in++);                         \
+     }                                                 \
+     })
+
 static inline size_t CryptAES128(bool toEncrypt, uint8_t *inputBytes, uint8_t *outputBytes, 
                                  size_t numBytes, CryptoData_t cdata) { 
      if((numBytes % AES128_BLOCK_SIZE) != 0) {
@@ -103,9 +112,20 @@ static inline size_t EncryptAES128(const uint8_t *plainSrcBuf, size_t bufSize,
      DesfireAESCryptoInit(cdata.keyData, cdata.keySize, cryptoCtx);
      size_t bufBlocks = bufSize / AES128_BLOCK_SIZE;
      bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
+     uint8_t IV[AES128_BLOCK_SIZE];
+     memset(IV, 0x00, AES128_BLOCK_SIZE);
      for(int blk = 0; blk < bufBlocks; blk++) {
-           aes128EncryptBlock(cryptoCtx, encDestBuf + blk * AES128_BLOCK_SIZE, 
-                              plainSrcBuf + blk * AES128_BLOCK_SIZE);
+          uint8_t inputBlock[AES128_BLOCK_SIZE];
+          if(blk == 0) {
+               memcpy(inputBlock, &plainSrcBuf[0], AES128_BLOCK_SIZE);
+               CryptoMemoryXOR(IV, inputBlock, AES128_BLOCK_SIZE);
+          }   
+          else {
+               memcpy(inputBlock, &encDestBuf[(blk - 1) * AES128_BLOCK_SIZE], AES128_BLOCK_SIZE);
+               CryptoMemoryXOR(&plainSrcBuf[blk * AES128_BLOCK_SIZE], inputBlock, AES128_BLOCK_SIZE);
+          }   
+          aes128EncryptBlock(cryptoCtx, encDestBuf + blk * AES128_BLOCK_SIZE, 
+                             inputBlock);
      }
      return bufSize;
 }
@@ -116,9 +136,21 @@ static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
      DesfireAESCryptoInit(cdata.keyData, cdata.keySize, cryptoCtx);
      size_t bufBlocks = (bufSize + AES128_BLOCK_SIZE - 1) / AES128_BLOCK_SIZE;
      bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
+     uint8_t IV[AES128_BLOCK_SIZE];
+     memset(IV, 0x00, AES128_BLOCK_SIZE);
      for(int blk = 0; blk < bufBlocks; blk++) {
+          uint8_t inputBlock[AES128_BLOCK_SIZE];
           aes128DecryptBlock(cryptoCtx, plainDestBuf + blk * AES128_BLOCK_SIZE,
-                             encSrcBuf + blk * AES128_BLOCK_SIZE);
+                             inputBlock);
+          if(blk == 0) {
+               memcpy(plainDestBuf + blk * AES128_BLOCK_SIZE, inputBlock, AES128_BLOCK_SIZE);
+               CryptoMemoryXOR(IV, plainDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
+          }
+          else {
+               memcpy(plainDestBuf + blk * AES128_BLOCK_SIZE, inputBlock, AES128_BLOCK_SIZE);
+               CryptoMemoryXOR(&encSrcBuf[(blk - 1) * AES128_BLOCK_SIZE],
+                               plainDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
+          }
      }
      return bufSize;
 }
