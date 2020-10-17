@@ -189,7 +189,11 @@ CommandStatusIdType CommandGetField(char* OutMessage);
 #define COMMAND_CLONE  "CLONE"
 CommandStatusIdType CommandExecClone(char* OutMessage);
 
-#if defined(CONFIG_MF_DESFIRE_SUPPORT) && defined(ALLOW_DESFIRE_TERMINAL_COMMANDS)
+#ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
+    #include "../Tests/ChameleonTerminal.h"
+#endif
+
+#if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
      #include "../Application/DESFire/DESFireChameleonTerminal.h"
 #endif
 

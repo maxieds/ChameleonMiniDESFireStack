@@ -27,7 +27,7 @@ This notice must be retained at the top of all source files where indicated.
 #ifndef __DESFIRE_CHAMELEON_TERMINAL_H__
 #define __DESFIRE_CHAMELEON_TERMINAL_H__
 
-#ifndef DISABLE_DESFIRE_TERMINAL_COMMANDS
+#if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
 
 #include <stdbool.h>
 
@@ -56,6 +56,6 @@ CommandStatusIdType CommandDESFireSetLoggingMode(char *OutMessage, const char *I
 CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam);
 CommandStatusIdType CommandDESFireSetTestingMode(char *OutMessage, const char *InParams);
 
-#endif /* DISABLE_DESFIRE_TERMINAL_COMMANDS */
+#endif
 
 #endif
