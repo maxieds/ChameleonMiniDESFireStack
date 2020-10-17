@@ -1879,7 +1879,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    Status = CryptoAESEncryptBuffer_NoIV(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, &Buffer[1], Key);
+    Status = CryptoAESEncryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, &Buffer[1], NULL, Key);
     if(Status != STATUS_OPERATION_OK) {
          Buffer[0] = Status;
          return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -1916,7 +1916,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    CryptoAESDecryptBuffer_NoIV(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, &Buffer[1], challengeRndAB, *Key);
+    CryptoAESDecryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, &Buffer[1], challengeRndAB, NULL, *Key); // TODO ???
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
@@ -1938,7 +1938,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     memset(challengeRndAB, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndAB, challengeRndA, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    CryptoAESEncryptBuffer_NoIV(CRYPTO_AES_BLOCK_SIZE, challengeRndAB, &Buffer[1], Key);
+    CryptoAESEncryptBuffer(CRYPTO_AES_BLOCK_SIZE, challengeRndAB, &Buffer[1], NULL, Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);

@@ -100,12 +100,11 @@ typedef enum aes_intlvl {
 typedef void (*aes_callback_t)(void);
 
 typedef struct {
-    unsigned char   ProcessingMode;              // O=decipher data, 1=cipher data
-    unsigned char   ProcessingDelay;             // [0,15]
-    unsigned char   StartMode;                   // 0 = Manual mode, 1 = Auto mode, 2 = DMA mode
-    unsigned char   KeySize;                     // 0 = 128bits, 1 = 192bits, 2 = 256bits
-    unsigned char   OpMode;                      // 0 = ECB, 1 = CBC, 2 = OFB, 3 = CFB, 4 = CTR
-    unsigned char   XorMode;                     // 0/1
+    CryptoAESDec_t   ProcessingMode; 
+    uint8_t          ProcessingDelay;            // [0,15]
+    CryptoAESAuto_t  StartMode;
+    unsigned char    OpMode;                     // 0 = ECB, 1 = CBC, 2 = OFB, 3 = CFB, 4 = CTR
+    CryptoAESXor_t   XorMode;
 } CryptoAESConfig_t;
 
 typedef struct {
@@ -125,9 +124,9 @@ bool aes_is_busy(void);
 bool aes_is_error(void);
 void aes_clear_interrupt_flag(void);
 void aes_clear_error_flag(void);
-void aes_configure(CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode);
-void aes_configure_encrypt(void);
-void aes_configure_decrypt(void);
+void aes_configure(CryptoAESDec_t op_mode, CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode);
+void aes_configure_encrypt(CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode);
+void aes_configure_decrypt(CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode);
 void aes_set_key(uint8_t *key_in);
 void aes_get_key(uint8_t *key_out);
 void aes_write_inputdata(uint8_t *data_in);
@@ -139,12 +138,10 @@ void CryptoAESGetConfigDefaults(CryptoAESConfig_t *ctx);
 void CryptoAESInitContext(CryptoAESConfig_t *ctx);
 uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize);
 
-void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
+void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool);
 void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
-uint8_t  CryptoAESEncryptBuffer_NoIV(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
 uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, 
                                const uint8_t *IV, const uint8_t *Key);
-uint8_t CryptoAESDecryptBuffer_NoIV(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
 uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, 
                                const uint8_t *IV, const uint8_t *Key);
 
@@ -179,7 +176,7 @@ void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *Ci
      uint8_t *out = (uint8_t *) destBuf;               \
      uint16_t count = (uint16_t) bufSize;              \
      while(count-- > 0) {                              \
-          *(out++) = *(in++);                          \
+          *(out++) ^= *(in++);                         \
      }                                                 \
      })
 

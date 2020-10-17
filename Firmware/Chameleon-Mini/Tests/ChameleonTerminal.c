@@ -16,14 +16,17 @@ CommandStatusIdType CommandRunTests(char *OutParam) {
           #endif
      };
      uint8_t t;
-     uint16_t maxOutputChars = TERMINAL_BUFFER_SIZE, charCount;
+     uint16_t maxOutputChars = TERMINAL_BUFFER_SIZE, charCount = 0;
      bool statusPassed = true;
      for(t = 0; t < sizeof(testCases); t++) {
           if(!testCases[t](OutParam)) {
                charCount = snprintf_P(OutParam, maxOutputChars, PSTR("> Test #% 2d ... [X]\r\n"), t + 1);
                statusPassed = false;
           }
-          maxOutputChars = MIN(0, maxOutputChars - charCount);
+          else {
+               charCount = 0;
+          }
+          maxOutputChars = maxOutputChars < charCount ? 0 : maxOutputChars - charCount;
           OutParam += charCount;
      }
      if(t == 0) {

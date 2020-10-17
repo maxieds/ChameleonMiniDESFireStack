@@ -32,6 +32,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <avr/interrupt.h>
+
 #include "CryptoAES128.h"
 
 #define NOP()	__asm__ __volatile__("nop")
@@ -48,6 +50,7 @@ static uint8_t __CryptoAESOpMode = CRYPTO_AES_CBC_MODE;
 void aes_start(void) {
 	AES.CTRL |= AES_START_bm;
 }
+
 void aes_software_reset(void) {
 	AES.CTRL = AES_RESET_bm;
 }
@@ -68,18 +71,16 @@ void aes_clear_error_flag(void) {
 	AES.STATUS |= AES_ERROR_bm;
 }
 
-void aes_configure(CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode) {
-     AES.CTRL = ((uint8_t) auto_start | (uint8_t) xor_mode);
+void aes_configure(CryptoAESDec_t op_mode, CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode) {
+     AES.CTRL = ((uint8_t) op_mode | (uint8_t) auto_start | (uint8_t) xor_mode);
 }
 
-void aes_configure_encrypt(void) {
-     AES.CTRL &= ~((uint8_t) CRYPTO_AES_PMODE_DECIPHER);
-     AES.CTRL |= (uint8_t) CRYPTO_AES_PMODE_ENCIPHER;
+void aes_configure_encrypt(CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode) {
+     aes_configure(AES_ENCRYPT, auto_start, xor_mode);
 }
 
-void aes_configure_decrypt(void) {
-     AES.CTRL &= ~((uint8_t) CRYPTO_AES_PMODE_ENCIPHER);
-     AES.CTRL |= (uint8_t) CRYPTO_AES_PMODE_DECIPHER;
+void aes_configure_decrypt(CryptoAESAuto_t auto_start, CryptoAESXor_t xor_mode) {
+     aes_configure(AES_DECRYPT, auto_start, xor_mode);
 }
 
 void aes_set_key(uint8_t *key_in) {
@@ -107,7 +108,7 @@ static bool aes_lastsubkey_generate(uint8_t *key, uint8_t *last_sub_key) {
 	     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
      };
-     CryptoAESEncryptBlock(dummy_data, dummy_data, key);
+     CryptoAESEncryptBlock(dummy_data, dummy_data, key, false);
 	/* If not error. */
 	if (!aes_is_error()) {
 		/* Store the last subkey. */
@@ -159,10 +160,9 @@ void CryptoAESGetConfigDefaults(CryptoAESConfig_t *ctx) {
      }
      ctx->ProcessingMode = CRYPTO_AES_PMODE_ENCIPHER;
      ctx->ProcessingDelay = 0;
-     ctx->StartMode = AES_AUTO_bm;
-     ctx->KeySize = CRYPTO_AES_KEY_SIZE;
+     ctx->StartMode = AES_MANUAL;
      ctx->OpMode = CRYPTO_AES_CBC_MODE;
-     ctx->XorMode = 0; //AES_XOR_bm;
+     ctx->XorMode = AES_XOR_ON;
 }
 
 static void int_callback_aes(void) {}
@@ -174,7 +174,7 @@ void CryptoAESInitContext(CryptoAESConfig_t *ctx) {
      aes_software_reset();
      memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);
      __CryptoAESOpMode = ctx->OpMode;
-     aes_configure(ctx->StartMode, ctx->XorMode);
+     aes_configure(ctx->ProcessingMode, ctx->StartMode, ctx->XorMode);
      aes_set_callback(&int_callback_aes);
 }
 
@@ -186,16 +186,17 @@ uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize) {
      return bufSize + CRYPTO_AES_BLOCK_SIZE - spareBytes;
 }
 
-void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
+void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool XorModeOn) {
      aes_software_reset();
      AES.CTRL = AES_RESET_bm;
 	NOP();
 	AES.CTRL = 0;
+     aes_configure_encrypt(AES_MANUAL, XorModeOn ? AES_XOR_ON : AES_XOR_OFF);
+     aes_isr_configure(AES_INTLVL_LO);
      aes_set_key(Key);
 	for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE; i++) {
 		AES.STATE = 0x00;
      }
-     aes_configure_encrypt();
      aes_write_inputdata(Plaintext);
 	aes_start();
 	do {
@@ -215,11 +216,12 @@ void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_
      AES.CTRL = AES_RESET_bm;
 	NOP();
 	AES.CTRL = 0;
+     aes_configure_decrypt(AES_MANUAL, AES_XOR_OFF);
+     aes_isr_configure(AES_INTLVL_LO);
      aes_set_key(lastSubKey);
      for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE; i++) {
 		AES.STATE = 0x00;
      }
-     aes_configure_decrypt();
      aes_write_inputdata(Ciphertext);
 	aes_start();
 	do {
@@ -230,15 +232,14 @@ void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_
      aes_clear_error_flag();
 }
 
-uint8_t CryptoAESEncryptBuffer_NoIV(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
-     memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);     
-     return CryptoAESEncryptBuffer(Count, Plaintext, Ciphertext, __CryptoAES_IVData, Key);
-}
-
 uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
                                const uint8_t *IV, const uint8_t *Key) {
      if((Count % CRYPTO_AES_BLOCK_SIZE) != 0) {
           return 0xBE;
+     }
+     else if(IV == NULL) {
+          memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);     
+          IV = &__CryptoAES_IVData[0];
      }
      size_t bufBlocks = (Count + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
      for(int blk = 0; blk < bufBlocks; blk++) {
@@ -252,25 +253,24 @@ uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
                     memcpy(inputBlock, &Ciphertext[(blk - 1) * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
                     CryptoMemoryXOR(&Plaintext[blk * CRYPTO_AES_BLOCK_SIZE], inputBlock, CRYPTO_AES_BLOCK_SIZE);
                }
-               CryptoAESEncryptBlock(inputBlock, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, Key);
+               CryptoAESEncryptBlock(inputBlock, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, Key, true);
           }
           else {
                CryptoAESEncryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE,
-                                     Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, Key);
+                                     Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, Key, true);
           }
      }
      return 0;
-}
-
-uint8_t CryptoAESDecryptBuffer_NoIV(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
-     memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);     
-     return CryptoAESDecryptBuffer(Count, Plaintext, Ciphertext, __CryptoAES_IVData, Key);
 }
 
 uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, 
                                const uint8_t *IV, const uint8_t *Key) {
      if((Count % CRYPTO_AES_BLOCK_SIZE) != 0) {
           return 0xBE;
+     }
+     else if(IV == NULL) {
+          memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);     
+          IV = &__CryptoAES_IVData[0];
      }
      size_t bufBlocks = (Count + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
      for(int blk = 0; blk < bufBlocks; blk++) {
@@ -315,7 +315,7 @@ void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
         CryptoMemoryXOR(ivBlock, tempBlock, CryptoSpec.blockSize);
         CryptoSpec.cryptFunc(ivBlock, tempBlock, Key);
         memcpy(IV + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
-        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
+        memcpy(ctBuf + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
         blockIndex++;
     }
 }
@@ -341,7 +341,7 @@ void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
         memcpy(ivBlock, IV, CryptoSpec.blockSize);
         CryptoMemoryXOR(ivBlock, tempBlock, CryptoSpec.blockSize);
         memcpy(IV, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
-        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
+        memcpy(ctBuf + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
         blockIndex++;
     }
 }
