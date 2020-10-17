@@ -2,7 +2,7 @@
 #### These tests are compiled for the local host system, not for AVR platforms
 
 CC=gcc-10
-CFLAGS= -ILocalInclude -ISource -DDRIVER_PN53X_USB_ENABLED \
+CFLAGS= -ILocalInclude -ISource \
 		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
 		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include \
 		-DHOST_BUILD -DCRYPTO_AES_DEFAULT=1 \
