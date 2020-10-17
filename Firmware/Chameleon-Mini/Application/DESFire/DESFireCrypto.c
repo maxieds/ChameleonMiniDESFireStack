@@ -46,7 +46,6 @@ uint16_t AESCryptoKeySizeBytes = 0;
 CryptoAESConfig_t AESCryptoContext = { 0 };
 DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
-DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
 
 uint8_t Authenticated = 0x00;
 uint8_t AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
@@ -180,21 +179,6 @@ uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8
 uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
      LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
      return STATUS_OPERATION_OK;
-}
-
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, const uint8_t *Key) {
-     if(cmacCtx == NULL || Key == NULL) {
-          return STATUS_PARAMETER_ERROR;
-     }
-     return bcal_cmac_init(cmacCtx, Key);
-}
-
-void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
-                            DesfireAESCryptoCMACContext *cmacCtx) {
-     if(cmacDestBytes == NULL || srcBuf == NULL || cmacCtx == NULL) {
-          return;
-     }
-     bcal_cmac(cmacDestBytes, DESFIRE_CMAC_LENGTH, srcBuf, bufSize, cmacCtx);
 }
 
 /* Checksum routines */

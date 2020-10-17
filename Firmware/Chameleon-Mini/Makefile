@@ -202,7 +202,7 @@ SRC         += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
 			$(DESFIRE_MAINSRC)/DESFireMemoryOperations.c \
 			$(DESFIRE_MAINSRC)/DESFirePICCControl.c \
 			$(DESFIRE_MAINSRC)/DESFirePICCHeaderLayout.c \
-			$(DESFIRE_MAINSRC)/DESFireUtils.c 
+			$(DESFIRE_MAINSRC)/DESFireUtils.c
 SRC         += Tests/CryptoTests.c \
 			Tests/ChameleonTerminal.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)

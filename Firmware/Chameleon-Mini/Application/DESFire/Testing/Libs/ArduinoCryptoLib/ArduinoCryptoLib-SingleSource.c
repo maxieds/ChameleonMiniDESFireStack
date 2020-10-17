@@ -30,7 +30,4 @@ This notice must be retained at the top of all source files where indicated.
 #include "aes/aes-common.c"
 #include "aes/aes128.c"
 
-#include "aes/aes-cmac.h"
-#include "aes/aes-cmac.c"
-
 #endif

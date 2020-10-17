@@ -31,8 +31,6 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireFirmwareSettings.h"
 
-#include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes-cmac.h"
-
 /* Communication modes: 
  * Define the modes of communication over the RFID channel
  * 
@@ -136,18 +134,6 @@ uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8
 uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
-
-/* CMAC local implementation */
-typedef bcal_cmac_ctx_t DesfireAESCryptoCMACContext;
-extern DesfireAESCryptoCMACContext AESCryptoChecksumContext;
-
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, const uint8_t *Key);
-void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
-                            DesfireAESCryptoCMACContext *cmacCtx);
-
-/* Public checksum routines: */
-void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);
-uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer);
 
 /*********************************************************
  * TripleDES crypto routines: 

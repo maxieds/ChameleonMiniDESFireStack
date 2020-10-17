@@ -8,7 +8,7 @@
 
 #include <openssl/rand.h>
 
-#include <CryptoLibs-SingleSource.c>
+#include <ArduinoCryptoLib-SingleSource.c>
 
 #include "LibNFCUtils.h"
 
