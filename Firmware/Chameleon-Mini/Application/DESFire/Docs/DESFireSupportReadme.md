@@ -28,8 +28,17 @@ The firmware has been tested and known to work with the KAOS manufactured RevG C
 Unfortunately, formative RevE device support is not available due to the memory requirements to 
 run this firmware emulation. The device responds well using the ``libnfc``-based utility 
 ``nfc-anticol``. More testing needs to be done to fine tune support for interfacing the Chameleon 
-with live, in-the-wild DESFire tag readers in practice. 
-The DESFire configuration mode has been known to see recognition problems with Proxmark3 devices and 
+with live, in-the-wild DESFire tag readers in practice. It has been verified to work with the 
+Proxmark3 NFC devices: 
+```
+[usb] pm3 --> hf 14a read
+[+]  UID: 4A D9 BA 11 B9 97 57
+[+] ATQA: 44 03
+[+]  SAK: 20 [1]
+[+]  ATS: 75 77 81 02 80
+[=] field dropped.
+```
+The DESFire configuration mode has been known to see recognition problems 
 using ``libfreefare``. 
 
 ## Supported functionality

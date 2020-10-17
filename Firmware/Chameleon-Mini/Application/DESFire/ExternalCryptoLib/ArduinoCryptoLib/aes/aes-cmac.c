@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <string.h>
 
+static __AES128Context __LocalAES128Ctx = { 0 };
+
 static uint8_t left_shift_be_block(void* block, uint8_t blocksize_B) {
 	uint8_t c1=0, c2;
 	do{
@@ -42,11 +44,13 @@ void bcal_cipher_dec(const bcal_cmac_ctx_t *ctx, void *input, void *output) {
     aes128DecryptBlock(ctx->cctx, output, input);
 }
 
-uint8_t bcal_cmac_init(bcal_cmac_ctx_t* ctx, AES128Context *aesCtx) {
-    ctx->cctx = aesCtx;
-    ctx->blocksize_B = 16;
-    /* subkey computation */
-    uint8_t r = const_128;
+uint8_t bcal_cmac_init(bcal_cmac_ctx_t* ctx, const uint8_t *Key) {
+     memset(&__LocalAES128Ctx, 0x00, sizeof(__AES128Context));
+     memcpy(__LocalAES128Ctx.keyData, Key, AES128_KEY_SIZE);
+     ctx->cctx = &__LocalAES128Ctx;
+     ctx->blocksize_B = 16;
+     /* subkey computation */
+     uint8_t r = const_128;
 	memset(ctx->accu, 0x00, ctx->blocksize_B);
 	memset(ctx->k1, 0x00, ctx->blocksize_B);
 	bcal_cipher_enc(ctx, ctx->accu, ctx->k1); // TODO

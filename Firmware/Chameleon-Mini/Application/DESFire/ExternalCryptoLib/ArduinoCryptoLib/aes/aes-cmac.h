@@ -24,20 +24,32 @@
      #include <avr/pgmspace.h>
 #endif
 
+#define AES128_CRYPTO_ROUNDS              (10)
+#define AES128_CRYPTO_SCHEDULE_SIZE       (16)
+#define AES128_BLOCK_SIZE                 (16)
+#define AES128_KEY_SIZE                   (16)
+
+typedef struct {
+    uint8_t     rounds;
+    uint8_t     schedule[AES128_CRYPTO_SCHEDULE_SIZE];
+    uint8_t     reverse[AES128_CRYPTO_SCHEDULE_SIZE];
+    uint8_t     keyData[AES128_KEY_SIZE];
+} __AES128Context;
+
 typedef struct{
-	AES128Context   *cctx;
-	uint8_t         accu[16];
-	uint8_t         k1[16];
-	uint8_t         k2[16];
-	uint8_t         lastblock[16];
-	uint8_t         last_set;
-	uint8_t         blocksize_B;
+	__AES128Context   *cctx;
+	uint8_t           accu[16];
+	uint8_t           k1[16];
+	uint8_t           k2[16];
+	uint8_t           lastblock[16];
+	uint8_t           last_set;
+	uint8_t           blocksize_B;
 } bcal_cmac_ctx_t;
 
 void bcal_cipher_enc(const bcal_cmac_ctx_t *ctx, void *input, void *output);
 void bcal_cipher_dec(const bcal_cmac_ctx_t *ctx, void *input, void *output);
 
-uint8_t bcal_cmac_init(bcal_cmac_ctx_t* ctx, AES128Context *aesCtx);
+uint8_t bcal_cmac_init(bcal_cmac_ctx_t* ctx, const uint8_t *key);
 void bcal_cmac_nextBlock(bcal_cmac_ctx_t* ctx, const void* block);
 void bcal_cmac_lastBlock(bcal_cmac_ctx_t* ctx, const void* block, uint16_t length_b);
 void bcal_cmac_ctx2mac(void* dest, uint16_t length_b, const bcal_cmac_ctx_t* ctx);

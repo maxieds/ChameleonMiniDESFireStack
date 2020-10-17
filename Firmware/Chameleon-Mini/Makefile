@@ -187,6 +187,7 @@ SRC         += Application/MifareUltralight.c \
 			Application/MifareClassic.c \
 			Application/ISO14443-3A.c \
 			Application/Crypto1.c \
+			Application/CryptoAES128.c \
 			Application/CryptoTDEA.c \
 			Application/Reader14443A.c \
 			Application/Sniff14443A.c \

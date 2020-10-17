@@ -28,11 +28,10 @@ This notice must be retained at the top of all source files where indicated.
 #define __DESFIRE_CRYPTO_H__
 
 #include "../../Common.h"
+
 #include "DESFireFirmwareSettings.h"
 
-#include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes128.h"
 #include "ExternalCryptoLib/ArduinoCryptoLib/aes/aes-cmac.h"
-#include "ExternalCryptoLib/AVRCryptoLib/memxor/memxor.h"
 
 /* Communication modes: 
  * Define the modes of communication over the RFID channel
@@ -66,14 +65,10 @@ This notice must be retained at the top of all source files where indicated.
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_AES_KEY_SIZE                  (16)
 #define CRYPTO_MAX_KEY_SIZE                  (24)
-#define CRYPTO_AES_BLOCK_SIZE                (16)
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
 #define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
 #define DESFIRE_SESSION_KEY_SIZE             (CRYPTO_3KTDEA_KEY_SIZE)
 #define CRYPTO_CHALLENGE_RESPONSE_BYTES      (8)
-
-#define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize) \
-     ( ((numBytes) + (blockSize) - 1) / (blockSize) )
 
 typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
 typedef BYTE CryptoIVBufferType[CRYPTO_MAX_BLOCK_SIZE];
@@ -88,8 +83,7 @@ extern uint8_t AuthenticatedWithPICCMasterKey;
 extern uint8_t CryptoAuthMethod;
 extern uint8_t ActiveCommMode;
 
-/* TODO: 
- * Need to invalidate the authentication state after:
+/* Need to invalidate the authentication state after:
  * 1) Selecting a new application; 
  * 2) Changing the active key used in the authentication;
  * 3) A failed authentication;
@@ -106,7 +100,7 @@ const char * GetCommSettingsDesc(uint8_t cryptoType);
 #define DESFIRE_CMAC_LENGTH         8    // in bytes
 
 /* Authentication status */
-#define DESFIRE_NOT_AUTHENTICATED 0xFF
+#define DESFIRE_NOT_AUTHENTICATED   0xFF
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_AUTH_LEGACY,
@@ -117,74 +111,37 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 
+#define CryptoBitsToBytes(cryptoBits) \
+     (cryptoBits / BITS_PER_BYTE)
+
 /*********************************************************
  * AES (128) crypto routines: 
  *********************************************************/
 
-#define CryptoBitsToBytes(cryptoBits) \
-     (cryptoBits / BITS_PER_BYTE)
+#include "../CryptoAES128.h"
 
-typedef AES128Context DesfireAESCryptoContext;
-extern DesfireAESCryptoContext AESCryptoContext;
-extern uint16_t AESCryptoKeySizeBytes;
+typedef uint8_t DesfireAESCryptoKey[CRYPTO_AES_KEY_SIZE];
 
-typedef uint8_t DesfireAESCryptoKey[16];
+extern CryptoAESConfig_t AESCryptoContext;
 extern DesfireAESCryptoKey AESCryptoSessionKey;
 extern DesfireAESCryptoKey AESCryptoIVBuffer;
 
-#define ExtractAESKeyBuffer(keyBufPtr, cryptoContext)                                     ({   \
-        DesfireAESCryptoContext *aesCryptoContext = (DesfireAESCryptoContext *) cryptoContext; \
-        memcpy(*keyBufPtr, aesCryptoContext->schedule, AES128_KEY_SIZE);                       \
-        *keyBufPtr;                                                                            \
-        })
-
-void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx);
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
-uint16_t GetPaddedBufferSize(uint16_t bufSize);
-uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, DesfireAESCryptoContext *cryptoCtx);
-uint8_t DesfireAESCryptoReset(DesfireAESCryptoContext *cryptoCtx);
-void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, uint8_t *encDestBuf);
-void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, uint8_t *plainDestBuf);
-BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
-                             uint8_t *encDestBuf, size_t bufSize);
-BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
-                             uint8_t *plainDestBuf, size_t bufSize);
+
+typedef void (*CryptoAESCBCFuncType)(uint16_t, void*, void*, uint8_t*, uint8_t*);
+
+typedef uint8_t (*CryptoTransferSendFunc)(uint8_t*, uint8_t);
+typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t*, uint8_t);
+uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
+uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
-
-typedef uint8_t (*CryptoTransferSendFunc)(uint8_t *Buffer, uint8_t Count);
-typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *Buffer, uint8_t Count);
-
-uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count);
-uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count);
-
-typedef void (*CryptoAESCBCFuncType)(uint16_t, const void*, void*, void*, DesfireAESCryptoContext*);
-typedef void (*CryptoAESFuncType)(DesfireAESCryptoContext*, const void *PlainText, void *Ciphertext);
-
-typedef struct {
-    CryptoAESFuncType cryptFunc;
-    uint16_t           blockSize;
-} CryptoAES_CBCSpec;
-
-void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
-                        void *IV, DesfireAESCryptoContext *cryptoContext, CryptoAES_CBCSpec CryptoSpec);
-void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,               
-                        void *IV, DesfireAESCryptoContext *cryptoContext, CryptoAES_CBCSpec CryptoSpec);
-
-void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
-                              void *IV, DesfireAESCryptoContext *AESCryptoContextData);
-void CryptoDecryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
-                              void *IV, DesfireAESCryptoContext *AESCryptoContextData);
-void CryptoEncryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
-                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData);
-void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
-                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData);
 
 /* CMAC local implementation */
 typedef bcal_cmac_ctx_t DesfireAESCryptoCMACContext;
 extern DesfireAESCryptoCMACContext AESCryptoChecksumContext;
 
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx);
+BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, const uint8_t *Key);
 void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
                             DesfireAESCryptoCMACContext *cmacCtx);
 
@@ -200,8 +157,7 @@ uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer);
 
 #define DESFIRE_2KTDEA_NONCE_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define DESFIRE_DES_IV_SIZE                  (CRYPTO_DES_BLOCK_SIZE)
-
-#define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
+#define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS      (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
 
 /* Checksum routines: */
 void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);

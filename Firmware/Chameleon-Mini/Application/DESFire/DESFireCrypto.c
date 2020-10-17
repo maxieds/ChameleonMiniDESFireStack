@@ -42,8 +42,8 @@ CryptoKeyBufferType SessionKey = { 0 };
 CryptoIVBufferType SessionIV = { 0 };
 BYTE SessionIVByteSize = { 0 };
 
-DesfireAESCryptoContext AESCryptoContext = { 0 };
 uint16_t AESCryptoKeySizeBytes = 0;
+CryptoAESConfig_t AESCryptoContext = { 0 };
 DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
 DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 DesfireAESCryptoCMACContext AESCryptoChecksumContext = { 0 };
@@ -139,85 +139,10 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
      }
 }
 
-void InitAESCryptoContext(DesfireAESCryptoContext *cryptoCtx) {
-     aes128InitContext(cryptoCtx);
-}
-
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {
      memset(cryptoKeyData, 0x00, sizeof(DesfireAESCryptoKey));
 }
-
-uint16_t GetPaddedBufferSize(uint16_t bufSize) {
-     uint16_t spareBytes = (bufSize % CRYPTO_AES_BLOCK_SIZE);
-     if(spareBytes == 0) {
-          return bufSize;
-     }
-     return bufSize + CRYPTO_AES_BLOCK_SIZE - spareBytes;
-}
-
-// assumes the crypto context struct is uninitialized: 
-uint8_t DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, 
-                             DesfireAESCryptoContext *cryptoCtx) {
-     if(initKeyBuffer == NULL || cryptoCtx == NULL) {
-          return STATUS_PARAMETER_ERROR;
-     }
-     else if(bufSize != CRYPTO_AES_KEY_SIZE) {
-          return STATUS_LENGTH_ERROR;
-     }
-     InitAESCryptoContext(cryptoCtx);
-     memcpy(cryptoCtx->keyData, initKeyBuffer, bufSize);
-     if(!aes128SetKey(cryptoCtx, initKeyBuffer, bufSize)) {
-         return STATUS_WRONG_VALUE_ERROR;
-     }
-     return STATUS_OPERATION_OK;
-}
-
-uint8_t DesfireAESCryptoReset(DesfireAESCryptoContext *cryptoCtx) {
-     uint8_t priorKeyData[CRYPTO_AES_KEY_SIZE];
-     memcpy(priorKeyData, cryptoCtx->keyData, CRYPTO_AES_KEY_SIZE);
-     return DesfireAESCryptoInit(priorKeyData, CRYPTO_AES_KEY_SIZE, cryptoCtx);
-}
-
-void DesfireAESEncryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *encDestBuf, uint8_t *plainSrcBuf) {
-     aes128EncryptBlock(cryptoCtx, encDestBuf, plainSrcBuf); 
-}
-
-void DesfireAESDecryptBlock(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainDestBuf, uint8_t *encSrcBuf) {
-     aes128DecryptBlock(cryptoCtx, plainDestBuf, encSrcBuf); 
-}
-
-BYTE DesfireAESEncryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *plainSrcBuf, 
-                             uint8_t *encDestBuf, size_t bufSize) {
-     size_t bufBlocks = (bufSize + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
-     bool padLastBlock = (bufSize % CRYPTO_AES_BLOCK_SIZE) != 0;
-     size_t lastBlockSize = bufSize % CRYPTO_AES_BLOCK_SIZE;
-     uint8_t ctxResetStatus = DesfireAESCryptoReset(cryptoCtx);
-     if(ctxResetStatus != STATUS_OPERATION_OK) {
-          return ctxResetStatus;
-     }
-     for(int blk = 0; blk < bufBlocks; blk++) {
-           DesfireAESEncryptBlock(cryptoCtx, encDestBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
-                                  plainSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE);
-     }
-     return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
-}
-
-BYTE DesfireAESDecryptBuffer(DesfireAESCryptoContext *cryptoCtx, uint8_t *encSrcBuf, 
-                             uint8_t *plainDestBuf, size_t bufSize) {
-     size_t bufBlocks = (bufSize + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE;
-     bool padLastBlock = (bufSize % CRYPTO_AES_BLOCK_SIZE) != 0;
-     uint8_t ctxResetStatus = DesfireAESCryptoReset(cryptoCtx);
-     if(ctxResetStatus != STATUS_OPERATION_OK) {
-          return ctxResetStatus;
-     }
-     for(int blk = 0; blk < bufBlocks; blk++) {
-          DesfireAESDecryptBlock(cryptoCtx, plainDestBuf + blk * CRYPTO_AES_BLOCK_SIZE, 
-                                 encSrcBuf + blk * CRYPTO_AES_BLOCK_SIZE);
-     }
-     return padLastBlock ? STATUS_BOUNDARY_ERROR : STATUS_OPERATION_OK;
-}
-
-uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
+uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_AES_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];
     uint16_t tempBufSize = (DESFIRE_MAX_PAYLOAD_AES_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE;
@@ -244,114 +169,24 @@ uint8_t TransferEncryptAESCryptoSend(uint8_t *Buffer, uint8_t Count) {
     }
     TransferState.ReadData.Encryption.AvailablePlaintext = AvailablePlaintext;
     /* Encrypt complete blocks in the buffer */
-    CryptoEncryptAES_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], 
-                             ExtractAESKeyBuffer(&AESCryptoIVBuffer, &AESCryptoContext), 
-                             AESCryptoKeySizeBytes);
+    uint8_t zeroIV[CRYPTO_AES_BLOCK_SIZE];
+    memset(zeroIV, 0x00, CRYPTO_AES_BLOCK_SIZE);
+    CryptoAESEncrypt_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], 
+                             *Key, zeroIV);
     /* Return byte count to transfer */
     return BlockCount * CRYPTO_AES_BLOCK_SIZE; 
 }
 
-uint8_t TransferEncryptAESCryptoReceive(uint8_t *Buffer, uint8_t Count) {
+uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
      LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
      return STATUS_OPERATION_OK;
 }
 
-// This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
-/*void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                       void *IV, DesfireAESCryptoContext *AESCryptoContextData, 
-                       CryptoAES_CBCSpec CryptoSpec) {
-    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
-    uint16_t blockIndex = 0;
-    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
-    bool lastBlockPadding = false;
-    if(numBlocks * CryptoSpec.blockSize > Count) {
-         lastBlockPadding = true;
-    }
-    while(blockIndex < numBlocks) {
-        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
-            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
-            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
-        }
-        memcpy(tempBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
-        memcpy(ivBlock, IV, CryptoSpec.blockSize);
-        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
-        CryptoSpec.cryptFunc(AESCryptoContextData, ivBlock, tempBlock);
-        memcpy(IV + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
-        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, tempBlock, CryptoSpec.blockSize);
-        blockIndex++;
-    }
-}*/
-
-// This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
-/*void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
-                       void *IV, DesfireAESCryptoContext *AESCryptoContextData, 
-                       CryptoAES_CBCSpec CryptoSpec) {
-    uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
-    uint16_t blockIndex = 0;
-    uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
-    uint8_t tempBlock[CryptoSpec.blockSize], ivBlock[CryptoSpec.blockSize];
-    bool lastBlockPadding = false;
-    if(numBlocks * CryptoSpec.blockSize > Count) {
-         lastBlockPadding = true;
-    }
-    while(blockIndex < numBlocks) {
-        if(blockIndex + 1 == numBlocks && lastBlockPadding) {
-            uint8_t bytesInBuffer = Count - (numBlocks - 1) * CryptoSpec.blockSize;
-            CryptoPaddingTDEA(ptBuf + blockIndex * CryptoSpec.blockSize, bytesInBuffer, false);
-        }
-        memcpy(ivBlock, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
-        CryptoSpec.cryptFunc(AESCryptoContextData, ivBlock, tempBlock);
-        memcpy(ivBlock, IV, CryptoSpec.blockSize);
-        memxor(ivBlock, tempBlock, CryptoSpec.blockSize);
-        memcpy(IV, ptBuf + blockIndex * CryptoSpec.blockSize, CryptoSpec.blockSize);
-        memcpy(Ciphertext + blockIndex * CryptoSpec.blockSize, ivBlock, CryptoSpec.blockSize);
-        blockIndex++;
-    }
-}*/
-
-void CryptoEncryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
-                              void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
-     CryptoAES_CBCSpec CryptoSpec = {
-         .cryptFunc   = &DesfireAESEncryptBlock,
-         .blockSize   = CRYPTO_AES_BLOCK_SIZE
-     };
-     CryptoAES_CBCSend(Count, PlainText, CipherText, IV, AESCryptoContextData, CryptoSpec);
-}
-
-void CryptoDecryptAES_CBCSend(uint16_t Count, const void *PlainText, void *CipherText, 
-                              void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
-     CryptoAES_CBCSpec CryptoSpec = {
-         .cryptFunc   = &DesfireAESDecryptBlock,
-         .blockSize   = CRYPTO_AES_BLOCK_SIZE
-     };
-     CryptoAES_CBCSend(Count, CipherText, PlainText, IV, AESCryptoContextData, CryptoSpec);
-}
-
-void CryptoEncryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
-                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
-     CryptoAES_CBCSpec CryptoSpec = {
-         .cryptFunc   = &DesfireAESEncryptBlock,
-         .blockSize   = CRYPTO_AES_BLOCK_SIZE
-     };
-     CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, AESCryptoContextData, CryptoSpec);
-}
-
-void CryptoDecryptAES_CBCReceive(uint16_t Count, const void *PlainText, void *CipherText, 
-                                 void *IV, DesfireAESCryptoContext *AESCryptoContextData) {
-     CryptoAES_CBCSpec CryptoSpec = {
-         .cryptFunc   = &DesfireAESDecryptBlock,
-         .blockSize   = CRYPTO_AES_BLOCK_SIZE
-     };
-     CryptoAES_CBCRecv(Count, CipherText, PlainText, IV, AESCryptoContextData, CryptoSpec);
-}
-
-
-BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, DesfireAESCryptoContext *cryptoCtx) {
-     if(cmacCtx == NULL || cryptoCtx == NULL) {
+BYTE InitAESCryptoCMACContext(DesfireAESCryptoCMACContext *cmacCtx, const uint8_t *Key) {
+     if(cmacCtx == NULL || Key == NULL) {
           return STATUS_PARAMETER_ERROR;
      }
-     return bcal_cmac_init(cmacCtx, cryptoCtx);
+     return bcal_cmac_init(cmacCtx, Key);
 }
 
 void CalculateAESCryptoCMAC(BYTE *cmacDestBytes, const BYTE *srcBuf, SIZET bufSize, 
