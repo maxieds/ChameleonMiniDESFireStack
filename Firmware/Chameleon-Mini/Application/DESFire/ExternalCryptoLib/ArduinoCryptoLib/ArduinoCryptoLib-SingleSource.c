@@ -26,12 +26,10 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "aes/aes-common.h"
 #include "aes/aes128.h"
-#include "aes/ProgMemUtil.h"
 
 #include "aes/aes-common.c"
 #include "aes/aes128.c"
 
-#include "../AVRCryptoLib/memxor/memxor.h"
 #include "aes/aes-cmac.h"
 #include "aes/aes-cmac.c"
 

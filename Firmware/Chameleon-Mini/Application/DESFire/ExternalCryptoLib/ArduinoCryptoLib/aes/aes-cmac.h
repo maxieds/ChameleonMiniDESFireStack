@@ -24,6 +24,17 @@
      #include <avr/pgmspace.h>
 #endif
 
+#ifndef MemoryXOR
+#define MemoryXOR(inputBuf, destBuf, bufSize) ({ \
+     uint8_t *in = (uint8_t *) inputBuf;               \
+     uint8_t *out = (uint8_t *) destBuf;               \
+     uint16_t count = (uint16_t) bufSize;              \
+     while(count-- > 0) {                              \
+          *(out++) ^= *(in++);                         \
+     }                                                 \
+     })
+#endif
+
 #define AES128_CRYPTO_ROUNDS              (10)
 #define AES128_CRYPTO_SCHEDULE_SIZE       (16)
 #define AES128_BLOCK_SIZE                 (16)

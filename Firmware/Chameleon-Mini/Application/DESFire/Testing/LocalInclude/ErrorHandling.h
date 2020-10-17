@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include "ANSIStringPrinting.h"
-
 #define STRING_BUFFER_SIZE          (256)
 static inline char __InternalLoggingStringBuffer[STRING_BUFFER_SIZE] = { '\0' };
 

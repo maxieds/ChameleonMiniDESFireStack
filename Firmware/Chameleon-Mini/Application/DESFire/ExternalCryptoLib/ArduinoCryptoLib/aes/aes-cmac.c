@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "aes-cmac.h"
+
 static __AES128Context __LocalAES128Ctx = { 0 };
 
 static uint8_t left_shift_be_block(void* block, uint8_t blocksize_B) {
@@ -67,7 +69,7 @@ uint8_t bcal_cmac_init(bcal_cmac_ctx_t* ctx, const uint8_t *Key) {
 
 void bcal_cmac_nextBlock(bcal_cmac_ctx_t* ctx, const void* block) {
     if(ctx->last_set){
-		memxor(ctx->accu, ctx->lastblock, ctx->blocksize_B);
+		MemoryXOR(ctx->accu, ctx->lastblock, ctx->blocksize_B);
 		bcal_cipher_enc(ctx, ctx->accu, ctx->accu); // TODO
 	}
 	memcpy(ctx->lastblock, block, ctx->blocksize_B);
@@ -83,18 +85,18 @@ void bcal_cmac_lastBlock(bcal_cmac_ctx_t* ctx, const void* block, uint16_t lengt
 		length_b -= blocksize_b;
 	}
 	if(ctx->last_set==0){
-		memxor(ctx->accu, block, (length_b+7)/8);
-		memxor(ctx->accu, ctx->k2, ctx->blocksize_B);
+		MemoryXOR(ctx->accu, block, (length_b+7)/8);
+		MemoryXOR(ctx->accu, ctx->k2, ctx->blocksize_B);
 		ctx->accu[length_b/8] ^= 0x80>>(length_b&7);
-	}else{
+	} else{
 		if(length_b==0){
-			memxor(ctx->accu, ctx->lastblock, ctx->blocksize_B);
-			memxor(ctx->accu, ctx->k1, ctx->blocksize_B);
-		}else{
-			memxor(ctx->accu, ctx->lastblock, ctx->blocksize_B);
+			MemoryXOR(ctx->accu, ctx->lastblock, ctx->blocksize_B);
+			MemoryXOR(ctx->accu, ctx->k1, ctx->blocksize_B);
+		} else{
+			MemoryXOR(ctx->accu, ctx->lastblock, ctx->blocksize_B);
 			bcal_cipher_enc(ctx, ctx->accu, ctx->accu); // TODO
-			memxor(ctx->accu, block, (length_b+7)/8);
-			memxor(ctx->accu, ctx->k2, ctx->blocksize_B);
+			MemoryXOR(ctx->accu, block, (length_b+7)/8);
+			MemoryXOR(ctx->accu, ctx->k2, ctx->blocksize_B);
 			ctx->accu[length_b/8] ^= 0x80>>(length_b&7);
 		}
 	}

@@ -29,7 +29,6 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "ArduinoCryptoLib/aes/aes-common.h"
 #include "ArduinoCryptoLib/aes/aes128.h"
-#include "ArduinoCryptoLib/aes/ProgMemUtil.h"
 
 #include "ArduinoCryptoLib/aes/aes-common.c"
 #include "ArduinoCryptoLib/aes/aes128.c"
