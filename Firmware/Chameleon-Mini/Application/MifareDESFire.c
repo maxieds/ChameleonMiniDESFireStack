@@ -109,8 +109,6 @@ void MifareDesfireAppTask(void)
 }
 
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
-    
-    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount == 0) {
          return ISO14443A_APP_NO_RESPONSE;
     } 
@@ -162,7 +160,6 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    //DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
     return ReturnBytes;
 
 }
@@ -221,12 +218,18 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
 
 uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
-    return ISO144433APiccProcess(Buffer, BitCount);
+    else if(ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+            Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { 
+         // Native wrapped command send without CRCA checksum bytes appended: 
+         return MifareDesfireProcess(Buffer, BitCount);
+    }
+    else {
+         return ISO144433APiccProcess(Buffer, BitCount);
+    }
 }
 
 void ResetLocalStructureData(void) {

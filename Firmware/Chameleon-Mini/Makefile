@@ -69,11 +69,11 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
-SETTINGS  += -DENABLE_CRYPTO_TESTS
+#SETTINGS  += -DENABLE_CRYPTO_TESTS
 
 #Enable a command to run any tests added by developers, e.g., the 
 #crypto scheme tests that can be enabled above:
-SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
+#SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
 
 #Whether or not to customize the USB identifier settings in the firmware:
 SETTINGS	+= -DENABLE_LUFAUSB_CUSTOM_VERSIONS

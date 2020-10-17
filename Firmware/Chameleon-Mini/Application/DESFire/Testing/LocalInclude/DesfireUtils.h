@@ -60,7 +60,8 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
     aesCryptoData.ivSize = 16;
     DecryptAES128(encryptedRndB, 16, plainTextRndB, aesCryptoData);
     RotateArrayLeft(plainTextRndB, rotatedRndB, 8);
-    memcpy(IVBuf, rxDataStorage->rxDataBuf, 8);
+    //memcpy(IVBuf, rxDataStorage->rxDataBuf, 8);
+    memset(IVBuf, 0x00, 16);
     aesCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, 8);
     ConcatByteArrays(rndA, 8, rotatedRndB, 8, challengeResponse);

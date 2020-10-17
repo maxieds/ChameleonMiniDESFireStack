@@ -66,15 +66,25 @@ static inline size_t CryptAES128(bool toEncrypt, uint8_t *inputBytes, uint8_t *o
      size_t numBlocks = numBytes / AES128_BLOCK_SIZE;
      size_t outputBufLength = 0, outputBufLengthTemp = 0;
      EVP_CIPHER_CTX *cipherCtx = EVP_CIPHER_CTX_new();
-     EVP_CipherInit(cipherCtx, EVP_aes_128_cbc(), cdata.keyData, cdata.ivData, toEncrypt);
-     for(int blk = 0; blk < numBlocks; blk++) {
-         EVP_CipherUpdate(cipherCtx, outputBytes + blk * AES128_BLOCK_SIZE, 
-                          &outputBufLengthTemp, inputBytes + blk * AES128_BLOCK_SIZE, 
-                          AES128_BLOCK_SIZE);
+     if(cipherCtx == NULL) {
+          fprintf(stderr, "Cipher context is NULL.\n");
+          return 0;
+     }
+     if(toEncrypt) {
+         EVP_EncryptInit(cipherCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
+         EVP_EncryptUpdate(cipherCtx, outputBytes, &outputBufLengthTemp, inputBytes, numBytes);
+         outputBufLength = outputBufLengthTemp;
+         EVP_EncryptFinal(cipherCtx, outputBytes + outputBufLengthTemp, &outputBufLengthTemp);
          outputBufLength += outputBufLengthTemp;
      }
-     EVP_CipherFinal(cipherCtx, outputBytes + outputBufLength, &outputBufLengthTemp);
-     outputBufLength += outputBufLengthTemp;
+     else {
+         EVP_DecryptInit(cipherCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
+         EVP_DecryptUpdate(cipherCtx, outputBytes, &outputBufLengthTemp, inputBytes, numBytes);
+         outputBufLength = outputBufLengthTemp;
+         EVP_DecryptFinal(cipherCtx, outputBytes + outputBufLengthTemp, &outputBufLengthTemp);
+         outputBufLength += outputBufLengthTemp;
+     }
+     EVP_CIPHER_CTX_free(cipherCtx);
      return outputBufLength;
 }
 
@@ -114,6 +124,7 @@ static inline size_t EncryptAES128(const uint8_t *plainSrcBuf, size_t bufSize,
      bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
      uint8_t IV[AES128_BLOCK_SIZE];
      memset(IV, 0x00, AES128_BLOCK_SIZE);
+     //memcpy(IV, cdata.keyData, AES128_BLOCK_SIZE);
      for(int blk = 0; blk < bufBlocks; blk++) {
           uint8_t inputBlock[AES128_BLOCK_SIZE];
           if(blk == 0) {
@@ -140,8 +151,7 @@ static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
      memset(IV, 0x00, AES128_BLOCK_SIZE);
      for(int blk = 0; blk < bufBlocks; blk++) {
           uint8_t inputBlock[AES128_BLOCK_SIZE];
-          aes128DecryptBlock(cryptoCtx, plainDestBuf + blk * AES128_BLOCK_SIZE,
-                             inputBlock);
+          aes128DecryptBlock(cryptoCtx, inputBlock, encSrcBuf + blk * AES128_BLOCK_SIZE);
           if(blk == 0) {
                memcpy(plainDestBuf + blk * AES128_BLOCK_SIZE, inputBlock, AES128_BLOCK_SIZE);
                CryptoMemoryXOR(IV, plainDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
