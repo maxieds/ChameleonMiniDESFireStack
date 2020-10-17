@@ -18,10 +18,10 @@
 /* DES crypto test cases: */
 
 /* Test 2KTDEA encryption, ECB mode: */
-bool CryptoTDEATestCase1(void);
+bool CryptoTDEATestCase1(char *OutParam, uint16_t MaxOutputLength);
 
 /* Test 2KTDEA encryption, CBC receive mode: */
-bool CryptoTDEATestCase2(void);
+bool CryptoTDEATestCase2(char *OutParam, uint16_t MaxOutputLength);
 
 /* AES-128 crypto test cases: */
 

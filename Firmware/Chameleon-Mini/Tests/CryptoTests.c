@@ -2,7 +2,7 @@
 
 #include "CryptoTests.h"
 
-bool CryptoTDEATestCase1(void) {
+bool CryptoTDEATestCase1(char *OutParam, uint16_t MaxOutputLength) {
      const uint8_t ZeroBlock[CRYPTO_DES_BLOCK_SIZE] = {
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      };
@@ -16,12 +16,16 @@ bool CryptoTDEATestCase1(void) {
      uint8_t Output[CRYPTO_DES_BLOCK_SIZE];
      CryptoEncrypt2KTDEA(ZeroBlock, Output, TestKey2KTDEA);
      if(memcmp(TestOutput2KTDEAECB, Output, sizeof(TestOutput2KTDEAECB))) {
+          strcat_P(OutParam, PSTR("> "));
+          OutParam += 2;
+          BufferToHexString(OutParam, MaxOutputLength - 2, Output, CRYPTO_DES_BLOCK_SIZE);
+          strcat_P(OutParam, PSTR("\r\n"));
           return false;
      }
      return true;
 }
 
-bool CryptoTDEATestCase2(void) {
+bool CryptoTDEATestCase2(char *OutParam, uint16_t MaxOutputLength) {
      const uint8_t TestKey2KTDEA[CRYPTO_2KTDEA_KEY_SIZE] = {
           0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
           0xcc, 0xaa, 0xff, 0xee, 0x11, 0x33, 0x33, 0x77,
@@ -39,6 +43,10 @@ bool CryptoTDEATestCase2(void) {
      memset(IV, 0x00, sizeof(IV));
      CryptoEncrypt2KTDEA_CBCReceive(2, TestInput2KTDEACBCReceive, Output, IV, TestKey2KTDEA);
      if(memcmp(TestOutput2KTDEACBCReceive, Output, sizeof(TestOutput2KTDEACBCReceive))) {
+          strcat_P(OutParam, PSTR("> "));
+          OutParam += 2;
+          BufferToHexString(OutParam, MaxOutputLength - 2, Output, CRYPTO_2KTDEA_KEY_SIZE);
+          strcat_P(OutParam, PSTR("\r\n"));
           return false;
      }
      return true;
@@ -49,22 +57,16 @@ bool CryptoAESTestCase1(char *OutParam, uint16_t MaxOutputLength) {
      const uint8_t KeyData[CRYPTO_AES_KEY_SIZE] = {
           0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 		0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
-          //0x30, 0x70, 0x97, 0x1A, 0xB7, 0xCE, 0x45, 0x06,
-	     //0x3F, 0xD2, 0x57, 0x3F, 0x49, 0xF5, 0x42, 0x0D
      };
      // Plaintext from FIPS-197: 00112233 44556677 8899AABB CCDDEEFF
      const uint8_t PlainText[CRYPTO_AES_BLOCK_SIZE] = {
           0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 		0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
-          //0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-	     //0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
      };
      // Cipher result from FIPS-197: 69c4e0d8 6a7b0430 d8cdb780 70b4c55a
      const uint8_t CipherText[CRYPTO_AES_BLOCK_SIZE] = {
           0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30,
 		0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a
-          //0x59, 0x1D, 0xA5, 0xBF, 0xEA, 0x0E, 0xD7, 0x61,
-	     //0x24, 0x4E, 0x81, 0xBA, 0x1E, 0xF6, 0x24, 0xB5
      };
      uint8_t tempBlock[CRYPTO_AES_BLOCK_SIZE];
      CryptoAESConfig_t aesContext;

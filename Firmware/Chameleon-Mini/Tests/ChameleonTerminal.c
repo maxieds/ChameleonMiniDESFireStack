@@ -8,8 +8,8 @@
 CommandStatusIdType CommandRunTests(char *OutParam) {
      const ChameleonTestType testCases[] = {
           #ifdef ENABLE_CRYPTO_TESTS
-          //&CryptoTDEATestCase1, 
-          //&CryptoTDEATestCase2, 
+          &CryptoTDEATestCase1, 
+          &CryptoTDEATestCase2, 
           &CryptoAESTestCase1,
           &CryptoAESTestCase2, 
           #endif
@@ -30,7 +30,8 @@ CommandStatusIdType CommandRunTests(char *OutParam) {
           }
      }
      if(statusPassed) {
-          snprintf_P(OutParam, maxOutputChars, PSTR("All tests passed."));
+          snprintf_P(OutParam, maxOutputChars, PSTR("All tests passed: %d / %d."), 
+                     ARRAY_COUNT(testCases), ARRAY_COUNT(testCases));
      }
      else {
           snprintf_P(OutParam, maxOutputChars, PSTR("Tests failed: %d / %d."), 
