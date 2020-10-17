@@ -219,7 +219,8 @@ CC_FLAGS     = -g0 -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 			   -D__MAX_ENDPOINT_INDEX=4 \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
 			   -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
-			   -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop #-ffreestanding
+			   -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
+			   -fno-aggressive-loop-optimizations
 LD_FLAGS     = $(CC_FLAGS) \
 			   -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 			   -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)

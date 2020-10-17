@@ -10,33 +10,31 @@ CommandStatusIdType CommandRunTests(char *OutParam) {
           #ifdef ENABLE_CRYPTO_TESTS
           //&CryptoTDEATestCase1, 
           //&CryptoTDEATestCase2, 
-          &CryptoAESTestCase1, 
-          //&CryptoAESTestCase2, 
-          //&CryptoAESTestCase3,
+          &CryptoAESTestCase1,
+          &CryptoAESTestCase2, 
           #endif
      };
-     uint8_t t;
-     uint16_t maxOutputChars = TERMINAL_BUFFER_SIZE, charCount = 0;
+     uint32_t t;
+     uint16_t maxOutputChars = TERMINAL_BUFFER_SIZE, charCount = 0, testsFailedCount = 0;
      bool statusPassed = true;
-     for(t = 0; t < sizeof(testCases); t++) {
-          if(!testCases[t](OutParam)) {
+     for(t = 0; t < ARRAY_COUNT(testCases); t++) {
+          if(!testCases[t](OutParam, maxOutputChars)) {
+               size_t opLength = StringLength(OutParam, maxOutputChars);
+               OutParam += opLength;
+               maxOutputChars -= opLength;
                charCount = snprintf_P(OutParam, maxOutputChars, PSTR("> Test #% 2d ... [X]\r\n"), t + 1);
+               maxOutputChars = maxOutputChars < charCount ? 0 : maxOutputChars - charCount;
+               OutParam += charCount;
                statusPassed = false;
+               ++testsFailedCount;
           }
-          else {
-               charCount = 0;
-          }
-          maxOutputChars = maxOutputChars < charCount ? 0 : maxOutputChars - charCount;
-          OutParam += charCount;
      }
-     if(t == 0) {
-          sprintf_P(OutParam, "No tests to run.\r\n");
-     }
-     else if(statusPassed) {
-          snprintf_P(OutParam, maxOutputChars, PSTR("All tests passed.\r\n"));
+     if(statusPassed) {
+          snprintf_P(OutParam, maxOutputChars, PSTR("All tests passed."));
      }
      else {
-          snprintf_P(OutParam, maxOutputChars, PSTR("Tests failed.\r\n"));
+          snprintf_P(OutParam, maxOutputChars, PSTR("Tests failed: %d / %d."), 
+                     testsFailedCount, ARRAY_COUNT(testCases));
      }
      return COMMAND_INFO_OK_WITH_TEXT_ID;
 }

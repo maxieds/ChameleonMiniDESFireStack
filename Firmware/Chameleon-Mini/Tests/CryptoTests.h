@@ -26,17 +26,12 @@ bool CryptoTDEATestCase2(void);
 /* AES-128 crypto test cases: */
 
 /* Test AES-128 encrypt/decrypt for a single block (ECB mode): */
-bool CryptoAESTestCase1(char *OutParam);
-
-/* Test AES-128 encrypt/decrypt for a single-block buffer (ECB mode) -- Version 1: 
- * Adapted from: https://github.com/avrxml/asf/blob/master/sam/drivers/aes/example/aes_example.c
- */
-bool CryptoAESTestCase2(char *OutParam);
+bool CryptoAESTestCase1(char *OutParam, uint16_t MaxOutputLength);
 
 /* Test AES-128 encrypt/decrypt for a single-block buffer (CBC mode, with an IV) -- Version 1: 
- * Adapted from: https://github.com/avrxml/asf/blob/master/sam/drivers/aes/example/aes_example.c 
+ * Adapted from: https://github.com/eewiki/asf/blob/master/xmega/drivers/aes/example2/aes_example2.c
  */
-bool CryptoAESTestCase3(void);
+bool CryptoAESTestCase2(char *OutParam, uint16_t MaxOutputLength);
 
 #endif /* __CRYPTO_TESTS_H__ */
 

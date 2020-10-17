@@ -44,7 +44,7 @@ bool CryptoTDEATestCase2(void) {
      return true;
 }
 
-bool CryptoAESTestCase1(char *OutParam) {
+bool CryptoAESTestCase1(char *OutParam, uint16_t MaxOutputLength) {
      // Key from FIPS-197: 00010203 04050607 08090A0B 0C0D0E0
      const uint8_t KeyData[CRYPTO_AES_KEY_SIZE] = {
           0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -75,7 +75,7 @@ bool CryptoAESTestCase1(char *OutParam) {
      if(memcmp(tempBlock, CipherText, CRYPTO_AES_BLOCK_SIZE)) {
           strcat_P(OutParam, PSTR("> ENC: "));
           OutParam += 7;
-          BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
+          BufferToHexString(OutParam, MaxOutputLength - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
           strcat_P(OutParam, PSTR("\r\n"));
           return false;
      }
@@ -83,77 +83,51 @@ bool CryptoAESTestCase1(char *OutParam) {
      if(memcmp(tempBlock, PlainText, CRYPTO_AES_BLOCK_SIZE)) {
           strcat_P(OutParam, PSTR("> DEC: "));
           OutParam += 7;
-          BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
+          BufferToHexString(OutParam, MaxOutputLength - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
           strcat_P(OutParam, PSTR("\r\n"));
           return false;
      }
      return true;
 }
 
-bool CryptoAESTestCase2(char *OutParam) {
+bool CryptoAESTestCase2(char *OutParam, uint16_t MaxOutputLength) {
+     // Example data taken from: 
+     // https://boringssl.googlesource.com/boringssl/+/2490/crypto/cipher/test/cipher_test.txt#104
      const uint8_t KeyData[CRYPTO_AES_KEY_SIZE] = {
-	     0x16, 0x15, 0x7e, 0x2b, 0xa6, 0xd2, 0xae, 0x28,
-	     0x88, 0x15, 0xf7, 0xab, 0x3c, 0x4f, 0xcf, 0x09
+          0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 
+          0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C
      };
      const uint8_t PlainText[CRYPTO_AES_BLOCK_SIZE] = {
-	     0xe2, 0xbe, 0xc1, 0x6b, 0x96, 0x9f, 0x40, 0x2e,
-	     0x11, 0x7e, 0x3d, 0xe9, 0x2a, 0x17, 0x93, 0x73
+          0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 
+          0xE9, 0x3D, 0x7E, 0x11, 0x73, 0x93, 0x17, 0x2A
      };
      const uint8_t CipherText[CRYPTO_AES_BLOCK_SIZE] = {
-          0xb4, 0x7b, 0xd7, 0x3a, 0x60, 0x36, 0x7a, 0x0d,
-	     0xf3, 0xca, 0x9e, 0xa8, 0x97, 0xef, 0x66, 0x24
-     };
-     const uint8_t tempBlock[CRYPTO_AES_BLOCK_SIZE];
-     CryptoAESConfig_t aesContext;
-     CryptoAESGetConfigDefaults(&aesContext);
-     aesContext.OpMode = CRYPTO_AES_CBC_MODE;
-     CryptoAESInitContext(&aesContext);
-     CryptoAESEncryptBuffer(CRYPTO_AES_BLOCK_SIZE, PlainText, tempBlock, NULL, KeyData);
-     if(memcmp(tempBlock, CipherText, CRYPTO_AES_BLOCK_SIZE)) {
-          OutParam += 7;
-          BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
-          strcat_P(OutParam, PSTR("\r\n"));
-          return false;
-     }
-     CryptoAESDecryptBuffer(CRYPTO_AES_BLOCK_SIZE, tempBlock, CipherText, NULL, KeyData);
-     if(memcmp(tempBlock, PlainText, CRYPTO_AES_BLOCK_SIZE)) {
-          strcat_P(OutParam, PSTR("> DEC: "));
-          OutParam += 7;
-          BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
-          strcat_P(OutParam, PSTR("\r\n"));
-          return false;
-     }
-     return true;
-}
-
-bool CryptoAESTestCase3(void) {
-     const uint8_t KeyData[CRYPTO_AES_KEY_SIZE] = {
-	     0x16, 0x15, 0x7e, 0x2b, 0xa6, 0xd2, 0xae, 0x28,
-	     0x88, 0x15, 0xf7, 0xab, 0x3c, 0x4f, 0xcf, 0x09
-     };
-     const uint8_t PlainText[CRYPTO_AES_BLOCK_SIZE] = {
-	     0xe2, 0xbe, 0xc1, 0x6b, 0x96, 0x9f, 0x40, 0x2e,
-	     0x11, 0x7e, 0x3d, 0xe9, 0x2a, 0x17, 0x93, 0x73
-     };
-     const uint8_t CipherText[CRYPTO_AES_BLOCK_SIZE] = {
-          0xac, 0xab, 0x49, 0x76, 0x46, 0xb2, 0x19, 0x81,
-	     0x9b, 0x8e, 0xe9, 0xce, 0x7d, 0x19, 0xe9, 0x12     
+          0x76, 0x49, 0xAB, 0xAC, 0x81, 0x19, 0xB2, 0x46, 
+          0xCE, 0xE9, 0x8E, 0x9B, 0x12, 0xE9, 0x19, 0x7D
      };
      const uint8_t IV[CRYPTO_AES_BLOCK_SIZE] = {
-          0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04,
-	     0x0b, 0x0a, 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c
+          0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+          0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
      };
-     const uint8_t tempBlock[CRYPTO_AES_BLOCK_SIZE];
+     uint8_t tempBlock[CRYPTO_AES_BLOCK_SIZE];
      CryptoAESConfig_t aesContext;
      CryptoAESGetConfigDefaults(&aesContext);
      aesContext.OpMode = CRYPTO_AES_CBC_MODE;
      CryptoAESInitContext(&aesContext);
      CryptoAESEncryptBuffer(CRYPTO_AES_BLOCK_SIZE, PlainText, tempBlock, IV, KeyData);
      if(memcmp(tempBlock, CipherText, CRYPTO_AES_BLOCK_SIZE)) {
+          strcat_P(OutParam, PSTR("> ENC: "));
+          OutParam += 7;
+          BufferToHexString(OutParam, MaxOutputLength - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
+          strcat_P(OutParam, PSTR("\r\n"));
           return false;
      }
      CryptoAESDecryptBuffer(CRYPTO_AES_BLOCK_SIZE, tempBlock, CipherText, IV, KeyData);
      if(memcmp(tempBlock, PlainText, CRYPTO_AES_BLOCK_SIZE)) {
+          strcat_P(OutParam, PSTR("> DEC: "));
+          OutParam += 7;
+          BufferToHexString(OutParam, MaxOutputLength - 7, tempBlock, CRYPTO_AES_BLOCK_SIZE);
+          strcat_P(OutParam, PSTR("\r\n"));
           return false;
      }
      return true;

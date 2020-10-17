@@ -276,15 +276,16 @@ uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
      for(int blk = 0; blk < bufBlocks; blk++) {
           if(__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
                CryptoAESBlock_t inputBlock;
+               CryptoAESDecryptBlock(inputBlock, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, Key);
                if(blk == 0) {
-                    memcpy(inputBlock, &Ciphertext[0], CRYPTO_AES_BLOCK_SIZE);
-                    CryptoMemoryXOR(IV, inputBlock, CRYPTO_AES_BLOCK_SIZE);
+                    memcpy(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, inputBlock, CRYPTO_AES_BLOCK_SIZE);
+                    CryptoMemoryXOR(IV, Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
                }
                else {
-                    memcpy(inputBlock, &Ciphertext[(blk - 1) * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
-                    CryptoMemoryXOR(&Ciphertext[blk * CRYPTO_AES_BLOCK_SIZE], inputBlock, CRYPTO_AES_BLOCK_SIZE);
+                    memcpy(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, inputBlock, CRYPTO_AES_BLOCK_SIZE);
+                    CryptoMemoryXOR(&Ciphertext[(blk - 1) * CRYPTO_AES_BLOCK_SIZE], 
+                                    Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
                }
-               CryptoAESDecryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, inputBlock, Key);
           }
           else {
                CryptoAESDecryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE,
