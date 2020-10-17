@@ -34,6 +34,8 @@
 
 #include "CryptoAES128.h"
 
+#define NOP()	__asm__ __volatile__("nop")
+
 /* AES interrupt callback function pointer. */
 static aes_callback_t __CryptoAESCallbackFunc = NULL;
 
@@ -96,6 +98,29 @@ void aes_get_key(uint8_t *key_out) {
 	}
 }
 
+static bool aes_lastsubkey_generate(uint8_t *key, uint8_t *last_sub_key) {
+	bool keygen_ok;
+	aes_software_reset();
+	/* Load dummy data into AES state memory. It isn't important what is
+	 * written, just that a write cycle occurs. */
+	uint8_t dummy_data[] = {
+	     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+     };
+     CryptoAESEncryptBlock(dummy_data, dummy_data, key);
+	/* If not error. */
+	if (!aes_is_error()) {
+		/* Store the last subkey. */
+		aes_get_key(last_sub_key);
+		aes_clear_interrupt_flag();
+		keygen_ok = true;
+	} else {
+		aes_clear_error_flag();
+		keygen_ok = false;
+	}
+	return keygen_ok;
+}
+
 void aes_write_inputdata(uint8_t *data_in) {
      uint8_t i;
 	uint8_t *temp_state = data_in;
@@ -134,11 +159,13 @@ void CryptoAESGetConfigDefaults(CryptoAESConfig_t *ctx) {
      }
      ctx->ProcessingMode = CRYPTO_AES_PMODE_ENCIPHER;
      ctx->ProcessingDelay = 0;
-     ctx->StartMode = CRYPTO_AES_START_MODE_MANUAL;
+     ctx->StartMode = AES_AUTO_bm;
      ctx->KeySize = CRYPTO_AES_KEY_SIZE;
      ctx->OpMode = CRYPTO_AES_CBC_MODE;
-     ctx->XorMode = 0;
+     ctx->XorMode = 0; //AES_XOR_bm;
 }
+
+static void int_callback_aes(void) {}
 
 void CryptoAESInitContext(CryptoAESConfig_t *ctx) { 
      if(ctx == NULL) {
@@ -148,6 +175,7 @@ void CryptoAESInitContext(CryptoAESConfig_t *ctx) {
      memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);
      __CryptoAESOpMode = ctx->OpMode;
      aes_configure(ctx->StartMode, ctx->XorMode);
+     aes_set_callback(&int_callback_aes);
 }
 
 uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize) {
@@ -159,18 +187,38 @@ uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize) {
 }
 
 void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
+     aes_software_reset();
+     AES.CTRL = AES_RESET_bm;
+	NOP();
+	AES.CTRL = 0;
      aes_set_key(Key);
-	aes_configure_encrypt();
+	for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE; i++) {
+		AES.STATE = 0x00;
+     }
+     aes_configure_encrypt();
      aes_write_inputdata(Plaintext);
 	aes_start();
 	do {
 	     // Wait until AES is finished or an error occurs.
 	} while (aes_is_busy());
 	aes_read_outputdata(Ciphertext);
+     aes_clear_interrupt_flag();
+     aes_clear_error_flag();
 }
 
 void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
-     aes_set_key(Key);
+     AES.CTRL = AES_RESET_bm;
+	NOP();
+	AES.CTRL = 0;
+     uint8_t lastSubKey[CRYPTO_AES_KEY_SIZE];
+     aes_lastsubkey_generate(Key, lastSubKey);
+     AES.CTRL = AES_RESET_bm;
+	NOP();
+	AES.CTRL = 0;
+     aes_set_key(lastSubKey);
+     for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE; i++) {
+		AES.STATE = 0x00;
+     }
      aes_configure_decrypt();
      aes_write_inputdata(Ciphertext);
 	aes_start();
@@ -178,6 +226,8 @@ void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_
 	     // Wait until AES is finished or an error occurs.
 	} while (aes_is_busy());
 	aes_read_outputdata(Plaintext);
+     aes_clear_interrupt_flag();
+     aes_clear_error_flag();
 }
 
 uint8_t CryptoAESEncryptBuffer_NoIV(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
@@ -234,7 +284,7 @@ uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
                     memcpy(inputBlock, &Ciphertext[(blk - 1) * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
                     CryptoMemoryXOR(&Ciphertext[blk * CRYPTO_AES_BLOCK_SIZE], inputBlock, CRYPTO_AES_BLOCK_SIZE);
                }
-               CryptoAESDecryptBlock(inputBlock, Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, Key);
+               CryptoAESDecryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, inputBlock, Key);
           }
           else {
                CryptoAESDecryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE,

@@ -5,10 +5,9 @@
 
 #include "../Terminal/Commands.h"
 #include "../Terminal/CommandLine.h"
+#include "../Terminal/Terminal.h"
 
-#include "CryptoTests.h"
-
-typedef bool (*ChameleonTestType)(void);
+typedef bool (*ChameleonTestType)(char*);
 
 #define COMMAND_RUNTESTS                 "RUNTESTS"
 CommandStatusIdType CommandRunTests(char *OutParam);

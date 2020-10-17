@@ -15,6 +15,9 @@ CONFIG_SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
 #CONFIG_SETTINGS    += -DCONFIG_ISO15693_SNIFF_SUPPORT 
 #CONFIG_SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
 
+#Default configuration
+CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
+
 #Support magic mode on mifare classic configuration
 SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
 
@@ -23,9 +26,6 @@ SETTINGS	+= -DSUPPORT_UID7_FIX_MANUFACTURER_BYTE
 
 #Support activating firmware upgrade mode through command-line
 SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
-
-#Default configuration
-SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
 
 #Default button actions
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RANDOM
@@ -296,10 +296,11 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
 
-desfire: CONFIG_SETTINGS:= -DCONFIG_MF_DESFIRE_SUPPORT
+desfire: CONFIG_SETTINGS:= -DCONFIG_MF_DESFIRE_SUPPORT -DDEFAULT_CONFIGURATION=CONFIG_NONE
 desfire: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
+
 
 local-clean:
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{hex,eep}
