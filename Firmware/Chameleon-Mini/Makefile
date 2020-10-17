@@ -192,9 +192,7 @@ SRC         += Application/MifareUltralight.c \
 			Application/Reader14443A.c \
 			Application/Sniff14443A.c \
 			Application/ISO15693-A.c
-SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-SingleSource.c \
-			$(DESFIRE_MAINSRC)/ExternalCryptoLib/ArduinoCryptoLib/ArduinoCryptoLib-SingleSource.c \
-			$(DESFIRE_MAINSRC)/../MifareDESFire.c \
+SRC         += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
 			$(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
 			$(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
 			$(DESFIRE_MAINSRC)/DESFireCrypto.c \
@@ -210,8 +208,7 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S
-ASRC        += Applications/CryptoTDEA-HWAccelerated.S \
-			$(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
+ASRC        += Applications/CryptoTDEA-HWAccelerated.S
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -g0 -std=gnu99 -D__PROG_TYPES_COMPAT__ \

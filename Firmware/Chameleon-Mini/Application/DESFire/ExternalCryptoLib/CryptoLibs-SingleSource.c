@@ -27,14 +27,6 @@ This notice must be retained at the top of all source files where indicated.
 #ifndef __CRYPTOLIBS_SINGLE_SOURCE_C__
 #define __CRYPTOLIBS_SINGLE_SOURCE_C__
 
-#include "AVRCryptoLib/gf256mul/gf256mul.h"
-
-#include "AVRCryptoLib/memxor/memxor.h"
-#include "AVRCryptoLib/memxor/memxor_c.c"
-
-#include "AVRCryptoLib/des/des.h"
-#include "AVRCryptoLib/des/des.c"
-
 #include "ArduinoCryptoLib/aes/aes-common.h"
 #include "ArduinoCryptoLib/aes/aes128.h"
 #include "ArduinoCryptoLib/aes/ProgMemUtil.h"
