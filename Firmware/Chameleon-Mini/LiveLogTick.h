@@ -50,7 +50,6 @@ typedef struct LogBlockListNode {
      uint8_t                  *logBlockDataStart;
      uint8_t                  logBlockDataSize;
      struct LogBlockListNode  *nextBlock;
-     //uint8_t                  *nextBlock;
 } LogBlockListNode;
 
 #define LOG_BLOCK_LIST_NODE_SIZE             (sizeof(LogBlockListNode) + 4 - (uint8_t) (sizeof(LogBlockListNode) % 4))

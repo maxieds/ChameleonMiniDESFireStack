@@ -208,6 +208,120 @@ _CommonEpilogue:
 ; Triple DEA ECB Routines
 ;
 
+; Input:
+;     R25:R24 - Pointer to plaintext input buffer
+;     R23:R22 - Pointer to ciphertext output buffer
+;     R21:R20 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoEncryptDEA
+CryptoEncryptDEA:
+    ; Preserve the clobbered regs
+    push    r2
+    push    r3
+    push    r4
+    push    r5
+    push    r6
+    push    r7
+    push    r8
+    push    r9
+    push    r10
+    push    r11
+    push    r12
+    push    r13
+    push    r14
+    push    r15
+    push    r16
+    push    r17
+
+    ; Load the plaintext pointer to Z and fetch data
+    movw    r30, r24
+    ld      r7, Z+
+    ld      r6, Z+
+    ld      r5, Z+
+    ld      r4, Z+
+    ld      r3, Z+
+    ld      r2, Z+
+    ld      r1, Z+
+    ld      r0, Z+
+    ; Encrypt
+    movw    r16, r20 
+    rcall   _EncryptDEA
+    ; Store the ciphertext
+    movw    r30, r22 
+    st      Z+, r7
+    st      Z+, r6
+    st      Z+, r5
+    st      Z+, r4
+    st      Z+, r3
+    st      Z+, r2
+    st      Z+, r1
+    st      Z+, r0
+
+    ; Restore clobbered regs
+    pop     r17 
+    pop     r16 
+    ; Reuse epilogue code
+    rjmp    _CommonEpilogue
+
+; Input:
+;     R25:R24 - Pointer to plaintext input buffer
+;     R23:R22 - Pointer to ciphertext output buffer
+;     R21:R20 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoDecryptDEA
+CryptoDecryptDEA:
+    ; Preserve the clobbered regs
+    push    r2
+    push    r3
+    push    r4
+    push    r5
+    push    r6
+    push    r7
+    push    r8
+    push    r9
+    push    r10
+    push    r11
+    push    r12
+    push    r13
+    push    r14
+    push    r15
+    push    r16
+    push    r17
+
+    ; Load the plaintext pointer to Z and fetch data
+    movw    r30, r24
+    ld      r7, Z+
+    ld      r6, Z+
+    ld      r5, Z+
+    ld      r4, Z+
+    ld      r3, Z+
+    ld      r2, Z+
+    ld      r1, Z+
+    ld      r0, Z+
+    ; Encrypt
+    movw    r16, r20
+    rcall   _DecryptDEA
+    ; Store the ciphertext
+    movw    r30, r22
+    st      Z+, r7
+    st      Z+, r6
+    st      Z+, r5
+    st      Z+, r4
+    st      Z+, r3
+    st      Z+, r2
+    st      Z+, r1
+    st      Z+, r0
+
+    ; Restore clobbered regs
+    pop     r17
+    pop     r16
+    ; Reuse epilogue code
+    rjmp    _CommonEpilogue
+
 ; This routine performs Triple DEA encryption using keying option 2: K1, K2, K1.
 ;
 ; Input:

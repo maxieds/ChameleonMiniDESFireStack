@@ -5,15 +5,15 @@
 SHELL = /bin/bash
 
 #Supported configurations
-#SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
-#SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
-#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
-#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
-#SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
-SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
-#SETTINGS    += -DCONFIG_ISO14443A_SNIFF_SUPPORT
-#SETTINGS    += -DCONFIG_ISO15693_SNIFF_SUPPORT 
-#SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
+CONFIG_SETTINGS    += -DCONFIG_MF_DESFIRE_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_ISO14443A_SNIFF_SUPPORT
+#CONFIG_SETTINGS    += -DCONFIG_ISO15693_SNIFF_SUPPORT 
+#CONFIG_SETTINGS    += -DCONFIG_ISO14443A_READER_SUPPORT
 
 #Support magic mode on mifare classic configuration
 SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
@@ -68,13 +68,22 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
+#Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
+#TODO
+#SETTINGS  += -DENABLE_CRYPTO_TESTS
+
+#Enable a command to run any tests added by developers, e.g., the 
+#crypto scheme tests that can be enabled above:
+#TODO
+#SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
+
 #Whether or not to customize the USB identifier settings in the firmware:
 SETTINGS	+= -DENABLE_LUFAUSB_CUSTOM_VERSIONS
 
 #Whether or not to allow users Chameleon terminal access to change the DESFire configuration's 
 #sensitive settings like manufacturer, serial number, etc.
-SETTINGS	+= -DENABLE_PERMISSIVE_DESFIRE_SETTINGS
-SETTINGS	+= -DALLOW_DESFIRE_TERMINAL_COMMANDS
+#SETTINGS	+= -DDISABLE_PERMISSIVE_DESFIRE_SETTINGS
+#SETTINGS	+= -DDISABLE_DESFIRE_TERMINAL_COMMANDS
 
 #Set a default logging mode for debugging with the DESFire 
 #emulation code:
@@ -86,7 +95,7 @@ SETTINGS	+= -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Feature: Use randomized UIDs that mask the actual secret UID until 
 #the tag has been issued a successful authentication sequence: 
-SETTINGS	+= -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
+#SETTINGS	+= -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
 
 #Anticipating that the implementation overhead is high with the 
 #maximum storage allocations for the number of possible keys per 
@@ -178,6 +187,7 @@ SRC         += Application/MifareUltralight.c \
 			Application/MifareClassic.c \
 			Application/ISO14443-3A.c \
 			Application/Crypto1.c \
+			Application/CryptoTDEA.c \
 			Application/Reader14443A.c \
 			Application/Sniff14443A.c \
 			Application/ISO15693-A.c
@@ -199,14 +209,14 @@ SRC         += $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/AVRCryptoLib-Si
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 ASRC         = MemoryAsm.S \
 			Codec/Reader14443-ISR.S
-ASRC        += Application/CryptoTDEA.S \
-			   $(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
+ASRC        += Applications/CryptoTDEA-HWAccelerated.S \
+			$(DESFIRE_MAINSRC)/ExternalCryptoLib/AVRCryptoLib/gf256mul/gf256mul.S 
 SRC         += $(ASRC)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -g0 -std=gnu99 -D__PROG_TYPES_COMPAT__ \
 			   -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) \
 			   -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
-			   -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
+			   -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(CONFIG_SETTINGS) $(SETTINGS) \
 			   -D__AVR_ATxmega128A4U__ -Werror=implicit-function-declaration \
 			   -D__MAX_ENDPOINT_INDEX=4 \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
@@ -288,15 +298,10 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
 
-desfire-dev: $(TARGET).elf $(TARGET).hex $(TARGET).eep
+desfire: CONFIG_SETTINGS:= -DCONFIG_MF_DESFIRE_SUPPORT
+desfire: $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
-
-desfire-dev-copy-lastest: desfire-dev
-	@cp $(TARGET)-DESFire.hex $(TARGET)-DESFire.eep Latest/
-	@git add -f Latest/$(TARGET)-DESFire.hex Latest/$(TARGET)-DESFire.eep
-	@cp $(TARGET)-DESFire-$(DATECMD).hex $(TARGET)-DESFire-$(DATECMD).eep Latest/
-	@git add -f Latest/$(TARGET)-DESFire-$(DATECMD).hex Latest/$(TARGET)-DESFire-$(DATECMD).eep
 
 local-clean:
 	@rm -f $(TARGET).{elf,hex,eep,bin,lss,map} $(TARGET)-DESFire.{hex,eep}

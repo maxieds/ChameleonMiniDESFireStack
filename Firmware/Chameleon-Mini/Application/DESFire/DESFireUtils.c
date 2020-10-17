@@ -94,22 +94,24 @@ uint16_t DesfireAddParityBits(uint8_t * Buffer, uint16_t BitCount)
     if (BitCount % 8)
         return BitCount;
     uint8_t * currByte, * tmpByte;
-    uint8_t * const lastByte = Buffer + BitCount/8 + BitCount/64; // starting address + number of bytes + number of parity bytes
+    uint8_t * const lastByte = Buffer + BitCount/8 + BitCount/64; // starting address + number of bytes + 
+                                                                  // number of parity bytes
     currByte = Buffer + BitCount/8 - 1;
     uint8_t parity;
-    memset(currByte+1, 0, lastByte-currByte); // zeroize all bytes used for parity bits
-    while (currByte >= Buffer) // loop over all input bytes
+    memset(currByte+1, 0, lastByte-currByte);                     // zeroize all bytes used for parity bits
+    while (currByte >= Buffer)                                    // loop over all input bytes
     {   
-        parity = OddParityBit(*currByte); // get parity bit
+        parity = OddParityBit(*currByte);                         // get parity bit
         tmpByte = lastByte;
-        while (tmpByte > currByte) // loop over all bytes from the last byte to the current one -- shifts the whole byte string        {
-            *tmpByte <<= 1; // shift this byte
-            *tmpByte |= (*(tmpByte-1) & 0x80) >> 7; // insert the last bit from the previous byte
-            tmpByte--; // go to the previous byte 
+        while (tmpByte > currByte) {                              // loop over all bytes from the last byte 
+                                                                  // to the current one -- shifts the whole byte string 
+            *tmpByte <<= 1; 
+            *tmpByte |= (*(tmpByte-1) & 0x80) >> 7;               // insert the last bit from the previous byte
+            tmpByte--; 
         }       
-        *(++tmpByte) &= 0xFE; // zeroize the bit, where we want to put the parity bit
-        *tmpByte |= parity & 1; // add the parity bit
-        currByte--; // go to previous input byte
+        *(++tmpByte) &= 0xFE;                                     // zeroize the bit, where we want to put the parity bit
+        *tmpByte |= parity & 1;                                   // add the parity bit
+        currByte--;                                               // go to previous input byte
     }       
     return BitCount + (BitCount / 8);
 }

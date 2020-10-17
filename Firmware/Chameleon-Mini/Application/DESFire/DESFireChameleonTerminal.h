@@ -27,12 +27,20 @@ This notice must be retained at the top of all source files where indicated.
 #ifndef __DESFIRE_CHAMELEON_TERMINAL_H__
 #define __DESFIRE_CHAMELEON_TERMINAL_H__
 
+#ifndef DISABLE_DESFIRE_TERMINAL_COMMANDS
+
+#include <stdbool.h>
+
 #include "../../Terminal/Commands.h"
 #include "../../Terminal/CommandLine.h"
 
+bool IsDESFireConfiguration(void);
+
+#ifndef DISABLE_PERMISSIVE_DESFIRE_SETTINGS
 #define DFCOMMAND_SET_HEADER                  "DF_SETHDR"
 CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam);
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutMessage, const char *InParams);
+#endif
 
 #define DFCOMMAND_LAYOUT_PPRINT               "DF_PPRINT_PICC"
 CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams);
@@ -47,5 +55,7 @@ CommandStatusIdType CommandDESFireSetLoggingMode(char *OutMessage, const char *I
 #define DFCOMMAND_TESTING_MODE                "DF_TESTMODE"
 CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam);
 CommandStatusIdType CommandDESFireSetTestingMode(char *OutMessage, const char *InParams);
+
+#endif /* DISABLE_DESFIRE_TERMINAL_COMMANDS */
 
 #endif

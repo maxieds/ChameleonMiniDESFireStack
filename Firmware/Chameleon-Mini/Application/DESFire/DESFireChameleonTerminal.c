@@ -24,16 +24,29 @@ This notice must be retained at the top of all source files where indicated.
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
-#ifdef CONFIG_MF_DESFIRE_SUPPORT
+#if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
 
 #include "../../Terminal/Terminal.h"
 #include "../../Terminal/Commands.h"
+#include "../../Settings.h"
 
 #include "DESFireChameleonTerminal.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
 #include "DESFireLogging.h"
 
+bool IsDESFireConfiguration(void) {
+     return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE;
+}
+
+CommandStatusIdType ExitOnInvalidConfigurationError(char *OutParam) {
+     if(OutParam != NULL) {
+          sprintf_P(OutParam, PSTR("Invalid Configuration: Set `CONFIG=MF_DESFIRE`.\r\n"));
+     }
+     return COMMAND_ERR_INVALID_USAGE_ID;
+}
+
+#ifndef DISABLE_PERMISSIVE_DESFIRE_SETTINGS
 CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam) {
      snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
                 PSTR("%s <ATS-5|HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>"), 
@@ -42,6 +55,9 @@ CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam) {
 }
 
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *InParams) {
+     if(!IsDESFireConfiguration()) {
+          ExitOnInvalidConfigurationError(OutParam); 
+     }
      char hdrPropSpecStr[24];
      char propSpecBytesStr[16];
      BYTE propSpecBytes[16];
@@ -106,8 +122,12 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
      SynchronizePICCInfo();
      return COMMAND_INFO_OK_ID;
 }
+#endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
 CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams) {
+     if(!IsDESFireConfiguration()) {
+          ExitOnInvalidConfigurationError(OutParam); 
+     }
      char pprintListSpecStr[32];
      BYTE StatusError = 0x00;
      if(!sscanf_P(InParams, PSTR("%31s"), pprintListSpecStr)) {
@@ -135,10 +155,13 @@ CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InPar
 }
 
 CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
+     if(!IsDESFireConfiguration()) {
+          ExitOnInvalidConfigurationError(OutParam); 
+     }
      snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, 
                 PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
                      "based on %s from \r\n"
-                     "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.git.\r\n"
+                     "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.\r\n"
                      "Revision: %s\r\n"),
                 DESFIRE_FIRMWARE_BUILD_TIMESTAMP, 
                 DESFIRE_FIRMWARE_GIT_COMMIT_ID, 
@@ -147,6 +170,9 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
 }
 
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
+    if(!IsDESFireConfiguration()) {
+         ExitOnInvalidConfigurationError(OutParam); 
+    }
     switch(LocalLoggingMode) {
          case OFF:
               snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("OFF"));
@@ -167,6 +193,9 @@ CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
 }
 
 CommandStatusIdType CommandDESFireSetLoggingMode(char *OutParam, const char *InParams) {
+     if(!IsDESFireConfiguration()) {
+          ExitOnInvalidConfigurationError(OutParam); 
+     }
      char valueStr[16];
      if(!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
           return COMMAND_ERR_INVALID_PARAM_ID;
@@ -198,13 +227,19 @@ CommandStatusIdType CommandDESFireSetLoggingMode(char *OutParam, const char *InP
 }
 
 CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam) {
-     if(LocalTestingMode) {
+     if(!IsDESFireConfiguration()) {
+          ExitOnInvalidConfigurationError(OutParam); 
+     }
+     else if(LocalTestingMode) {
           return COMMAND_INFO_TRUE_ID;
      }
      return COMMAND_INFO_FALSE_ID;
 }
 
 CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InParams) {
+     if(!IsDESFireConfiguration()) {
+          ExitOnInvalidConfigurationError(OutParam); 
+     }
      char valueStr[16];
      if(!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
           return COMMAND_ERR_INVALID_PARAM_ID;

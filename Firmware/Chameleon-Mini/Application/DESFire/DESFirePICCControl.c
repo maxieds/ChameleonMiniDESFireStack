@@ -29,6 +29,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "../../Settings.h"
 #include "../../Log.h"
 #include "../../Random.h"
+#include "../CryptoTDEA.h"
 
 #include "DESFirePICCControl.h"
 #include "DESFirePICCHeaderLayout.h"
