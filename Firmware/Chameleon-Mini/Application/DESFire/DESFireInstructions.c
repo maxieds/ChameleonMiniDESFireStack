@@ -1880,12 +1880,6 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Status = CryptoAESEncryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, &Buffer[1], NULL, *Key);
-    //uint8_t tempBuf[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    //CryptoAESDecryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, tempBuf, &Buffer[1], NULL, *Key);
-    //if(memcmp(tempBuf, rndBPadded, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
-    //     Buffer[0] = 0xff;
-    //     return DESFIRE_STATUS_RESPONSE_SIZE;
-    //}
     if(Status != STATUS_OPERATION_OK) {
          Buffer[0] = Status;
          return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -1932,10 +1926,9 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     if(memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
          memcpy(challengeRndAB, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
          memcpy(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-         //LogEntry(LOG_APP_NONCE_B, challengeRndAB, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
+         LogEntry(LOG_APP_NONCE_B, challengeRndAB, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
          Buffer[0] = STATUS_AUTHENTICATION_ERROR;
-         memcpy(&Buffer[1], challengeRndAB, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES); // TODO: Remove this extra data ... 
-         return DESFIRE_STATUS_RESPONSE_SIZE + 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES;
+         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     
     /* Authenticated successfully */

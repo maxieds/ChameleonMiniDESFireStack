@@ -35,6 +35,7 @@ typedef struct {
     uint8_t     rounds;
     uint8_t     schedule[AES128_CRYPTO_SCHEDULE_SIZE];
     uint8_t     reverse[AES128_CRYPTO_SCHEDULE_SIZE];
+    uint8_t     sched[176];
     uint8_t     keyData[AES128_KEY_SIZE];
 } AES128Context;
 

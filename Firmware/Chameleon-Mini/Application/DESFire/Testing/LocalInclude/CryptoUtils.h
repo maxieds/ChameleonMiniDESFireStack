@@ -58,46 +58,6 @@ typedef struct {
      }                                                 \
      })
 
-static inline size_t CryptAES128(bool toEncrypt, uint8_t *inputBytes, uint8_t *outputBytes, 
-                                 size_t numBytes, CryptoData_t cdata) { 
-     if((numBytes % AES128_BLOCK_SIZE) != 0) {
-         return 0;
-     }
-     size_t numBlocks = numBytes / AES128_BLOCK_SIZE;
-     size_t outputBufLength = 0, outputBufLengthTemp = 0;
-     EVP_CIPHER_CTX *cipherCtx = EVP_CIPHER_CTX_new();
-     if(cipherCtx == NULL) {
-          fprintf(stderr, "Cipher context is NULL.\n");
-          return 0;
-     }
-     if(toEncrypt) {
-         EVP_EncryptInit(cipherCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
-         EVP_EncryptUpdate(cipherCtx, outputBytes, &outputBufLengthTemp, inputBytes, numBytes);
-         outputBufLength = outputBufLengthTemp;
-         EVP_EncryptFinal(cipherCtx, outputBytes + outputBufLengthTemp, &outputBufLengthTemp);
-         outputBufLength += outputBufLengthTemp;
-     }
-     else {
-         EVP_DecryptInit(cipherCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
-         EVP_DecryptUpdate(cipherCtx, outputBytes, &outputBufLengthTemp, inputBytes, numBytes);
-         outputBufLength = outputBufLengthTemp;
-         EVP_DecryptFinal(cipherCtx, outputBytes + outputBufLengthTemp, &outputBufLengthTemp);
-         outputBufLength += outputBufLengthTemp;
-     }
-     EVP_CIPHER_CTX_free(cipherCtx);
-     return outputBufLength;
-}
-
-static inline size_t EncryptAES128_CBC(uint8_t *inputPlainText, size_t ptSize, 
-                                   uint8_t *outputCipherText, CryptoData_t cdata) {
-    return CryptAES128(true, inputPlainText, outputCipherText, ptSize, cdata);
-}
-
-static inline size_t DecryptAES128_CBC(uint8_t *inputCipherText, size_t ctSize, 
-                                   uint8_t *outputPlainText, CryptoData_t cdata) {
-    return CryptAES128(false, inputCipherText, outputPlainText, ctSize, cdata);
-}
-
 static inline void DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize, 
                                         DesfireAESCryptoContext *cryptoCtx) {
      if(initKeyBuffer == NULL || cryptoCtx == NULL) {
@@ -124,7 +84,6 @@ static inline size_t EncryptAES128(const uint8_t *plainSrcBuf, size_t bufSize,
      bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
      uint8_t IV[AES128_BLOCK_SIZE];
      memset(IV, 0x00, AES128_BLOCK_SIZE);
-     //memcpy(IV, cdata.keyData, AES128_BLOCK_SIZE);
      for(int blk = 0; blk < bufBlocks; blk++) {
           uint8_t inputBlock[AES128_BLOCK_SIZE];
           if(blk == 0) {
@@ -176,8 +135,8 @@ static inline bool TestAESEncyptionRoutines(void) {
         0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
     };
     const uint8_t ctData[] = {
-        0x69, 0xC4, 0xE0, 0xD8, 0x6A, 0x7B, 0x04, 0x30,
-        0xD8, 0xCD, 0xB7, 0x80, 0x70, 0xB4, 0xC5, 0x5A
+        0xc8, 0xa3, 0x31, 0xff, 0x8e, 0xdd, 0x3d, 0xb1,
+        0x75, 0xe1, 0x54, 0x5d, 0xbe, 0xfb, 0x76, 0x0b
     };
     CryptoData_t cdata;
     cdata.keyData = keyData;

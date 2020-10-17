@@ -23,10 +23,16 @@ This notice must be retained at the top of all source files where indicated.
 
 #include <string.h>
 
+const uint8_t zeroBlock[AES128_BLOCK_SIZE] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 void aes128InitContext(AES128Context *ctx) {
     ctx->rounds = AES128_CRYPTO_ROUNDS;
     memset(&(ctx->schedule[0]), 0x00, AES128_CRYPTO_SCHEDULE_SIZE);
     memset(&(ctx->reverse[0]), 0x00, AES128_CRYPTO_SCHEDULE_SIZE);
+    memset(&(ctx->sched[0]), 0x00, 176);
     memset(&(ctx->keyData[0]), 0x00, AES128_KEY_SIZE);
 }
 
@@ -41,120 +47,110 @@ bool aes128SetKey(AES128Context *ctx, const uint8_t *keyData, size_t keySize)
     if (keySize != AES128_KEY_SIZE) {
         return false;
     }
-    // Make a copy of the key - it will be expanded in encryptBlock().
-    uint8_t *schedule, round, temp[4];
-    memset(temp, 0x00, 4);
-    memcpy(ctx->keyData, keyData, 16);
-    memcpy(ctx->schedule, keyData, 16);
-    schedule = ctx->reverse;
+       
+    // Copy the key itself into the first 16 bytes of the schedule.
+    uint8_t *schedule = ctx->sched;
     memcpy(schedule, keyData, 16);
-    for (round = 1; round <= 10; ++round) {
-        KCORE(round);
-        KXOR(1, 0);
-        KXOR(2, 1);
-        KXOR(3, 2);
-    }
-    // Key is ready to go.
+    // Expand the key schedule until we have 176 bytes of expanded key.
+    uint8_t iteration = 1;
+    uint8_t n = 16; 
+    uint8_t w = 4;
+    while (n < 176) {
+        if (w == 4) {
+            // Every 16 bytes (4 words) we need to apply the key schedule core.
+            keyScheduleCore(schedule + 16, schedule + 12, iteration);
+            schedule[16] ^= schedule[0];
+            schedule[17] ^= schedule[1];
+            schedule[18] ^= schedule[2];
+            schedule[19] ^= schedule[3];
+            ++iteration;
+            w = 0;
+        } else {
+            // Otherwise just XOR the word with the one 16 bytes previous.
+            schedule[16] = schedule[12] ^ schedule[0];
+            schedule[17] = schedule[13] ^ schedule[1];
+            schedule[18] = schedule[14] ^ schedule[2];
+            schedule[19] = schedule[15] ^ schedule[3];
+        }   
+        // Advance to the next word in the schedule.
+        schedule += 4;
+        n += 4;
+        ++w;
+    }     
+    
     return true;
+}
+
+static void aes128DecryptBuildKey(AES128Context *ctx, uint8_t *tempOutputBuf) {
+     aes128EncryptBlock(ctx, tempOutputBuf, zeroBlock);
 }
 
 void aes128EncryptBlock(AES128Context *ctx, uint8_t *output, const uint8_t *input) 
 {
-    uint8_t schedule[16];
+    // Reset the key data:
+    aes128SetKey(ctx, ctx->keyData, AES128_KEY_SIZE);
+
+    const uint8_t *roundKey = ctx->sched;
     uint8_t posn;
     uint8_t round;
     uint8_t state1[16];
     uint8_t state2[16];
-    uint8_t temp[4];
-   
-    // Set all of the structures to be initialized to zero:
-    memset(state1, 0x00, 16);
-    memset(state2, 0x00, 16);
-    memset(temp, 0x00, 4);
 
-    // Start with the key in the schedule buffer.
-    memset(schedule, 0x00, 16);
-    memcpy(schedule, ctx->schedule, 16);
-
-    // Copy the input into the state and XOR with the key schedule.
+    // Copy the input into the state and XOR with the first round key.
     for (posn = 0; posn < 16; ++posn)
-        state1[posn] = input[posn] ^ schedule[posn];
-    
-    // Perform the first 9 rounds of the cipher.
-    for (round = 1; round <= 9; ++round) {
-        // Expand the next 16 bytes of the key schedule.
-        KCORE(round);
-        KXOR(1, 0);
-        KXOR(2, 1);
-        KXOR(3, 2);
-        
-        // Encrypt using the key schedule.
+        state1[posn] = input[posn] ^ roundKey[posn];
+    roundKey += 16;
+
+    // Perform all rounds except the last.
+    for (round = ctx->rounds; round > 1; --round) {
         subBytesAndShiftRows(state2, state1);
-        mixColumn(state1,      state2); 
+        mixColumn(state1,      state2);
         mixColumn(state1 + 4,  state2 + 4);
         mixColumn(state1 + 8,  state2 + 8);
         mixColumn(state1 + 12, state2 + 12);
         for (posn = 0; posn < 16; ++posn)
-            state1[posn] ^= schedule[posn];
+            state1[posn] ^= roundKey[posn];
+        roundKey += 16;
     }
-    
-    // Expand the final 16 bytes of the key schedule.
-    KCORE(10);
-    KXOR(1, 0);
-    KXOR(2, 1);
-    KXOR(3, 2);
-    
+
     // Perform the final round.
     subBytesAndShiftRows(state2, state1);
-    for (posn = 0; posn < 16; ++posn) 
-        output[posn] = state2[posn] ^ schedule[posn];
+    for (posn = 0; posn < 16; ++posn)
+        output[posn] = state2[posn] ^ roundKey[posn];
+
 }
 
 void aes128DecryptBlock(AES128Context *ctx, uint8_t *output, const uint8_t *input) 
 {
-    uint8_t schedule[16];
+    // Setup the key data as though we have already been through an encryption round:
+    aes128DecryptBuildKey(ctx, output);
+
+    const uint8_t *roundKey = ctx->sched + (ctx->rounds) * 16;
     uint8_t round;
     uint8_t posn;
     uint8_t state1[16];
     uint8_t state2[16];
-    uint8_t temp[4];
-
-    // Set all of the structures to be initialized to zero:
-    memset(state1, 0x00, 16);
-    memset(state2, 0x00, 16);
-    memset(temp, 0x00, 4);
-
-    // Start with the end of the decryption schedule.
-    memcpy(schedule, ctx->reverse, 16);
 
     // Copy the input into the state and reverse the final round.
     for (posn = 0; posn < 16; ++posn)
-        state1[posn] = input[posn] ^ schedule[posn];
+        state1[posn] = input[posn] ^ roundKey[posn];
     inverseShiftRowsAndSubBytes(state2, state1);
-    KXOR(3, 2);
-    KXOR(2, 1);
-    KXOR(1, 0);
-    KCORE(10);
 
-    // Perform the next 9 rounds of the decryption process.
-    for (round = 9; round >= 1; --round) {
-        // Decrypt using the key schedule.
+    // Perform all other rounds in reverse.
+    for (round = ctx->rounds; round > 1; --round) {
+        roundKey -= 16;
         for (posn = 0; posn < 16; ++posn)
-            state2[posn] ^= schedule[posn];
+            state2[posn] ^= roundKey[posn];
         inverseMixColumn(state1,      state2);
         inverseMixColumn(state1 + 4,  state2 + 4);
         inverseMixColumn(state1 + 8,  state2 + 8);
         inverseMixColumn(state1 + 12, state2 + 12);
         inverseShiftRowsAndSubBytes(state2, state1);
-
-        // Expand the next 16 bytes of the key schedule in reverse.
-        KXOR(3, 2);
-        KXOR(2, 1);
-        KXOR(1, 0);
-        KCORE(round);
     }
 
     // Reverse the initial round and create the output words.
+    roundKey -= 16;
     for (posn = 0; posn < 16; ++posn)
-        output[posn] = state2[posn] ^ schedule[posn];
+        output[posn] = state2[posn] ^ roundKey[posn];
+
 }

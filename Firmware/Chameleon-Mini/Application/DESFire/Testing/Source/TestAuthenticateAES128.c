@@ -12,7 +12,7 @@
 int main(int argc, char **argv) {
 
     if(!TestAESEncyptionRoutines()) {
-        //return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     nfc_context *nfcCtxt;
