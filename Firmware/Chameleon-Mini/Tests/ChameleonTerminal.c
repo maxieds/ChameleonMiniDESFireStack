@@ -17,21 +17,23 @@ CommandStatusIdType CommandRunTests(char *OutParam) {
      };
      uint8_t t;
      uint16_t maxOutputChars = TERMINAL_BUFFER_SIZE, charCount;
+     bool statusPassed = true;
      for(t = 0; t < sizeof(testCases); t++) {
-          bool testPassed = testCases[t]();
-          if(testPassed) {
-               charCount = snprintf_P(OutParam, maxOutputChars, 
-                                      PSTR("Test #% 2d ... [OK]\r\n"), t + 1);
-          }
-          else {
-               charCount = snprintf_P(OutParam, maxOutputChars, 
-                                      PSTR("Test #% 2d ... [XX]"), t + 1);
+          if(!testCases[t]()) {
+               charCount = snprintf_P(OutParam, maxOutputChars, PSTR("> Test #% 2d ... [X]\r\n"), t + 1);
+               statusPassed = false;
           }
           maxOutputChars = MIN(0, maxOutputChars - charCount);
           OutParam += charCount;
      }
      if(t == 0) {
           sprintf_P(OutParam, "No tests to run.\r\n");
+     }
+     else if(statusPassed) {
+          snprintf_P(OutParam, maxOutputChars, PSTR("All tests passed.\r\n"));
+     }
+     else {
+          snprintf_P(OutParam, maxOutputChars, PSTR("Tests failed.\r\n"));
      }
      return COMMAND_INFO_OK_WITH_TEXT;
 }
